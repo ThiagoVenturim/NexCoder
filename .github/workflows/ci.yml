@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff pytest
+          for pkg in packages/*/; do python -m pip install -e "$pkg"; done
+      - name: No emojis
+        run: python scripts/check_no_emoji.py
+      - name: Lint
+        run: ruff check packages scripts
+      - name: Tests
+        run: python -m pytest packages
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
