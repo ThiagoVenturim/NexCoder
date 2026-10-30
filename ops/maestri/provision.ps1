@@ -45,7 +45,8 @@ $Workspaces = [ordered]@{
   "faccoder"          = @{ Name = "faccoder";             Dir = "fabrica-code" }
   "askdash"           = @{ Name = "askdash";              Dir = "askdash" }
   "support-engine"    = @{ Name = "Support Engine";       Dir = "Support_Intelligence_Engine" }
-  "acompanhamento-np" = @{ Name = "Acompanhamento de NP"; Dir = "acompanhamento_de_np" }
+  # Dir may be absolute when a project lives outside -Root.
+  "acompanhamento-np" = @{ Name = "Acompanhamento de NP"; Dir = (Join-Path $HOME "acompanhamento_de_np") }
 }
 
 # Layer = floor. Each floor is a git worktree on its own branch, staffed by one agy agent.
@@ -80,7 +81,7 @@ Rules for every agent in this portfolio:
 - Never push, open pull requests, or change repository visibility without the Maestro's go-ahead.
 - Keep 'maestri floor status' current: post when you start, at milestones, '--state blocked' when you need a human, '--state review' when ready.
 - Run 'maestri list' to see your teammates and shared notes before asking anyone anything.
-- Read the shared note 'faccoder-plan' before starting. Report back with: maestri ask "Maestro" "<result>".
+- Read PLAN.md in the portfolio root before starting (it cites internal source paths: never copy those paths or any company names into public files). Report back with: maestri ask "Maestro" "<result>".
 "@
 
 $Roles = @{
@@ -97,12 +98,18 @@ $Roles = @{
 }
 
 if ($Bootstrap) {
-  Invoke-Maestri @("preset", "create", "Antigravity", "--command", $AgentCommand, "--quick-start", "on")
+  if (-not ((& $maestri preset list) -match '"Antigravity"')) {
+    Invoke-Maestri @("preset", "create", "Antigravity", "--command", $AgentCommand, "--quick-start", "on")
+  }
+  $existingRoles = (& $maestri role list) -join "`n"
   foreach ($role in $Roles.GetEnumerator()) {
+    if ($existingRoles -match [regex]::Escape($role.Key)) { continue }
     Invoke-Maestri @("role", "create", $role.Key, "$($role.Value)`n`n$CommonRules", "--scope", "global")
   }
+  $existingWorkspaces = (& $maestri workspace list) -join "`n"
   foreach ($ws in $Workspaces.Values) {
-    $dir = Join-Path $Root $ws.Dir
+    if ($existingWorkspaces -match ('"' + [regex]::Escape($ws.Name) + '"')) { continue }
+    $dir = if ([IO.Path]::IsPathRooted($ws.Dir)) { $ws.Dir } else { Join-Path $Root $ws.Dir }
     if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force $dir | Out-Null; git -C $dir init -q }
     Invoke-Maestri @("workspace", "create", $ws.Name, "--dir", $dir, "--group", "OSS Portfolio")
   }

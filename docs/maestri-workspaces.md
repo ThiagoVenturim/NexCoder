@@ -11,7 +11,7 @@ and talks to the humans.
 ```
 OSS Portfolio (sidebar group)
 |
-+-- faccoder                      ground: Maestro (orchestrator), shared note "faccoder-plan"
++-- faccoder                      ground: Maestro (orchestrator); plan in PLAN.md at the portfolio root
 |     +-- Ideation and Jury       layer/ideation     agent Lumen
 |     +-- Planning                layer/planning     agent Quill
 |     +-- Code Intelligence       layer/code-intel   agent Atlas
