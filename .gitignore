@@ -30,3 +30,6 @@ langfuse-data/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Maestri canvas state
+.maestri/
