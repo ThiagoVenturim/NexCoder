@@ -8,7 +8,6 @@ second-stage cross-encoder reranking, and HyDE query expansion.
 from __future__ import annotations
 
 import fnmatch
-import json
 import logging
 import os
 from pathlib import Path
@@ -171,18 +170,7 @@ class CodeSearchIndex:
 
     def _delete_file_chunks(self, file_path: str) -> None:
         """Delete existing chunks for a file before indexing to prevent stale symbols."""
-        try:
-            cur = self.store.conn.cursor()
-            rows = cur.execute(
-                "SELECT id FROM chunks WHERE json_extract(metadata, '$.file_path') = ?",
-                (file_path,),
-            ).fetchall()
-            old_ids = [r["id"] for r in rows]
-        except Exception:
-            rows = self.store.conn.execute("SELECT id, metadata FROM chunks").fetchall()
-            old_ids = [r["id"] for r in rows if json.loads(r["metadata"]).get("file_path") == file_path]
-        if old_ids:
-            self.store.delete(old_ids)
+        self.store.delete_by_metadata("file_path", file_path)
 
     def index_code(
         self,
@@ -220,8 +208,12 @@ class CodeSearchIndex:
         ignore_patterns: list[str] | None = None,
         use_gitignore: bool = True,
     ) -> int:
-        """Recursively index source files ignoring binaries, caches, venvs, and .gitignore rules."""
-        root = Path(root_dir)
+        """Recursively index source files ignoring binaries, caches, venvs, and .gitignore rules.
+
+        Purges chunks for any files previously indexed under `root_dir` that no longer exist
+        or were deleted from disk.
+        """
+        root = Path(root_dir).resolve()
         count = 0
         ext_set = {e.lower() if e.startswith(".") else f".{e.lower()}" for e in extensions} if extensions else None
 
@@ -229,6 +221,8 @@ class CodeSearchIndex:
         if use_gitignore:
             gi_path = root / ".gitignore"
             active_patterns.extend(_parse_gitignore(gi_path))
+
+        seen_files: set[Path] = set()
 
         for dirpath, dirnames, filenames in os.walk(root):
             rel_dir = os.path.relpath(dirpath, root)
@@ -259,12 +253,35 @@ class CodeSearchIndex:
 
                 try:
                     self.index_file(f_path)
+                    seen_files.add(f_path.resolve())
                     count += 1
                 except Exception as exc:
                     logger.debug("Skipping unparseable file %s: %s", f_path, exc)
                     continue
 
+        self._purge_deleted_files(root, seen_files)
         return count
+
+    def _purge_deleted_files(self, root: Path, seen_files: set[Path]) -> int:
+        """Purge chunks whose file_path is under root but was not seen during directory indexing."""
+        all_file_chunks = self.store.get_metadata_values("file_path")
+        stale_ids: list[str] = []
+        for cid, fp_val in all_file_chunks.items():
+            if not isinstance(fp_val, str):
+                continue
+            fp = Path(fp_val)
+            try:
+                resolved_fp = fp.resolve()
+                if resolved_fp.is_relative_to(root) and resolved_fp not in seen_files:
+                    stale_ids.append(cid)
+            except Exception as exc:
+                logger.debug("Failed resolving file path %s during purge: %s", fp_val, exc)
+                continue
+
+        if stale_ids:
+            logger.info("Purged %d stale chunks for removed files under %s", len(stale_ids), root)
+            self.store.delete(stale_ids)
+        return len(stale_ids)
 
     def _filtered_text_search(self, query: str, k: int, where: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Perform full-text search with metadata pushdown in SQL."""
@@ -273,7 +290,13 @@ class CodeSearchIndex:
     def _filtered_vector_search(
         self, query_vec: list[float], k: int, where: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """Perform vector search with metadata pushdown."""
+        """Perform vector search with metadata pushdown.
+
+        Note on large repositories: When metadata filters are present, candidates are
+        pre-filtered via SQLite JSON pushdown and scored in memory using vectorized NumPy.
+        For large repositories, this avoids scanning the entire database while preserving
+        exact cosine similarity over the filtered subset.
+        """
         return self.store.vector_search(query_vec, k=k, where=where)
 
     def _get_or_compute_embeddings(self, docs: list[dict[str, Any]], query_dim: int) -> list[list[float]]:
