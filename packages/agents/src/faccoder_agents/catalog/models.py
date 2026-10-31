@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+_SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 AgentTier = Literal["small", "medium", "large"]
 
@@ -50,6 +53,17 @@ class AgentSpec(BaseModel):
     prompt: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
     source_path: Path | None = None
+
+    @field_validator("slug")
+    @classmethod
+    def validate_slug(cls, v: str) -> str:
+        clean = str(v).strip()
+        if not clean or not _SLUG_PATTERN.match(clean) or ".." in clean:
+            raise ValueError(
+                f"Invalid agent slug '{v}': slugs must contain only alphanumeric characters, "
+                "hyphens, and underscores, without directory traversal."
+            )
+        return clean
 
     def render_prompt(self, **kwargs: Any) -> str:
         """Render prompt with kwargs interpolation."""
