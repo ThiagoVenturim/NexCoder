@@ -87,3 +87,27 @@ def test_cli_execution(tmp_path: Path, capsys) -> None:
     ret_export = main(["export", "--claude", "-o", str(target_dir), "-s", "direction"])
     assert ret_export == 0
     assert (target_dir / "manifest.json").is_file()
+
+
+def test_cli_no_args_prints_help(capsys) -> None:
+    code = main([])
+    assert code == 0
+    captured = capsys.readouterr()
+    assert "usage:" in captured.out.lower() or "faccoder-agents" in captured.out
+
+
+def test_export_claude_package_empty_sectors(tmp_path: Path) -> None:
+    catalog = AgentCatalog.default()
+    skills = SkillCatalog.default()
+
+    out_dir = tmp_path / "empty_export"
+    result = export_claude_package(
+        catalog=catalog,
+        output_dir=out_dir,
+        skill_catalog=skills,
+        sectors=["non-existent-sector"],
+        zip_output=False,
+    )
+    assert len(result.agents_exported) == 0
+    manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["total_agents"] == 0

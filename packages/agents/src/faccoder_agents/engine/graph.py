@@ -70,8 +70,8 @@ class PipelineGraph:
         if status == "running":
             status = "completed"
 
-        approval_obj = None
-        if final_state.get("approval"):
+        approval_obj = final_state.get("_last_approval_req")
+        if approval_obj is None and final_state.get("approval"):
             try:
                 approval_obj = ApprovalRequest.model_validate(final_state["approval"])
             except Exception:
@@ -233,8 +233,10 @@ class PipelineBuilder:
                 new_status = "rejected"
 
             new_approval = state.get("approval")
+            last_approval_req = state.get("_last_approval_req")
             if result.approval_request:
-                new_approval = result.approval_request.model_dump()
+                new_approval = result.approval_request.to_state_dict()
+                last_approval_req = result.approval_request
 
             return {
                 "inputs": state.get("inputs", {}),
@@ -245,6 +247,7 @@ class PipelineBuilder:
                 "current_block": block.name,
                 "metadata": state.get("metadata", {}),
                 "approval": new_approval,
+                "_last_approval_req": last_approval_req,
                 "_last_route": result.next_step,
                 "_limits": state.get("_limits"),
             }

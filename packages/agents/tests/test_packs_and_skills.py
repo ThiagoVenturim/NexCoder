@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from faccoder_agents.catalog import AgentCatalog, SkillCatalog
+import pytest
+from faccoder_agents.catalog import (
+    AgentCatalog,
+    SkillCatalog,
+    load_skill_file,
+    parse_skill_markdown,
+)
 
 
 def test_stack_packs_loaded() -> None:
@@ -81,3 +87,22 @@ def test_skill_catalog_load_dir(tmp_path: Path) -> None:
     assert len(cat) == 1
     assert "custom-skill" in cat
     assert cat.get("custom-skill").description == "Custom skill description."
+
+
+def test_skill_catalog_get_or_raise_missing() -> None:
+    cat = SkillCatalog()
+    with pytest.raises(KeyError, match="not found in catalog"):
+        cat.get_or_raise("non-existent-skill")
+
+
+def test_load_skill_file_missing() -> None:
+    with pytest.raises(FileNotFoundError):
+        load_skill_file(Path("non_existent_skill_path_12345.md"))
+
+
+def test_skill_markdown_no_frontmatter() -> None:
+    raw = "# Raw Skill\nJust markdown body without frontmatter."
+    spec = parse_skill_markdown(raw, default_slug="inferred-skill")
+    assert spec.slug == "inferred-skill"
+    assert spec.name == "Inferred Skill"
+    assert spec.content == raw

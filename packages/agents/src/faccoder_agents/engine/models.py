@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import time
 import uuid
 from enum import StrEnum
@@ -26,22 +28,63 @@ class ApprovalStatus(StrEnum):
 
 
 class ApprovalRequest(BaseModel):
-    """Encapsulates a human approval gate with dry-run support and time-bounded token."""
+    """Encapsulates a human approval gate with dry-run support, state isolation, and timing-safe tokens."""
 
-    token: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    block_name: str = ""
     action_name: str
     description: str = ""
+    token_hash: str = ""
+    token: str | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
     created_at: float = Field(default_factory=time.time)
     expires_at: float = Field(default_factory=lambda: time.time() + 1800.0)  # 30 minutes default
     status: ApprovalStatus = ApprovalStatus.PENDING
+    consumed: bool = False
+
+    @classmethod
+    def create(
+        cls,
+        action_name: str,
+        block_name: str = "",
+        description: str = "",
+        payload: dict[str, Any] | None = None,
+        ttl_seconds: float = 1800.0,
+        status: ApprovalStatus = ApprovalStatus.PENDING,
+    ) -> tuple[ApprovalRequest, str]:
+        """Generate a new approval request and return (request, raw_token)."""
+        raw_token = str(uuid.uuid4())
+        token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+        now = time.time()
+        req = cls(
+            block_name=block_name,
+            action_name=action_name,
+            description=description,
+            token_hash=token_hash,
+            token=raw_token,
+            payload=payload or {},
+            created_at=now,
+            expires_at=now + ttl_seconds,
+            status=status,
+            consumed=False,
+        )
+        return req, raw_token
 
     def is_expired(self, current_time: float | None = None) -> bool:
         now = current_time if current_time is not None else time.time()
         return now > self.expires_at
 
     def matches_token(self, candidate_token: str) -> bool:
-        return self.token.strip() == candidate_token.strip()
+        """Timing-safe token check using SHA-256 and hmac.compare_digest."""
+        if not candidate_token:
+            return False
+        candidate_hash = hashlib.sha256(str(candidate_token).strip().encode("utf-8")).hexdigest()
+        return hmac.compare_digest(self.token_hash, candidate_hash)
+
+    def to_state_dict(self) -> dict[str, Any]:
+        """Serialize into pipeline state while keeping raw token hidden from models."""
+        data = self.model_dump()
+        data["token"] = None
+        return data
 
 
 class BlockResult(BaseModel):

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import time
+
+import pytest
 from faccoder_agents.engine import (
     Ballot,
     BlockStatus,
@@ -149,3 +152,54 @@ def test_pipeline_engine_limits_depth_enforcement() -> None:
     result = pipeline.run(inputs={"k": "v"})
     assert result.status == "failed"
     assert any("maximum depth" in err for err in result.errors)
+
+
+def test_guardrail_block_timeout_violation() -> None:
+    limits = ExecutionLimits(timeout_seconds=5.0)
+    guard = GuardrailBlock("guard", limits=limits)
+
+    # Simulating execution started 10 seconds ago
+    state = {
+        "history": [],
+        "data": {},
+        "metadata": {"started_at": time.time() - 10.0},
+    }
+    res = guard.execute(state)
+    assert res.status == BlockStatus.FAILURE
+    assert "timeout" in (res.error or "").lower()
+
+
+def test_guardrail_block_raise_on_violation() -> None:
+    limits = ExecutionLimits(max_depth=2)
+    guard = GuardrailBlock("guard", limits=limits, raise_on_violation=True)
+
+    fake_history = [{"block": "b0"}, {"block": "b1"}, {"block": "b2"}]
+    state = {"history": fake_history, "data": {}, "metadata": {}}
+
+    with pytest.raises(RuntimeError, match="maximum execution depth"):
+        guard.execute(state)
+
+
+def test_committee_block_target_key() -> None:
+    committee = CommitteeBlock(name="sub_jury", target_key="deliverable")
+    state = {
+        "data": {
+            "unrelated_flag": "critical_defect",
+            "deliverable": {"feature": "Safe Module", "test_coverage": 100},
+        }
+    }
+    res = committee.execute(state)
+    assert res.status == BlockStatus.SUCCESS
+    verdict = res.updates["committee_verdict"]
+    assert verdict["decision"] == "go"
+
+
+def test_committee_block_llm_json_decode_error_fallback() -> None:
+    # Model returns invalid non-JSON string
+    bad_model = FakeChatModel(responses=["This is not JSON"])
+    committee = CommitteeBlock(name="fallback_jury", model=bad_model)
+
+    res = committee.execute({"data": {"feature": "Docs"}})
+    assert res.status == BlockStatus.SUCCESS
+    verdict = res.updates["committee_verdict"]
+    assert verdict["decision"] == "go"

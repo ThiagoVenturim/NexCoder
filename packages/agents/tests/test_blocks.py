@@ -214,6 +214,66 @@ def test_human_approval_block_token_without_request_fails() -> None:
     assert "no active approval request" in (res.error or "").lower()
 
 
+def test_human_approval_block_binding_mismatch_rejected() -> None:
+    # Token from block A cannot approve block B
+    block_a = HumanApprovalBlock(name="gate_a", action_name="deploy_service_a")
+    block_b = HumanApprovalBlock(name="gate_b", action_name="deploy_service_b")
+
+    res_a = block_a.execute({"data": {"target": "cluster_a"}})
+    token_a = res_a.approval_request.token
+    req_a_dict = res_a.updates["approval"]
+
+    # Raw token must NOT be in model-visible state dict
+    assert req_a_dict.get("token") is None
+    assert req_a_dict.get("token_hash") is not None
+
+    # Attempt to use block A's token on block B
+    state_b = {
+        "data": {"target": "cluster_b"},
+        "inputs": {"approval_token": token_a},
+        "approval": req_a_dict,
+    }
+    res_b = block_b.execute(state_b)
+    assert res_b.status == BlockStatus.FAILURE
+    assert "bound to block 'gate_a'" in (res_b.error or "")
+
+
+def test_human_approval_reused_token_rejected() -> None:
+    gate = HumanApprovalBlock(name="payment_gate", action_name="transfer_funds")
+
+    # Step 1: initial run -> pending
+    res1 = gate.execute({"data": {"amount": 1000}})
+    token = res1.approval_request.token
+    saved_approval = res1.updates["approval"]
+
+    # Step 2: approve once
+    state2 = {"inputs": {"approval_token": token}, "approval": saved_approval}
+    res2 = gate.execute(state2)
+    assert res2.status == BlockStatus.SUCCESS
+
+    # Step 3: attempt reuse of consumed token
+    reused_approval = res2.updates["approval"]
+    state3 = {"inputs": {"approval_token": token}, "approval": reused_approval}
+    res3 = gate.execute(state3)
+    assert res3.status == BlockStatus.REJECTED
+    assert "already been consumed" in (res3.error or "").lower()
+
+
+def test_human_approval_non_pending_status_rejected() -> None:
+    gate = HumanApprovalBlock(name="reboot_gate", action_name="reboot_node")
+
+    res = gate.execute({"data": {"node": "worker-1"}})
+    token = res.approval_request.token
+    state_dict = res.updates["approval"]
+
+    # Force status to REJECTED in state
+    state_dict["status"] = ApprovalStatus.REJECTED
+
+    res_rejected = gate.execute({"inputs": {"approval_token": token}, "approval": state_dict})
+    assert res_rejected.status == BlockStatus.REJECTED
+    assert "not in pending status" in (res_rejected.error or "").lower()
+
+
 def test_prompt_block_safe_format_with_missing_keys() -> None:
     fake_llm = FakeChatModel(responses=["Executed successfully."])
     block = PromptBlock(
