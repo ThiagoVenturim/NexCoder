@@ -14,11 +14,10 @@ import os
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 from faccoder_core.retrieval.embeddings import Embedder
 from faccoder_core.retrieval.fusion import mmr_select, rrf_fuse
 from faccoder_core.retrieval.rerank import NoReranker, Reranker
-from faccoder_core.store.sqlite_store import HybridStore, _unpack, fts_query
+from faccoder_core.store.sqlite_store import HybridStore
 
 from faccoder_code_intel.chunking import CodeChunk, SymbolChunker
 from faccoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter
@@ -70,7 +69,20 @@ DEFAULT_BINARY_EXTENSIONS: set[str] = {
 
 
 def _parse_gitignore(gitignore_path: Path) -> list[str]:
-    """Parse pattern lines from a .gitignore file."""
+    """Parse pattern lines from a .gitignore file.
+
+    Supported syntax subset:
+    - Standard wildcard globs (*, ?, [a-z])
+    - Root-anchored patterns starting with '/' (e.g. '/build', '/config.local.json')
+    - Directory indicators ending with '/' (e.g. 'temp/', 'logs/')
+    - Relative path patterns (e.g. 'docs/*.tmp', 'src/generated/*')
+    - Comment lines (#) and blank lines are ignored.
+
+    Limitations:
+    - Negation (!pattern) is not parsed.
+    - Recursive double-star (**) in mid-path is approximated with fnmatch.
+    - Nested .gitignore files in subdirectories are not discovered; the root file is used.
+    """
     if not gitignore_path.is_file():
         return []
     patterns: list[str] = []
@@ -86,14 +98,43 @@ def _parse_gitignore(gitignore_path: Path) -> list[str]:
 
 
 def _matches_any_pattern(rel_path_str: str, filename: str, patterns: list[str]) -> bool:
-    """Check whether a path or filename matches any glob / gitignore pattern."""
-    norm_path = rel_path_str.replace("\\", "/")
+    """Check whether a path or filename matches any glob / gitignore pattern.
+
+    Handles root-anchored patterns ('/pattern'), directory-specific patterns ('dir/'),
+    and general wildcard patterns (*, ?, [seq]).
+    """
+    norm_path = rel_path_str.replace("\\", "/").strip("/")
     for pat in patterns:
-        clean_pat = pat.rstrip("/")
-        if fnmatch.fnmatch(filename, clean_pat) or fnmatch.fnmatch(norm_path, clean_pat):
-            return True
-        if pat.endswith("/") and (norm_path == clean_pat or norm_path.startswith(clean_pat + "/")):
-            return True
+        raw_pat = pat.strip()
+        if not raw_pat:
+            continue
+
+        is_anchored = raw_pat.startswith("/")
+        clean_pat = raw_pat.lstrip("/").rstrip("/")
+
+        if is_anchored:
+            # Anchored to the indexing root
+            if norm_path == clean_pat or norm_path.startswith(clean_pat + "/"):
+                return True
+            if fnmatch.fnmatch(norm_path, clean_pat):
+                return True
+            continue
+
+        # Directory-scoped pattern (e.g. 'temp/' or 'sub/temp/')
+        if raw_pat.endswith("/"):
+            if norm_path == clean_pat or norm_path.startswith(clean_pat + "/") or f"/{clean_pat}/" in f"/{norm_path}/":
+                return True
+            continue
+
+        # If pattern contains a path separator, match against relative path
+        if "/" in clean_pat:
+            if fnmatch.fnmatch(norm_path, clean_pat) or fnmatch.fnmatch(norm_path, f"*/{clean_pat}"):
+                return True
+        else:
+            # Simple filename / directory pattern matches anywhere in the tree
+            if fnmatch.fnmatch(filename, clean_pat) or fnmatch.fnmatch(norm_path, clean_pat):
+                return True
+
     return False
 
 
@@ -227,71 +268,18 @@ class CodeSearchIndex:
 
     def _filtered_text_search(self, query: str, k: int, where: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Perform full-text search with metadata pushdown in SQL."""
-        if not where:
-            return self.store.text_search(query, k=k)
-        match = fts_query(query)
-        if not match:
-            return []
-
-        where_clauses = ["chunks_fts MATCH ?"]
-        params: list[Any] = [match]
-        for key, value in where.items():
-            safe_key = "".join(c for c in key if c.isalnum() or c == "_")
-            where_clauses.append(f"json_extract(c.metadata, '$.{safe_key}') = ?")
-            params.append(value)
-
-        where_sql = " AND ".join(where_clauses)
-        params.append(k)
-        rows = self.store.conn.execute(
-            f"SELECT c.*, bm25(chunks_fts) AS rank FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "  # noqa: S608
-            f"WHERE {where_sql} ORDER BY rank LIMIT ?",
-            params,
-        ).fetchall()
-        return [self.store._row(r, -float(r["rank"])) for r in rows]
+        return self.store.text_search(query, k=k, where=where)
 
     def _filtered_vector_search(
         self, query_vec: list[float], k: int, where: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """Perform vector search with metadata pushdown."""
-        if not where:
-            return self.store.vector_search(query_vec, k=k)
-
-        where_clauses = ["embedding IS NOT NULL"]
-        params: list[Any] = []
-        for key, value in where.items():
-            safe_key = "".join(c for c in key if c.isalnum() or c == "_")
-            where_clauses.append(f"json_extract(metadata, '$.{safe_key}') = ?")
-            params.append(value)
-
-        where_sql = " AND ".join(where_clauses)
-        rows = self.store.conn.execute(
-            f"SELECT * FROM chunks WHERE {where_sql}",  # noqa: S608
-            params,
-        ).fetchall()
-        if not rows:
-            return []
-
-        matrix = np.vstack([_unpack(r["embedding"]) for r in rows])
-        query_arr = np.asarray(query_vec, dtype=np.float32)
-        norms = np.linalg.norm(matrix, axis=1) * (np.linalg.norm(query_arr) or 1.0)
-        norms[norms == 0] = 1.0
-        sims = (matrix @ query_arr) / norms
-        top = np.argsort(-sims)[:k]
-        return [self.store._row(rows[i], float(sims[i])) for i in top]
+        return self.store.vector_search(query_vec, k=k, where=where)
 
     def _get_or_compute_embeddings(self, docs: list[dict[str, Any]], query_dim: int) -> list[list[float]]:
         """Reuse stored vectors from SQLite chunks, computing embeddings only for missing ones."""
         doc_ids = [d["id"] for d in docs]
-        stored: dict[str, list[float]] = {}
-        if doc_ids:
-            placeholders = ",".join("?" for _ in doc_ids)
-            rows = self.store.conn.execute(
-                f"SELECT id, embedding FROM chunks WHERE id IN ({placeholders}) AND embedding IS NOT NULL",  # noqa: S608
-                doc_ids,
-            ).fetchall()
-            for r in rows:
-                if r["embedding"]:
-                    stored[r["id"]] = _unpack(r["embedding"]).tolist()
+        stored: dict[str, list[float]] = self.store.get_embeddings(doc_ids) if doc_ids else {}
 
         missing_indices = [i for i, d in enumerate(docs) if d["id"] not in stored]
         if missing_indices and self.embedder is not None:
