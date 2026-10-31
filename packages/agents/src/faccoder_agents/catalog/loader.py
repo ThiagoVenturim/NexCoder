@@ -33,10 +33,11 @@ def parse_agent_markdown(content: str, default_slug: str = "", default_sector: s
     description = data.get("description") or ""
     tools = data.get("tools") or []
     skills = data.get("skills") or []
+    scripts = data.get("scripts") or []
     prompt = data.get("prompt") or body
 
     # Collect additional metadata
-    reserved_keys = {"name", "slug", "sector", "tier", "description", "tools", "skills", "prompt"}
+    reserved_keys = {"name", "slug", "sector", "tier", "description", "tools", "skills", "scripts", "prompt"}
     extra_metadata = {k: v for k, v in data.items() if k not in reserved_keys}
 
     return AgentSpec(
@@ -47,6 +48,7 @@ def parse_agent_markdown(content: str, default_slug: str = "", default_sector: s
         description=description,
         tools=tools,
         skills=skills,
+        scripts=scripts,
         prompt=prompt,
         metadata=extra_metadata,
     )

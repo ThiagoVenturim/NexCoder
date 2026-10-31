@@ -19,6 +19,8 @@ class AgentSector:
     DATA_AI = "data-ai"
     SUPPORT = "support"
     MARKETING_GTM = "marketing-gtm"
+    STACKS = "stacks"
+    REGULATIONS = "regulations"
 
     ALL = [
         DIRECTION,
@@ -31,6 +33,8 @@ class AgentSector:
         DATA_AI,
         SUPPORT,
         MARKETING_GTM,
+        STACKS,
+        REGULATIONS,
     ]
 
 
@@ -42,6 +46,7 @@ class AgentSpec(BaseModel):
     description: str = ""
     tools: list[str] = Field(default_factory=list)
     skills: list[str] = Field(default_factory=list)
+    scripts: list[str] = Field(default_factory=list)
     prompt: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
     source_path: Path | None = None
