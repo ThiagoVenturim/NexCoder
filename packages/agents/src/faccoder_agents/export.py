@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,6 +15,28 @@ from faccoder_agents.catalog.registry import AgentCatalog
 from faccoder_agents.catalog.skills import SkillCatalog, SkillSpec
 
 logger = logging.getLogger(__name__)
+
+_SAFE_SLUG_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def validate_safe_slug(slug: str, category: str = "item") -> str:
+    """Validate that a slug contains only safe characters and cannot cause directory traversal."""
+    cleaned = str(slug or "").strip()
+    if not cleaned or not _SAFE_SLUG_RE.match(cleaned) or ".." in cleaned:
+        raise ValueError(
+            f"Invalid {category} slug '{slug}': slugs must contain only alphanumeric characters, "
+            "hyphens, and underscores, without directory traversal."
+        )
+    return cleaned
+
+
+def resolve_safe_export_path(base_dir: Path, *parts: str) -> Path:
+    """Safely resolve an export target path and verify it remains strictly inside base_dir."""
+    resolved_base = base_dir.resolve()
+    target = resolved_base.joinpath(*parts).resolve()
+    if not target.is_relative_to(resolved_base):
+        raise ValueError(f"Path traversal detected: target '{target}' escapes base directory '{resolved_base}'.")
+    return target
 
 
 class ClaudeExportResult(BaseModel):
@@ -79,8 +102,9 @@ def export_claude_package(
     referenced_skills: set[str] = set()
 
     for agent in all_agents:
+        validate_safe_slug(agent.slug, category="agent")
         agent_content = format_claude_agent_md(agent)
-        agent_file = agents_dir / f"{agent.slug}.md"
+        agent_file = resolve_safe_export_path(agents_dir, f"{agent.slug}.md")
         agent_file.write_text(agent_content, encoding="utf-8")
         exported_agents.append(agent.slug)
 
@@ -93,10 +117,11 @@ def export_claude_package(
     skills_to_export = set(referenced_skills) | {s.slug for s in skills_source.list()}
 
     for skill_slug in sorted(skills_to_export):
+        validate_safe_slug(skill_slug, category="skill")
         skill_item = skills_source.get(skill_slug)
-        skill_dest_dir = skills_dir / skill_slug
+        skill_dest_dir = resolve_safe_export_path(skills_dir, skill_slug)
         skill_dest_dir.mkdir(parents=True, exist_ok=True)
-        skill_dest_file = skill_dest_dir / "SKILL.md"
+        skill_dest_file = resolve_safe_export_path(skills_dir, skill_slug, "SKILL.md")
 
         if skill_item is not None:
             content = skill_item.to_markdown()
