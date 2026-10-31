@@ -359,6 +359,45 @@ class _AstExtractor:
             if body_node:
                 for child in body_node.named_children:
                     self._visit(child, parent_prefix=f"{qname}.", parent_id=sym_id)
+
+        elif node.type in {"lexical_declaration", "variable_declaration"}:
+            for child in node.named_children:
+                if child.type == "variable_declarator":
+                    val_node = child.child_by_field_name("value")
+                    if val_node and val_node.type in {"arrow_function", "function", "function_expression"}:
+                        name_node = child.child_by_field_name("name")
+                        if not name_node:
+                            continue
+                        name = self.text(name_node)
+                        qname = f"{parent_prefix}{name}" if parent_prefix else name
+                        stype = SymbolType.METHOD if parent_prefix else SymbolType.FUNCTION
+                        params_node = val_node.child_by_field_name("parameters")
+                        ret_node = val_node.child_by_field_name("return_type")
+
+                        params_text = self.text(params_node)
+                        sig_raw = f"const {name} = {params_text}"
+                        if ret_node:
+                            sig_raw += f": {self.text(ret_node)}"
+
+                        sym_id = self.parser.make_symbol_id(self.file_path, qname, outer_node.start_point.row + 1)
+                        sym = Symbol(
+                            id=sym_id,
+                            name=name,
+                            qualified_name=qname,
+                            symbol_type=stype,
+                            location=self.location(outer_node),
+                            language=self.language,
+                            signature=SymbolSignature(
+                                raw=sig_raw,
+                                name=name,
+                                parameters=self._parse_parameters(params_node),
+                                return_type=self.text(ret_node) if ret_node else None,
+                            ),
+                            docstring=self._extract_leading_comment(outer_node),
+                            body=self.text(outer_node),
+                            parent_id=parent_id,
+                        )
+                        self.symbols.append(sym)
         else:
             for child in node.named_children:
                 self._visit(child, parent_prefix, parent_id)

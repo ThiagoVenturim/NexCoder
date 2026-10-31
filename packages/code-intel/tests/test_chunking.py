@@ -74,3 +74,32 @@ def test_fallback_chunking() -> None:
 
     assert len(chunks) == 3
     assert chunks[0].symbol_type == SymbolType.CODE_BLOCK
+
+
+def test_class_method_chunk_no_overlap() -> None:
+    code = """class AccountService:
+    \"\"\"Service managing user accounts.\"\"\"
+    default_timeout = 30
+
+    def get_account(self, account_id: str) -> dict:
+        \"\"\"Retrieve an account.\"\"\"
+        return {"id": account_id}
+
+    def close_account(self, account_id: str) -> bool:
+        \"\"\"Close an account.\"\"\"
+        return True
+"""
+    chunker = SymbolChunker()
+    chunks = chunker.chunk_content(code, file_path="account.py")
+
+    # Find the class chunk
+    class_chunk = next((c for c in chunks if c.symbol_type == SymbolType.CLASS), None)
+    assert class_chunk is not None
+    # Class chunk should contain header and docstring, but NOT the full method bodies
+    assert "class AccountService:" in class_chunk.content
+    assert "Service managing user accounts." in class_chunk.content
+    assert "def close_account" not in class_chunk.content
+
+    # Methods exist as their own separate chunks
+    method_chunks = [c for c in chunks if c.symbol_type == SymbolType.METHOD]
+    assert len(method_chunks) == 2

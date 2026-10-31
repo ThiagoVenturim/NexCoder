@@ -187,88 +187,109 @@ class DelphiParser(BaseParser):
         while i < total_lines:
             line = lines[i].strip()
             # Check if line begins a routine definition
-            match = re.match(
-                r"^(?:class\s+)?(function|procedure|constructor|destructor)\s+"
-                r"((?:\w+\.)*\w+)(?:\(([\s\S]*?)\))?(?:\s*:\s*([\w\.<>]+))?",
+            if re.match(
+                r"^(?:class\s+)?(function|procedure|constructor|destructor)\b",
                 line,
                 re.IGNORECASE,
-            )
-            if match:
-                m_kind = match.group(1).lower()
-                full_name = match.group(2)
-                params_raw = match.group(3) or ""
-                return_type = match.group(4)
+            ):
+                # Accumulate multiline headers until matching ')' and ';' or 'begin'
+                header_lines = [line]
+                header_idx = i
+                paren_depth = line.count("(") - line.count(")")
+                while header_idx + 1 < total_lines:
+                    if paren_depth <= 0 and (";" in header_lines[-1] or "begin" in header_lines[-1].lower()):
+                        break
+                    header_idx += 1
+                    next_line = lines[header_idx].strip()
+                    paren_depth += next_line.count("(") - next_line.count(")")
+                    header_lines.append(next_line)
 
-                start_idx = i
-                # Locate beginning of body and matching end
-                end_idx = self._find_routine_end(lines, i)
-                body_lines = lines[start_idx : end_idx + 1]
-                body_content = "\n".join(body_lines)
-
-                start_line = impl_start_line + start_idx
-                end_line = impl_start_line + end_idx
-
-                if m_kind == "constructor":
-                    stype = SymbolType.CONSTRUCTOR
-                elif m_kind == "destructor":
-                    stype = SymbolType.DESTRUCTOR
-                elif "." in full_name:
-                    stype = SymbolType.METHOD
-                else:
-                    stype = SymbolType.FUNCTION
-
-                # Determine parent class if any
-                parent_class = full_name.split(".")[0] if "." in full_name else None
-                short_name = full_name.split(".")[-1]
-
-                # Parse parameters
-                params: list[SymbolParameter] = []
-                if params_raw:
-                    for p_chunk in params_raw.split(";"):
-                        p_chunk = p_chunk.strip()
-                        if not p_chunk:
-                            continue
-                        if ":" in p_chunk:
-                            p_names, p_t = p_chunk.split(":", 1)
-                            p_type = p_t.strip()
-                            for pn in p_names.split(","):
-                                pn = pn.strip().lstrip("var ").lstrip("const ").lstrip("out ").strip()
-                                if pn:
-                                    params.append(SymbolParameter(name=pn, type_annotation=p_type))
-                        else:
-                            params.append(SymbolParameter(name=p_chunk))
-
-                raw_sig = lines[start_idx].strip()
-                sym_id = self.make_symbol_id(file_path, full_name, start_line)
-
-                sym = Symbol(
-                    id=sym_id,
-                    name=short_name,
-                    qualified_name=full_name,
-                    symbol_type=stype,
-                    location=SymbolLocation(
-                        file_path=file_path,
-                        start_line=start_line,
-                        end_line=end_line,
-                    ),
-                    language="delphi",
-                    signature=SymbolSignature(
-                        raw=raw_sig,
-                        name=short_name,
-                        parameters=params,
-                        return_type=return_type,
-                    ),
-                    docstring=self._extract_leading_comment_from_lines(lines, start_idx),
-                    body=body_content,
-                    parent_id=unit_id,
+                header_text = " ".join(header_lines)
+                match = re.match(
+                    r"^(?:class\s+)?(function|procedure|constructor|destructor)\s+"
+                    r"((?:\w+\.)*\w+)(?:\(([\s\S]*?)\))?(?:\s*:\s*([\w\.<>]+))?",
+                    header_text,
+                    re.IGNORECASE,
                 )
-                if parent_class:
-                    sym.add_relationship(RelationshipKind.CONTAINS, parent_class)
+                if match:
+                    m_kind = match.group(1).lower()
+                    full_name = match.group(2)
+                    params_raw = match.group(3) or ""
+                    return_type = match.group(4)
 
-                methods.append(sym)
-                i = end_idx + 1
-            else:
-                i += 1
+                    start_idx = i
+                    # Locate beginning of body and matching end
+                    end_idx = self._find_routine_end(lines, i)
+                    body_lines = lines[start_idx : end_idx + 1]
+                    body_content = "\n".join(body_lines)
+
+                    start_line = impl_start_line + start_idx
+                    end_line = impl_start_line + end_idx
+
+                    if m_kind == "constructor":
+                        stype = SymbolType.CONSTRUCTOR
+                    elif m_kind == "destructor":
+                        stype = SymbolType.DESTRUCTOR
+                    elif "." in full_name:
+                        stype = SymbolType.METHOD
+                    else:
+                        stype = SymbolType.FUNCTION
+
+                    # Determine parent class if any
+                    parent_class = full_name.split(".")[0] if "." in full_name else None
+                    short_name = full_name.split(".")[-1]
+
+                    # Parse parameters
+                    params: list[SymbolParameter] = []
+                    if params_raw:
+                        for p_chunk in params_raw.split(";"):
+                            p_chunk = p_chunk.strip()
+                            if not p_chunk:
+                                continue
+                            if ":" in p_chunk:
+                                p_names, p_t = p_chunk.split(":", 1)
+                                p_type = p_t.strip()
+                                for pn in p_names.split(","):
+                                    pn = pn.strip()
+                                    for prefix in ("var ", "const ", "out "):
+                                        if pn.lower().startswith(prefix):
+                                            pn = pn[len(prefix) :].strip()
+                                    if pn:
+                                        params.append(SymbolParameter(name=pn, type_annotation=p_type))
+                            else:
+                                params.append(SymbolParameter(name=p_chunk))
+
+                    raw_sig = header_text.split(";")[0].strip() + ";"
+                    sym_id = self.make_symbol_id(file_path, full_name, start_line)
+
+                    sym = Symbol(
+                        id=sym_id,
+                        name=short_name,
+                        qualified_name=full_name,
+                        symbol_type=stype,
+                        location=SymbolLocation(
+                            file_path=file_path,
+                            start_line=start_line,
+                            end_line=end_line,
+                        ),
+                        language="delphi",
+                        signature=SymbolSignature(
+                            raw=raw_sig,
+                            name=short_name,
+                            parameters=params,
+                            return_type=return_type,
+                        ),
+                        docstring=self._extract_leading_comment_from_lines(lines, start_idx),
+                        body=body_content,
+                        parent_id=unit_id,
+                    )
+                    if parent_class:
+                        sym.add_relationship(RelationshipKind.CONTAINS, parent_class)
+
+                    methods.append(sym)
+                    i = end_idx + 1
+                    continue
+            i += 1
 
         return methods
 

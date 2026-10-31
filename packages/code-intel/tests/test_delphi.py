@@ -130,3 +130,35 @@ end
 
     assert "edtCustomer" in names
     assert names["edtCustomer"].metadata["component_type"] == "TEdit"
+
+
+def test_delphi_multiline_header_and_prefixes() -> None:
+    code = """unit ServiceUnit;
+
+interface
+
+implementation
+
+procedure TService.ProcessOrder(
+  const Value: Double;
+  var Rating: Integer;
+  Version: string
+);
+begin
+  Rating := 10;
+end;
+
+end.
+"""
+    parser = DelphiParser()
+    symbols = parser.parse(code, file_path="ServiceUnit.pas")
+    proc = next((s for s in symbols if s.name == "ProcessOrder"), None)
+
+    assert proc is not None
+    assert proc.symbol_type == SymbolType.METHOD
+    assert len(proc.signature.parameters) == 3
+
+    # Ensure names starting with 'v', 'a', 'r' are preserved correctly
+    assert proc.signature.parameters[0].name == "Value"
+    assert proc.signature.parameters[1].name == "Rating"
+    assert proc.signature.parameters[2].name == "Version"

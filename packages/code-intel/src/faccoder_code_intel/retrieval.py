@@ -139,11 +139,7 @@ class CodeSearchIndex:
         # 4. Optional MMR diversification
         if mmr and query_vec is not None and len(fused) > 1:
             pool = fused[:candidates]
-            doc_embeddings: list[list[float]] = []
-            for doc in pool:
-                # Reconstruct embedding or generate on the fly
-                emb = self.embedder.embed_query(doc["text"])
-                doc_embeddings.append(emb)
+            doc_embeddings = self.embedder.embed_documents([doc["text"] for doc in pool])
 
             selected_indices = mmr_select(
                 doc_embeddings,

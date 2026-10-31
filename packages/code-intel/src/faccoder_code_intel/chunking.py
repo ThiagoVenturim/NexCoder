@@ -115,9 +115,27 @@ class SymbolChunker:
         chunks: list[CodeChunk] = []
         last_covered_line = 0
 
+        # Build map of container symbols to their child routine starting lines to avoid overlap
+        child_starts: dict[str, int] = {}
+        for s in symbols:
+            if s.parent_id and s.symbol_type in {
+                SymbolType.FUNCTION,
+                SymbolType.METHOD,
+                SymbolType.CONSTRUCTOR,
+                SymbolType.DESTRUCTOR,
+            }:
+                current_min = child_starts.get(s.parent_id, 999999)
+                child_starts[s.parent_id] = min(current_min, s.location.start_line)
+
         for sym in primary_symbols:
             sym_start = max(1, sym.location.start_line)
             sym_end = min(len(lines), sym.location.end_line)
+
+            # Avoid class/method overlap: truncate container to header prior to first child routine
+            if sym.symbol_type in {SymbolType.CLASS, SymbolType.STRUCT, SymbolType.INTERFACE}:
+                first_child_start = child_starts.get(sym.id)
+                if first_child_start and first_child_start > sym_start:
+                    sym_end = min(sym_end, first_child_start - 1)
 
             # Check if there is an uncovered preamble/gap before this symbol
             if sym_start > last_covered_line + 1:

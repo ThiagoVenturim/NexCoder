@@ -196,3 +196,24 @@ pub fn init_cache() -> bool {
 def test_unsupported_file() -> None:
     parser = get_parser_for_file("notes.txt")
     assert parser is None
+
+
+def test_typescript_arrow_functions() -> None:
+    code = """// Helper to calculate total
+export const calculateTotal = (subtotal: number, taxRate: number): number => {
+    return subtotal * (1 + taxRate);
+};
+
+const formatCurrency = (amount: number): string => `$${amount.toFixed(2)}`;
+"""
+    symbols = parse_file("utils.ts", content=code)
+    names = {s.name: s for s in symbols}
+
+    assert "calculateTotal" in names
+    fn = names["calculateTotal"]
+    assert fn.symbol_type == SymbolType.FUNCTION
+    assert fn.docstring == "Helper to calculate total"
+    assert len(fn.signature.parameters) == 2
+
+    assert "formatCurrency" in names
+    assert names["formatCurrency"].symbol_type == SymbolType.FUNCTION
