@@ -67,14 +67,15 @@ def test_pipeline_approval_gate_halt_and_resume() -> None:
     assert res1.approval.status == ApprovalStatus.PENDING
 
     token = res1.approval.token
-    saved_approval = res1.approval.model_dump()
+    saved_approval = res1.approval.to_state_dict()
+    assert "_last_approval_req" not in res1.data
 
-    # Step 2: Resume providing the approval token
+    # Step 2: Resume providing the per-block approval token
     res2 = pipeline.run(
         inputs={
             "build_id": "b-9912",
-            "approval_token": token,
-            "approval": saved_approval,
+            "approval_token_deploy_gate": token,
+            "approval_deploy_gate": saved_approval,
         }
     )
     assert res2.status == "completed"

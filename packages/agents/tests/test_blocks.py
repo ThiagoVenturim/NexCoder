@@ -160,13 +160,13 @@ def test_human_approval_block_pending_and_approval_flow() -> None:
     assert res_pending.approval_request.status == ApprovalStatus.PENDING
 
     token = res_pending.approval_request.token
-    req_dict = res_pending.approval_request.model_dump()
+    req_dict = res_pending.approval_request.to_state_dict()
 
     # 2. Second run: invalid token
     state_invalid = {
         "data": {"amount": 50000},
-        "inputs": {"approval_token": "wrong-token-123"},
-        "approval": req_dict,
+        "inputs": {"approval_token_gate": "wrong-token-123"},
+        "approval_gate": req_dict,
     }
     res_invalid = approval.execute(state_invalid)
     assert res_invalid.status == BlockStatus.FAILURE
@@ -174,8 +174,8 @@ def test_human_approval_block_pending_and_approval_flow() -> None:
     # 3. Third run: valid token -> approved!
     state_valid = {
         "data": {"amount": 50000},
-        "inputs": {"approval_token": token},
-        "approval": req_dict,
+        "inputs": {"approval_token_gate": token},
+        "approval_gate": req_dict,
     }
     res_ok = approval.execute(state_valid)
     assert res_ok.status == BlockStatus.SUCCESS
@@ -192,15 +192,15 @@ def test_human_approval_block_expired_token() -> None:
     state = {"data": {"table": "temp_logs"}}
     res_pending = approval.execute(state)
     token = res_pending.approval_request.token
-    req_dict = res_pending.approval_request.model_dump()
+    req_dict = res_pending.approval_request.to_state_dict()
 
     # Artificially expire the token
     req_dict["expires_at"] = time.time() - 10.0
 
     state_expired = {
         "data": {"table": "temp_logs"},
-        "inputs": {"approval_token": token},
-        "approval": req_dict,
+        "inputs": {"approval_token_gate": token},
+        "approval_gate": req_dict,
     }
     res_expired = approval.execute(state_expired)
     assert res_expired.status == BlockStatus.REJECTED
@@ -209,7 +209,7 @@ def test_human_approval_block_expired_token() -> None:
 
 def test_human_approval_block_token_without_request_fails() -> None:
     approval = HumanApprovalBlock(name="gate", action_name="delete_index")
-    res = approval.execute({"inputs": {"approval_token": "random_token"}})
+    res = approval.execute({"inputs": {"approval_token_gate": "random_token"}})
     assert res.status == BlockStatus.FAILURE
     assert "no active approval request" in (res.error or "").lower()
 
@@ -221,7 +221,7 @@ def test_human_approval_block_binding_mismatch_rejected() -> None:
 
     res_a = block_a.execute({"data": {"target": "cluster_a"}})
     token_a = res_a.approval_request.token
-    req_a_dict = res_a.updates["approval"]
+    req_a_dict = res_a.updates["approval_gate_a"]
 
     # Raw token must NOT be in model-visible state dict
     assert req_a_dict.get("token") is None
@@ -230,8 +230,8 @@ def test_human_approval_block_binding_mismatch_rejected() -> None:
     # Attempt to use block A's token on block B
     state_b = {
         "data": {"target": "cluster_b"},
-        "inputs": {"approval_token": token_a},
-        "approval": req_a_dict,
+        "inputs": {"approval_token_gate_b": token_a},
+        "approval_gate_b": req_a_dict,
     }
     res_b = block_b.execute(state_b)
     assert res_b.status == BlockStatus.FAILURE
@@ -244,16 +244,16 @@ def test_human_approval_reused_token_rejected() -> None:
     # Step 1: initial run -> pending
     res1 = gate.execute({"data": {"amount": 1000}})
     token = res1.approval_request.token
-    saved_approval = res1.updates["approval"]
+    saved_approval = res1.updates["approval_payment_gate"]
 
     # Step 2: approve once
-    state2 = {"inputs": {"approval_token": token}, "approval": saved_approval}
+    state2 = {"inputs": {"approval_token_payment_gate": token}, "approval_payment_gate": saved_approval}
     res2 = gate.execute(state2)
     assert res2.status == BlockStatus.SUCCESS
 
     # Step 3: attempt reuse of consumed token
-    reused_approval = res2.updates["approval"]
-    state3 = {"inputs": {"approval_token": token}, "approval": reused_approval}
+    reused_approval = res2.updates["approval_payment_gate"]
+    state3 = {"inputs": {"approval_token_payment_gate": token}, "approval_payment_gate": reused_approval}
     res3 = gate.execute(state3)
     assert res3.status == BlockStatus.REJECTED
     assert "already been consumed" in (res3.error or "").lower()
@@ -264,14 +264,30 @@ def test_human_approval_non_pending_status_rejected() -> None:
 
     res = gate.execute({"data": {"node": "worker-1"}})
     token = res.approval_request.token
-    state_dict = res.updates["approval"]
+    state_dict = res.updates["approval_reboot_gate"]
 
     # Force status to REJECTED in state
     state_dict["status"] = ApprovalStatus.REJECTED
 
-    res_rejected = gate.execute({"inputs": {"approval_token": token}, "approval": state_dict})
+    res_rejected = gate.execute({"inputs": {"approval_token_reboot_gate": token}, "approval_reboot_gate": state_dict})
     assert res_rejected.status == BlockStatus.REJECTED
     assert "not in pending status" in (res_rejected.error or "").lower()
+
+
+def test_human_approval_generic_fallback_rejected() -> None:
+    gate = HumanApprovalBlock(name="export_gate", action_name="export_data")
+    res1 = gate.execute({"data": {"report": "q3"}})
+    token = res1.approval_request.token
+    saved_dict = res1.updates["approval_export_gate"]
+
+    # Attempt to supply generic approval_token and generic approval
+    generic_state = {
+        "inputs": {"approval_token": token},
+        "approval": saved_dict,
+    }
+    # Because generic fallbacks were removed, gate sees no token for this block
+    res_generic = gate.execute(generic_state)
+    assert res_generic.status == BlockStatus.WAITING_APPROVAL
 
 
 def test_prompt_block_safe_format_with_missing_keys() -> None:

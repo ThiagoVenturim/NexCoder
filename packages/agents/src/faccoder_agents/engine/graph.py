@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 import time
+import uuid
 from collections.abc import Callable
 from typing import Any
 
@@ -16,7 +18,11 @@ from faccoder_agents.engine.models import (
     PipelineRunResult,
 )
 
+logger = logging.getLogger(__name__)
+
 __all__ = ["END", "START", "PipelineBuilder", "PipelineGraph"]
+
+_RUN_APPROVAL_REGISTRY: dict[str, ApprovalRequest] = {}
 
 
 class PipelineGraph:
@@ -46,6 +52,7 @@ class PipelineGraph:
         context = context or {}
         effective_limits = limits or self.limits
 
+        run_id = uuid.uuid4().hex
         initial_state: dict[str, Any] = {
             "inputs": inputs,
             "data": inputs.copy(),
@@ -58,33 +65,41 @@ class PipelineGraph:
                 "started_at": time.time(),
                 **context.get("metadata", {}),
             },
-            "approval": inputs.get("approval"),
+            "_run_id": run_id,
+            **{k: v for k, v in inputs.items() if k.startswith("approval_")},
         }
 
         if effective_limits is not None:
             initial_state["_limits"] = effective_limits.model_dump()
 
-        final_state = self.compiled_graph.invoke(initial_state)
+        try:
+            final_state = self.compiled_graph.invoke(initial_state)
 
-        status = final_state.get("status", "completed")
-        if status == "running":
-            status = "completed"
+            status = final_state.get("status", "completed")
+            if status == "running":
+                status = "completed"
 
-        approval_obj = final_state.get("_last_approval_req")
-        if approval_obj is None and final_state.get("approval"):
-            try:
-                approval_obj = ApprovalRequest.model_validate(final_state["approval"])
-            except Exception:
-                approval_obj = None
+            approval_obj = _RUN_APPROVAL_REGISTRY.pop(run_id, None)
+            if approval_obj is None:
+                for block_name in self.blocks:
+                    block_dict = final_state.get(f"approval_{block_name}")
+                    if block_dict:
+                        try:
+                            approval_obj = ApprovalRequest.model_validate(block_dict)
+                            break
+                        except Exception as exc:
+                            logger.debug("Failed validating approval request from block %s: %s", block_name, exc)
 
-        return PipelineRunResult(
-            pipeline_name=self.name,
-            status=status,
-            data=final_state.get("data", {}),
-            history=final_state.get("history", []),
-            errors=final_state.get("errors", []),
-            approval=approval_obj,
-        )
+            return PipelineRunResult(
+                pipeline_name=self.name,
+                status=status,
+                data=final_state.get("data", {}),
+                history=final_state.get("history", []),
+                errors=final_state.get("errors", []),
+                approval=approval_obj,
+            )
+        finally:
+            _RUN_APPROVAL_REGISTRY.pop(run_id, None)
 
 
 class PipelineBuilder:
@@ -232,13 +247,11 @@ class PipelineBuilder:
             elif result.status == BlockStatus.REJECTED:
                 new_status = "rejected"
 
-            new_approval = state.get("approval")
-            last_approval_req = state.get("_last_approval_req")
-            if result.approval_request:
-                new_approval = result.approval_request.to_state_dict()
-                last_approval_req = result.approval_request
+            run_id = state.get("_run_id")
+            if result.approval_request and run_id:
+                _RUN_APPROVAL_REGISTRY[run_id] = result.approval_request
 
-            return {
+            new_state = {
                 "inputs": state.get("inputs", {}),
                 "data": new_data,
                 "history": new_history,
@@ -246,11 +259,16 @@ class PipelineBuilder:
                 "status": new_status,
                 "current_block": block.name,
                 "metadata": state.get("metadata", {}),
-                "approval": new_approval,
-                "_last_approval_req": last_approval_req,
+                "_run_id": run_id,
                 "_last_route": result.next_step,
                 "_limits": state.get("_limits"),
             }
+            # Carry over per-block state updates (e.g. approval_{block_name})
+            for k, v in result.updates.items():
+                if k.startswith("approval_") or k.startswith("_"):
+                    new_state[k] = v
+
+            return new_state
 
         return _node_fn
 
