@@ -6,6 +6,7 @@ modules, and system architecture.
 
 from __future__ import annotations
 
+import logging
 from enum import StrEnum
 from typing import Any
 
@@ -13,6 +14,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from faccoder_code_intel.graph.communities import Community
 from faccoder_code_intel.models import Symbol, SymbolType
+
+logger = logging.getLogger(__name__)
 
 
 class DocLevel(StrEnum):
@@ -42,6 +45,19 @@ class BottomUpDocEngine:
     def __init__(self, llm: Any | None = None) -> None:
         self.llm = llm
 
+    def _synthesize_with_llm(self, prompt: str, default: str) -> str:
+        """Query LLM for documentation synthesis, falling back to default template."""
+        if self.llm is None:
+            return default
+        try:
+            resp = self.llm.invoke(prompt)
+            content = resp.content if hasattr(resp, "content") else str(resp)
+            cleaned = content.strip()
+            return cleaned if cleaned else default
+        except Exception as exc:
+            logger.debug("Docgen LLM invocation failed, using default: %s", exc)
+            return default
+
     def document_routine(self, symbol: Symbol) -> DocNode:
         """Synthesize Level 0 documentation for a function or method."""
         params_desc: list[str] = []
@@ -55,6 +71,15 @@ class BottomUpDocEngine:
         existing_doc = f"\n\n> {symbol.docstring}" if symbol.docstring else ""
 
         summary = symbol.docstring or f"Executes {symbol.name} operation."
+        if self.llm is not None:
+            prompt = (
+                f"Summarize this code routine in one concise sentence:\n"
+                f"Name: {symbol.name}\n"
+                f"Signature: {symbol.signature.raw if symbol.signature else symbol.name}\n"
+                f"Existing doc: {symbol.docstring or 'None'}"
+            )
+            summary = self._synthesize_with_llm(prompt, summary)
+
         md_lines = [
             f"### `{symbol.qualified_name}`",
             f"**Type**: {symbol.symbol_type.value}",
@@ -89,6 +114,13 @@ class BottomUpDocEngine:
             class_symbol.docstring
             or f"Encapsulates {class_symbol.name} state, data contracts, and operational routines."
         )
+        if self.llm is not None:
+            prompt = (
+                f"Summarize this class in one concise sentence based on its member routines:\n"
+                f"Class: {class_symbol.name}\n"
+                f"Members: {[m.name for m in member_docs]}"
+            )
+            summary = self._synthesize_with_llm(prompt, summary)
 
         md_lines = [
             f"## Class `{class_symbol.name}`",
@@ -129,6 +161,14 @@ class BottomUpDocEngine:
             f"Module `{module_name}` provides {len(classes)} class definition(s) "
             f"and {len(routines)} standalone routine(s)."
         )
+        if self.llm is not None:
+            prompt = (
+                f"Summarize this module in one concise sentence:\n"
+                f"Module: {module_name}\n"
+                f"Classes: {[c.name for c in classes]}\n"
+                f"Routines: {[r.name for r in routines]}"
+            )
+            summary = self._synthesize_with_llm(prompt, summary)
 
         md_lines = [
             f"# Module `{module_name}`",
@@ -169,6 +209,13 @@ class BottomUpDocEngine:
             f"System architecture comprises {len(module_docs)} module(s) "
             f"organized across {len(communities or [])} subsystem cluster(s)."
         )
+        if self.llm is not None:
+            prompt = (
+                f"Summarize the system architecture in one concise sentence:\n"
+                f"Modules: {[m.name for m in module_docs]}\n"
+                f"Subsystems: {[c.title for c in (communities or [])]}"
+            )
+            summary = self._synthesize_with_llm(prompt, summary)
 
         md_lines = [
             "# Architecture Overview",
@@ -218,25 +265,37 @@ class BottomUpDocEngine:
         for r in routines:
             docs[r.id] = self.document_routine(r)
 
-        # 2. Level 1: Document classes
+        # 2. Level 1: Document classes with exact member matching
         classes = [s for s in symbols if s.symbol_type in {SymbolType.CLASS, SymbolType.STRUCT, SymbolType.INTERFACE}]
+        class_member_ids: set[str] = set()
+
         for c in classes:
-            # Match member routines
-            members = [
-                docs[r.id]
-                for r in routines
-                if r.parent_id == c.id
-                or (r.location.file_path == c.location.file_path and f"{c.name}." in r.qualified_name)
-            ]
+            members: list[DocNode] = []
+            for r in routines:
+                is_member = False
+                if r.parent_id == c.id:
+                    is_member = True
+                elif r.location.file_path == c.location.file_path:
+                    prefix_name = f"{c.name}."
+                    prefix_qname = f"{c.qualified_name}."
+                    if r.qualified_name.startswith(prefix_name) or r.qualified_name.startswith(prefix_qname):
+                        is_member = True
+
+                if is_member:
+                    members.append(docs[r.id])
+                    class_member_ids.add(r.id)
+
             docs[c.id] = self.document_class(c, members)
 
         # 3. Level 2: Group by module / file
         by_file: dict[str, list[DocNode]] = {}
         for c in classes:
             by_file.setdefault(c.location.file_path, []).append(docs[c.id])
-        # Add standalone functions (not in any class)
+
+        # Standalone routines: Any routine not belonging to a class belongs to module level
+        # (retains dotted functions that are not class methods)
         for r in routines:
-            if not r.parent_id and "." not in r.qualified_name:
+            if r.id not in class_member_ids:
                 by_file.setdefault(r.location.file_path, []).append(docs[r.id])
 
         module_docs: list[DocNode] = []
