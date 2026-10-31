@@ -178,6 +178,24 @@ def test_documentation_pipeline() -> None:
     assert "api_documentation" in res.data
 
 
+def test_refactor_pipeline_execution() -> None:
+    fake_llm = FakeChatModel(responses=["Monolithic coupling detected.", "Split into separate services."])
+    pipeline = build_pipeline("code-refactor", model=fake_llm)
+    res = pipeline.run(
+        inputs={
+            "target_module": "services/billing.py",
+            "refactor_goal": "Decouple payment processor from notification logic",
+        },
+        dry_run=True,
+    )
+    assert res.status == "completed"
+    assert "audit_findings" in res.data
+    assert "refactoring_steps" in res.data
+    assert res.approval is not None
+    assert res.approval.status == ApprovalStatus.DRY_RUN
+
+
+
 def test_cli_pipeline_commands(capsys) -> None:
     # 1. list-pipelines
     code = main(["list-pipelines"])
