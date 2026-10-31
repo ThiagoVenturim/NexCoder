@@ -16,12 +16,20 @@ Agentic planning engine for faccoder: converts Product Requirement Documents (PR
   - Buffer reserve percentage to safeguard against unexpected operational overhead.
   - Historical velocity tracking with rolling completion factor adjustments.
   - Automated scheduling and overflow carry-over logic.
-- **Idempotent Platform Adapters**:
-  - GitHub, GitLab, and Azure DevOps integration.
-  - Embedded hidden tracking marker `<!-- faccoder-id: <uuid> -->` in task issue bodies.
-  - Duplicate detection preventing repeated ticket creation on re-runs.
-  - Full pagination support without item count limits.
-  - Safe by default: `--dry-run` is enabled by default to prevent unintended remote modifications.
+- **Kanban & Sprint Sync Loop**:
+  - `BoardSynchronizer` correlates issue and pull request states with board columns.
+  - Detects capacity slippage in active sprints and recommends deferral of excess workload.
+  - Dynamic backlog re-planning retaining completed tasks while re-allocating remaining capacity.
+- **Projects v2 & Platform Integration**:
+  - Full cursor-based pagination for Projects v2 GraphQL API, overcoming 50/100 item limits.
+  - Duplicate prevention when adding items to boards.
+  - Milestone management and automated issue linking.
+  - Hidden tracking marker `<!-- faccoder-id: <uuid> -->` ensuring idempotent syncing.
+  - Safe by default: `--dry-run` is enabled across all write operations.
+- **Git Automation Helpers**:
+  - Standardized branch creation from integration bases (`develop`).
+  - Conventional commit builder strictly validating types and enforcing zero emojis and no AI co-author trailers.
+  - Automated pull request creation with milestone linkage and verification checklists.
 
 ## Installation
 
@@ -33,11 +41,14 @@ pip install -e packages/planning
 
 ```python
 from faccoder_planning import (
-    PRDConverter,
+    BoardSynchronizer,
     CapacityCalculator,
+    GitHubAdapter,
+    PRDConverter,
     SprintCapacityConfig,
     TeamMember,
-    GitHubAdapter,
+    build_conventional_commit,
+    create_branch,
 )
 
 # 1. Parse a PRD
@@ -69,10 +80,20 @@ config = SprintCapacityConfig(
 calculator = CapacityCalculator()
 sprint_result = calculator.plan_sprint(plan.all_tasks(), config)
 
-# 3. Sync to GitHub with dry-run protection
+# 3. Synchronize with GitHub and Projects v2 (dry-run by default)
 adapter = GitHubAdapter(repo="org/repo", token="gh_token", dry_run=True)
-summary = adapter.sync_plan(plan)
-print(f"Sync complete (dry-run): {summary.created} to create, {summary.skipped} unchanged.")
+sync_loop = BoardSynchronizer(adapter, capacity_config=config)
+summary = sync_loop.sync_board_and_sprint(plan, dry_run=True)
+print(f"Board sync complete: {summary.total_tasks} evaluated, {summary.moved_count} transitions.")
+
+# 4. Git workflow helpers
+branch_res = create_branch("feature/auth-jwt", base_branch="develop", dry_run=True)
+commit_msg = build_conventional_commit(
+    type_="feat",
+    scope="auth",
+    description="implement jwt auth",
+    issue_number=4,
+)
 ```
 
 ## Origin

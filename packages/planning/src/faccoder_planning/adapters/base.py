@@ -58,6 +58,49 @@ class IssueSyncResult(BaseModel):
     dry_run: bool = True
 
 
+class RemoteMilestone(BaseModel):
+    """Normalized milestone or sprint target on a platform tracker."""
+
+    id: str
+    number: int
+    title: str
+    description: str = ""
+    state: str = "open"
+    due_on: str | None = None
+    url: str | None = None
+
+
+class ProjectV2Info(BaseModel):
+    """Metadata for a GitHub Projects v2 Kanban board."""
+
+    id: str
+    number: int
+    title: str
+    url: str | None = None
+    owner: str = ""
+
+
+class ProjectV2Item(BaseModel):
+    """An individual item card in a Projects v2 board."""
+
+    id: str
+    content_id: str
+    content_type: str = "Issue"
+    title: str = ""
+    status: str | None = None
+
+
+class ProjectV2ItemResult(BaseModel):
+    """Result of adding or updating an item in Projects v2."""
+
+    project_id: str
+    item_id: str | None = None
+    content_id: str
+    action: str  # added, skipped, dry_run_add
+    message: str = ""
+    dry_run: bool = True
+
+
 class SyncSummary(BaseModel):
     """Aggregated results across all synchronized tasks in a plan."""
 
@@ -146,3 +189,37 @@ class PlatformAdapter(ABC):
             skipped=skipped_count,
             results=results,
         )
+
+    def list_milestones(self) -> list[RemoteMilestone]:
+        """Fetch all existing milestones on the remote platform."""
+        return []
+
+    def create_milestone(
+        self,
+        title: str,
+        description: str = "",
+        due_on: str | None = None,
+        dry_run: bool | None = None,
+    ) -> RemoteMilestone:
+        """Create a new milestone on the remote platform."""
+        return RemoteMilestone(
+            id="dry-run-milestone",
+            number=999,
+            title=title,
+            description=description,
+            state="open",
+            due_on=due_on,
+        )
+
+    def get_or_create_milestone(
+        self,
+        title: str,
+        description: str = "",
+        due_on: str | None = None,
+        dry_run: bool | None = None,
+    ) -> RemoteMilestone:
+        """Find an existing milestone by title or create it if missing."""
+        for m in self.list_milestones():
+            if m.title.strip().lower() == title.strip().lower():
+                return m
+        return self.create_milestone(title, description=description, due_on=due_on, dry_run=dry_run)
