@@ -6,11 +6,12 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
 _FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)$", re.DOTALL)
+_SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 class SkillSpec(BaseModel):
@@ -23,6 +24,17 @@ class SkillSpec(BaseModel):
     user_invocable: bool = True
     metadata: dict[str, Any] = Field(default_factory=dict)
     source_path: Path | None = None
+
+    @field_validator("slug")
+    @classmethod
+    def validate_slug(cls, v: str) -> str:
+        clean = str(v).strip()
+        if not clean or not _SLUG_PATTERN.match(clean) or ".." in clean:
+            raise ValueError(
+                f"Invalid skill slug '{v}': slugs must contain only alphanumeric characters, "
+                "hyphens, and underscores, without directory traversal."
+            )
+        return clean
 
     def to_markdown(self) -> str:
         """Render standard SKILL.md format with YAML frontmatter."""
