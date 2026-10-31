@@ -17,5 +17,5 @@ ignore = ["S101", "S105", "S106"]
 
 [tool.pytest.ini_options]
 testpaths = ["packages"]
-pythonpath = ["packages/core/src", "packages/code-intel/src"]
+pythonpath = ["packages/core/src", "packages/code-intel/src", "packages/planning/src"]
 addopts = "-q"

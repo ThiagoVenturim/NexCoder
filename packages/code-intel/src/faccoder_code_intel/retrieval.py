@@ -1,8 +1,8 @@
 """Symbol retrieval and semantic search over codebases.
 
 Integrates with faccoder-core HybridStore (SQLite FTS5 + vectors),
-rrf_fuse (Reciprocal Rank Fusion), and mmr_select (Maximal Marginal Relevance)
-for diversified symbol retrieval.
+rrf_fuse (Reciprocal Rank Fusion), mmr_select (Maximal Marginal Relevance),
+second-stage cross-encoder reranking, and HyDE query expansion.
 """
 
 from __future__ import annotations
@@ -13,25 +13,34 @@ from typing import Any
 
 from faccoder_core.retrieval.embeddings import Embedder
 from faccoder_core.retrieval.fusion import mmr_select, rrf_fuse
+from faccoder_core.retrieval.rerank import NoReranker, Reranker
 from faccoder_core.store.sqlite_store import HybridStore
 
 from faccoder_code_intel.chunking import CodeChunk, SymbolChunker
+from faccoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter
 
 logger = logging.getLogger(__name__)
 
 
 class CodeSearchIndex:
-    """Semantic and lexical symbol index over source code."""
+    """Semantic and lexical symbol index over source code with HyDE and Reranker support."""
 
     def __init__(
         self,
         db_path: str | Path,
         embedder: Embedder | None = None,
         chunker: SymbolChunker | None = None,
+        reranker: Reranker | None = None,
+        rewriter: QueryRewriter | None = None,
+        hyde_generator: HyDEGenerator | None = None,
     ):
         self.db_path = Path(db_path)
         self.embedder = embedder
         self.chunker = chunker or SymbolChunker()
+        self.reranker = reranker or NoReranker()
+        self.rewriter = rewriter or QueryRewriter()
+        self.hyde_generator = hyde_generator or HyDEGenerator()
+
         dims = getattr(embedder, "dimensions", None) if embedder else None
         self.store = HybridStore(self.db_path, dimensions=dims)
 
@@ -101,22 +110,38 @@ class CodeSearchIndex:
         candidates: int = 40,
         vector_weight: float = 1.0,
         bm25_weight: float = 1.0,
+        rewrite_query: bool = False,
+        hyde: bool = False,
+        hyde_language: str = "python",
+        rerank: bool = True,
         mmr: bool = False,
         mmr_lambda: float = 0.5,
         where: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        """Retrieve code chunks via hybrid search (FTS + vector) with optional MMR diversification."""
-        # 1. BM25 text search
-        text_results = self.store.text_search(query, k=candidates)
+        """Retrieve code chunks via hybrid search with optional HyDE, Reranker, and MMR."""
+        # 1. Query Rewriting
+        fts_query_str = query
+        if rewrite_query and self.rewriter:
+            rewritten = self.rewriter.rewrite(query)
+            fts_query_str = rewritten.expanded_text
 
-        # 2. Vector search if embedder is available
+        # 2. BM25 text search
+        text_results = self.store.text_search(fts_query_str, k=candidates)
+
+        # 3. Vector search (optionally using HyDE)
         query_vec: list[float] | None = None
         vector_results: list[dict[str, Any]] = []
+
         if self.embedder is not None:
-            query_vec = self.embedder.embed_query(query)
+            if hyde and self.hyde_generator:
+                synthetic_code = self.hyde_generator.generate_hypothetical_code(query, language=hyde_language)
+                query_vec = self.embedder.embed_query(synthetic_code)
+            else:
+                query_vec = self.embedder.embed_query(query)
+
             vector_results = self.store.vector_search(query_vec, k=candidates)
 
-        # 3. Fuse results with RRF
+        # 4. Rank fusion (RRF)
         result_lists: list[list[dict[str, Any]]] = []
         weights: list[float] = []
 
@@ -136,7 +161,12 @@ class CodeSearchIndex:
         if where:
             fused = [doc for doc in fused if all(doc.get("metadata", {}).get(k) == v for k, v in where.items())]
 
-        # 4. Optional MMR diversification
+        # 5. Second-stage reranker
+        if rerank and self.reranker and not isinstance(self.reranker, NoReranker) and fused:
+            pool = fused[:candidates]
+            fused = self.reranker.rerank(query, pool, top_k=candidates)
+
+        # 6. Optional MMR diversification
         if mmr and query_vec is not None and len(fused) > 1:
             pool = fused[:candidates]
             doc_embeddings = self.embedder.embed_documents([doc["text"] for doc in pool])
