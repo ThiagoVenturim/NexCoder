@@ -205,3 +205,24 @@ def test_human_approval_block_expired_token() -> None:
     res_expired = approval.execute(state_expired)
     assert res_expired.status == BlockStatus.REJECTED
     assert "expired" in (res_expired.error or "").lower()
+
+
+def test_human_approval_block_token_without_request_fails() -> None:
+    approval = HumanApprovalBlock(name="gate", action_name="delete_index")
+    res = approval.execute({"inputs": {"approval_token": "random_token"}})
+    assert res.status == BlockStatus.FAILURE
+    assert "no active approval request" in (res.error or "").lower()
+
+
+def test_prompt_block_safe_format_with_missing_keys() -> None:
+    fake_llm = FakeChatModel(responses=["Executed successfully."])
+    block = PromptBlock(
+        name="prompt_missing",
+        system_prompt="Role: {role}",
+        user_prompt_template="Action: {action} on {target}",
+        model=fake_llm,
+    )
+    res = block.execute({"data": {"action": "clean"}})
+    assert res.status == BlockStatus.SUCCESS
+    assert res.updates["llm_output"] == "Executed successfully."
+

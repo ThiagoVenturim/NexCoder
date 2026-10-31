@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from faccoder_agents.engine import (
     ApprovalStatus,
     ConditionBlock,
@@ -111,3 +112,52 @@ def test_pipeline_branching_with_condition_block() -> None:
     assert res_minor.status == "completed"
     executed_blocks_minor = [h["block"] for h in res_minor.history]
     assert executed_blocks_minor == ["triage", "slack_notify"]
+
+
+def test_pipeline_add_sequence() -> None:
+    builder = PipelineBuilder("sequence-pipeline")
+    builder.add_sequence([
+        ValidatorBlock(name="step1", required_keys=["k1"]),
+        ValidatorBlock(name="step2", required_keys=["k2"]),
+    ])
+    pipeline = builder.compile()
+    res = pipeline.run(inputs={"k1": "v1", "k2": "v2"})
+    assert res.status == "completed"
+    assert len(res.history) == 2
+
+
+def test_pipeline_short_circuits_on_failure() -> None:
+    builder = PipelineBuilder("failing-pipeline")
+    builder.add_block(ValidatorBlock(name="val", required_keys=["mandatory"]))
+    builder.add_block(ValidatorBlock(name="downstream", required_keys=["optional"]))
+    builder.set_entry_point("val")
+    builder.add_edge("val", "downstream")
+    pipeline = builder.compile()
+
+    res = pipeline.run(inputs={"optional": "present"})
+    assert res.status == "failed"
+    assert len(res.errors) >= 1
+    # Downstream was passed through without executing its validation
+    executed_blocks = [h["block"] for h in res.history]
+    assert executed_blocks == ["val"]
+
+
+def test_pipeline_builder_validation_errors() -> None:
+    builder = PipelineBuilder("invalid-pipeline")
+    builder.add_block(ValidatorBlock(name="b1"))
+    with pytest.raises(ValueError, match="already registered"):
+        builder.add_block(ValidatorBlock(name="b1"))
+
+    with pytest.raises(KeyError, match="Entry block"):
+        builder.set_entry_point("unknown")
+
+    with pytest.raises(KeyError, match="Source block"):
+        builder.add_edge("missing_source", "b1")
+
+    with pytest.raises(KeyError, match="Target block"):
+        builder.add_edge("b1", "missing_target")
+
+    empty_builder = PipelineBuilder("empty")
+    with pytest.raises(ValueError, match="zero blocks"):
+        empty_builder.compile()
+

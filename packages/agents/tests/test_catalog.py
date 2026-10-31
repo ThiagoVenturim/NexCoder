@@ -7,6 +7,7 @@ from faccoder_agents.catalog import (
     AgentCatalog,
     AgentSector,
     AgentSpec,
+    load_agents_from_dir,
     parse_agent_markdown,
 )
 
@@ -90,3 +91,42 @@ def test_get_or_raise() -> None:
     catalog = AgentCatalog()
     with pytest.raises(KeyError):
         catalog.get_or_raise("non-existent-agent")
+
+
+def test_parse_agent_markdown_no_frontmatter() -> None:
+    raw = "You are a simple assistant without frontmatter."
+    spec = parse_agent_markdown(raw, default_slug="simple-bot", default_sector="support")
+    assert spec.name == "Simple Bot"
+    assert spec.slug == "simple-bot"
+    assert spec.sector == "support"
+    assert spec.tier == "medium"
+    assert spec.prompt == raw
+
+
+def test_catalog_filter_by_skill_and_tool() -> None:
+    repo_agents_dir = Path(__file__).resolve().parent.parent / "agents"
+    catalog = AgentCatalog.from_directory(repo_agents_dir)
+
+    eng_clean = catalog.list(skill="clean-architecture")
+    assert len(eng_clean) >= 1
+    slugs = [a.slug for a in eng_clean]
+    assert "backend-engineer" in slugs or "lead-architect" in slugs
+
+    code_searchers = catalog.list(tool="code_search")
+    assert len(code_searchers) >= 1
+
+
+def test_catalog_default_discovery() -> None:
+    catalog = AgentCatalog.default()
+    assert len(catalog) >= 15
+    assert "lead-architect" in catalog
+
+
+def test_load_agents_from_dir_empty_or_nonexistent(tmp_path: Path) -> None:
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    assert load_agents_from_dir(empty_dir) == []
+
+    non_existent = tmp_path / "does_not_exist"
+    assert load_agents_from_dir(non_existent) == []
+
