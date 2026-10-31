@@ -45,7 +45,7 @@ class CommunityDetector:
             return []
 
         # Undirected projection with weights for clustering
-        ug = g.to_undirected()
+        ug = nx.Graph(g.to_undirected())
 
         all_communities: list[Community] = []
         comm_counter = 1

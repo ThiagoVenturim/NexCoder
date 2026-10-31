@@ -4,9 +4,17 @@ import json
 import zipfile
 from pathlib import Path
 
+import pytest
 from faccoder_agents.catalog import AgentCatalog, SkillCatalog
+from faccoder_agents.catalog.models import AgentSpec
+from faccoder_agents.catalog.skills import SkillSpec
 from faccoder_agents.cli import main
-from faccoder_agents.export import export_claude_package, format_claude_agent_md
+from faccoder_agents.export import (
+    export_claude_package,
+    format_claude_agent_md,
+    resolve_safe_export_path,
+    validate_safe_slug,
+)
 
 
 def test_format_claude_agent_md() -> None:
@@ -111,3 +119,30 @@ def test_export_claude_package_empty_sectors(tmp_path: Path) -> None:
     assert len(result.agents_exported) == 0
     manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["total_agents"] == 0
+
+
+def test_slug_validation_and_path_traversal_prevention(tmp_path: Path) -> None:
+    # 1. Valid slugs pass
+    assert validate_safe_slug("python-dev") == "python-dev"
+    assert validate_safe_slug("qa_lead_01") == "qa_lead_01"
+
+    # 2. Path traversal or invalid characters raise ValueError
+    for bad_slug in ["../traversal", "sub/dir", "bad..name", "bad name", "a*b", "", ".."]:
+        with pytest.raises(ValueError, match="Invalid"):
+            validate_safe_slug(bad_slug)
+
+    # 3. Model level validation
+    with pytest.raises(ValueError, match="Invalid agent slug"):
+        AgentSpec(name="Bad Agent", slug="../evil", sector="engineering")
+
+    with pytest.raises(ValueError, match="Invalid skill slug"):
+        SkillSpec(name="Bad Skill", slug="bad/skill", content="exploit")
+
+    # 4. Safe path resolution prevents escaping base directory
+    base = tmp_path / "sandbox"
+    base.mkdir()
+    safe_path = resolve_safe_export_path(base, "agents", "good.md")
+    assert safe_path.is_relative_to(base.resolve())
+
+    with pytest.raises(ValueError, match="Path traversal detected"):
+        resolve_safe_export_path(base, "..", "outside.md")

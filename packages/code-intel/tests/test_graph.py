@@ -1,5 +1,6 @@
 """Tests for CodeGraph representation and structural impact analysis."""
 
+import pytest
 from faccoder_code_intel.graph import CodeGraph, EdgeType
 from faccoder_code_intel.models import (
     RelationshipKind,
@@ -118,7 +119,71 @@ def test_ui_binds_and_contains_edges() -> None:
     graph.add_symbols([form, btn, click_handler])
 
     assert graph.graph.has_edge(form.id, btn.id)
-    assert graph.graph[form.id][btn.id]["kind"] == EdgeType.CONTAINS
+    edge_data = graph.graph.get_edge_data(form.id, btn.id)
+    assert EdgeType.CONTAINS in edge_data
 
     assert graph.graph.has_edge(btn.id, click_handler.id)
-    assert graph.graph[btn.id][click_handler.id]["kind"] == EdgeType.UI_BINDS
+    edge_data_btn = graph.graph.get_edge_data(btn.id, click_handler.id)
+    assert EdgeType.UI_BINDS in edge_data_btn
+
+
+def test_multidigraph_multiple_edge_types() -> None:
+    """Ensure MultiDiGraph permits multiple distinct relationships between the same two symbols."""
+    graph = CodeGraph()
+    source = _make_sym("OrderController", SymbolType.CLASS, file_path="order.py")
+    target = _make_sym("PaymentGateway", SymbolType.CLASS, file_path="payment.py")
+    graph.add_symbols([source, target])
+
+    # Add both CALLS and USES relationships between OrderController and PaymentGateway
+    graph.add_edge(source.id, target.id, EdgeType.CALLS)
+    graph.add_edge(source.id, target.id, EdgeType.USES)
+
+    edges = graph.graph.get_edge_data(source.id, target.id)
+    assert len(edges) == 2
+    assert EdgeType.CALLS in edges
+    assert EdgeType.USES in edges
+    assert edges[EdgeType.CALLS]["kind"] == EdgeType.CALLS
+    assert edges[EdgeType.USES]["kind"] == EdgeType.USES
+
+
+def test_resolve_symbol_id_ambiguity() -> None:
+    """Ensure ambiguous symbols without file qualification raise ValueError instead of silent wrong match."""
+    graph = CodeGraph()
+    user_model = _make_sym("User", SymbolType.CLASS, file_path="models/user.py")
+    user_schema = _make_sym("User", SymbolType.CLASS, file_path="schemas/user.py")
+    graph.add_symbols([user_model, user_schema])
+
+    # Unqualified ambiguous name must raise ValueError
+    with pytest.raises(ValueError, match="Ambiguous symbol name 'User' matches 2 symbols"):
+        graph.resolve_symbol_id("User")
+
+    # Qualified by context_file resolves unambiguously
+    assert graph.resolve_symbol_id("User", context_file="models/user.py") == user_model.id
+    assert graph.resolve_symbol_id("User", context_file="schemas/user.py") == user_schema.id
+
+
+def test_impact_analysis_excludes_contains_by_default() -> None:
+    """Ensure contains edges are excluded by default in blast radius propagation."""
+    graph = CodeGraph()
+    parent_cls = _make_sym("OrderService", SymbolType.CLASS, file_path="order.py")
+    child_method = _make_sym("checkout", SymbolType.METHOD, file_path="order.py", parent_id=parent_cls.id)
+    caller_fn = _make_sym(
+        "run_api",
+        SymbolType.FUNCTION,
+        file_path="api.py",
+        relationships={RelationshipKind.CALLS: ["checkout"]},
+    )
+    graph.add_symbols([parent_cls, child_method, caller_fn])
+
+    # Blast radius on child_method with default include_contains=False
+    report_default = graph.impact_analysis("checkout", max_depth=2, include_contains=False)
+    affected_ids_default = {s.symbol_id for s in report_default.affected_symbols}
+    assert caller_fn.id in affected_ids_default
+    # parent OrderService should NOT be in affected symbols via contains
+    assert parent_cls.id not in affected_ids_default
+
+    # When explicitly include_contains=True, parent container is also traced
+    report_with_contains = graph.impact_analysis("checkout", max_depth=2, include_contains=True)
+    affected_ids_contains = {s.symbol_id for s in report_with_contains.affected_symbols}
+    assert caller_fn.id in affected_ids_contains
+    assert parent_cls.id in affected_ids_contains

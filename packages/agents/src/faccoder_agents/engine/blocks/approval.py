@@ -57,24 +57,24 @@ class HumanApprovalBlock(BaseBlock):
                 status=BlockStatus.DRY_RUN,
                 approval_request=req,
                 updates={
-                    "approval": state_dict,
                     f"approval_{self.name}": state_dict,
                     "_dry_run_preview": payload,
                 },
                 message=f"Dry run passed for '{self.action_name}' without external side-effects",
             )
 
-        # 2. Gate check: look for candidate token in inputs, data or context
+        # 2. Gate check: look for candidate token strictly in per-block keys
         candidate_token = (
             inputs.get(f"approval_token_{self.name}")
-            or inputs.get("approval_token")
             or data.get(f"approval_token_{self.name}")
-            or data.get("approval_token")
-            or context.get("approval_token")
+            or context.get(f"approval_token_{self.name}")
         )
 
         existing_approval_dict = (
-            state.get(f"approval_{self.name}") or state.get("approvals", {}).get(self.name) or state.get("approval")
+            state.get(f"approval_{self.name}")
+            or inputs.get(f"approval_{self.name}")
+            or data.get(f"approval_{self.name}")
+            or state.get("approvals", {}).get(self.name)
         )
 
         existing_req: ApprovalRequest | None = None
@@ -147,7 +147,7 @@ class HumanApprovalBlock(BaseBlock):
                     approval_request=existing_req,
                     error=f"Approval token for '{self.action_name}' has expired.",
                     message="Approval token expired",
-                    updates={"approval": state_dict, f"approval_{self.name}": state_dict},
+                    updates={f"approval_{self.name}": state_dict},
                 )
 
             # Timing-safe token validation
@@ -169,7 +169,7 @@ class HumanApprovalBlock(BaseBlock):
                 status=BlockStatus.SUCCESS,
                 approval_request=existing_req,
                 message=f"Action '{self.action_name}' approved by human operator.",
-                updates={"approval": state_dict, f"approval_{self.name}": state_dict},
+                updates={f"approval_{self.name}": state_dict},
             )
 
         # 3. No token provided: create a pending approval request and pause/wait
@@ -186,6 +186,6 @@ class HumanApprovalBlock(BaseBlock):
             block_name=self.name,
             status=BlockStatus.WAITING_APPROVAL,
             approval_request=req,
-            updates={"approval": state_dict, f"approval_{self.name}": state_dict},
+            updates={f"approval_{self.name}": state_dict},
             message=f"Execution halted: waiting for approval token for '{self.action_name}'.",
         )
