@@ -17,8 +17,10 @@ class DummyPlatformAdapter(PlatformAdapter):
     def list_project_items(self, project_id: str):
         return self._board_items
 
-    def update_project_item_status(self, project_id, item_id, field_id, single_select_option_id, dry_run=None):
-        self.updated_statuses.append((item_id, single_select_option_id, dry_run))
+    def update_project_item_status(
+        self, project_id, item_id, field_id, single_select_option_id, content_id=None, dry_run=None
+    ):
+        self.updated_statuses.append((item_id, single_select_option_id, content_id, dry_run))
 
     def create_issue(self, task, dry_run=None):
         pass
@@ -178,3 +180,66 @@ def test_sync_board_and_sprint_full():
     # Work fits within 32h capacity, so no slippage alert
     assert summary.replan_result is not None
     assert summary.replan_result.alert is None
+
+
+def test_sync_board_matching_by_node_id_and_number():
+    from faccoder_planning.adapters.base import ProjectV2Item
+
+    t1 = Task(id="T1", faccoder_id="f-1", title="Task 1")
+    t2 = Task(id="T2", faccoder_id="f-2", title="Task 2")
+
+    # Issue 1 has REST id "1001", node_id "I_kwDO1", number 1
+    # Issue 2 has REST id "1002", node_id None, number 2
+    issue1 = RemoteIssue(
+        id="1001",
+        node_id="I_kwDO1",
+        number=1,
+        title="Task 1",
+        status="open",
+        faccoder_id="f-1",
+    )
+    issue2 = RemoteIssue(
+        id="1002",
+        node_id=None,
+        number=2,
+        title="Task 2",
+        status="closed",
+        faccoder_id="f-2",
+    )
+
+    # Board item 1 matches issue1 by content_id == node_id
+    b_item1 = ProjectV2Item(
+        id="ITEM_1",
+        content_id="I_kwDO1",
+        content_number=1,
+        status="Backlog",
+    )
+    # Board item 2 matches issue2 by content_number == number
+    b_item2 = ProjectV2Item(
+        id="ITEM_2",
+        content_id="DIFFERENT_CONTENT_ID",
+        content_number=2,
+        status="Todo",
+    )
+
+    adapter = DummyPlatformAdapter([issue1, issue2], board_items=[b_item1, b_item2])
+    sync = BoardSynchronizer(adapter)
+
+    plan = Plan(
+        title="Plan",
+        epics=[Epic(id="EP-1", title="Epic 1", stories=[Story(id="US-1", title="Story 1", tasks=[t1, t2])])],
+    )
+
+    sync.sync_board_and_sprint(
+        plan=plan,
+        project_id="PVT_1",
+        status_field_id="FIELD_STATUS",
+        single_select_option_ids={"Todo": "OPT_TODO", "Done": "OPT_DONE"},
+        dry_run=False,
+    )
+
+    assert len(adapter.updated_statuses) == 2
+    # Item 1 moved to Todo (since open issue), content_id="I_kwDO1"
+    assert adapter.updated_statuses[0] == ("ITEM_1", "OPT_TODO", "I_kwDO1", False)
+    # Item 2 moved to Done (since closed issue), content_id="DIFFERENT_CONTENT_ID"
+    assert adapter.updated_statuses[1] == ("ITEM_2", "OPT_DONE", "DIFFERENT_CONTENT_ID", False)
