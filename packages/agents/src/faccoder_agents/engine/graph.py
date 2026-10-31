@@ -1,38 +1,50 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from typing import Any
 
+from faccoder_core.observability.usage import current_meter
 from langgraph.graph import END, START, StateGraph
-
-__all__ = ["END", "START", "PipelineBuilder", "PipelineGraph"]
 
 from faccoder_agents.engine.blocks.base import BaseBlock
 from faccoder_agents.engine.blocks.condition import ConditionBlock
+from faccoder_agents.engine.blocks.guardrails import ExecutionLimits
 from faccoder_agents.engine.models import (
     ApprovalRequest,
     BlockStatus,
     PipelineRunResult,
 )
 
+__all__ = ["END", "START", "PipelineBuilder", "PipelineGraph"]
+
 
 class PipelineGraph:
-    """Compiled runnable LangGraph pipeline wrapping blocks and edges."""
+    """Compiled runnable LangGraph pipeline wrapping blocks, limits, and edges."""
 
-    def __init__(self, name: str, compiled_graph: Any, blocks: dict[str, BaseBlock]) -> None:
+    def __init__(
+        self,
+        name: str,
+        compiled_graph: Any,
+        blocks: dict[str, BaseBlock],
+        limits: ExecutionLimits | None = None,
+    ) -> None:
         self.name = name
         self.compiled_graph = compiled_graph
         self.blocks = blocks
+        self.limits = limits
 
     def run(
         self,
         inputs: dict[str, Any] | None = None,
         dry_run: bool = False,
         context: dict[str, Any] | None = None,
+        limits: ExecutionLimits | None = None,
     ) -> PipelineRunResult:
-        """Execute the pipeline from entry to completion."""
+        """Execute the pipeline from entry to completion with guardrails."""
         inputs = inputs or {}
         context = context or {}
+        effective_limits = limits or self.limits
 
         initial_state: dict[str, Any] = {
             "inputs": inputs,
@@ -41,9 +53,16 @@ class PipelineGraph:
             "errors": [],
             "status": "running",
             "current_block": None,
-            "metadata": {"dry_run": dry_run, **context.get("metadata", {})},
+            "metadata": {
+                "dry_run": dry_run,
+                "started_at": time.time(),
+                **context.get("metadata", {}),
+            },
             "approval": inputs.get("approval"),
         }
+
+        if effective_limits is not None:
+            initial_state["_limits"] = effective_limits.model_dump()
 
         final_state = self.compiled_graph.invoke(initial_state)
 
@@ -69,7 +88,7 @@ class PipelineGraph:
 
 
 class PipelineBuilder:
-    """Builder to construct LangGraph state graphs with reusable blocks."""
+    """Builder to construct LangGraph state graphs with reusable blocks and guardrails."""
 
     def __init__(self, name: str) -> None:
         self.name = name
@@ -78,6 +97,12 @@ class PipelineBuilder:
         self.conditional_edges: list[tuple[str, Callable[[dict[str, Any]], str], dict[str, str]]] = []
         self.entry_point: str | None = None
         self.finish_points: set[str] = set()
+        self.limits: ExecutionLimits | None = None
+
+    def set_limits(self, limits: ExecutionLimits) -> PipelineBuilder:
+        """Configure runtime execution limits for the pipeline."""
+        self.limits = limits
+        return self
 
     def add_block(self, block: BaseBlock) -> PipelineBuilder:
         """Register a block in the pipeline."""
@@ -139,6 +164,46 @@ class PipelineBuilder:
             if curr_status in ("failed", "waiting_approval", "rejected"):
                 return state
 
+            # Check execution limits if present
+            limits_dict = state.get("_limits")
+            if limits_dict:
+                limits = ExecutionLimits.model_validate(limits_dict)
+                history = state.get("history", [])
+                metadata = state.get("metadata", {})
+                data = state.get("data", {})
+
+                # 1. Depth limit
+                if len(history) >= limits.max_depth:
+                    err = f"Guardrail limit exceeded: maximum depth of {limits.max_depth} reached."
+                    return {
+                        **state,
+                        "status": "failed",
+                        "errors": [*state.get("errors", []), err],
+                    }
+
+                # 2. Timeout limit
+                started_at = metadata.get("started_at")
+                if limits.timeout_seconds is not None and started_at is not None:
+                    elapsed = time.time() - float(started_at)
+                    if elapsed >= limits.timeout_seconds:
+                        err = f"Guardrail limit exceeded: timeout of {limits.timeout_seconds:.1f}s reached."
+                        return {
+                            **state,
+                            "status": "failed",
+                            "errors": [*state.get("errors", []), err],
+                        }
+
+                # 3. Budget limit
+                meter = current_meter()
+                current_cost = meter.cost_usd if meter is not None else float(data.get("cost_usd", 0.0))
+                if limits.max_budget_usd is not None and current_cost >= limits.max_budget_usd:
+                    err = f"Guardrail limit exceeded: budget cap of ${limits.max_budget_usd:.4f} USD reached."
+                    return {
+                        **state,
+                        "status": "failed",
+                        "errors": [*state.get("errors", []), err],
+                    }
+
             context = {"metadata": state.get("metadata", {})}
             result = block.execute(state, context=context)
 
@@ -181,6 +246,7 @@ class PipelineBuilder:
                 "metadata": state.get("metadata", {}),
                 "approval": new_approval,
                 "_last_route": result.next_step,
+                "_limits": state.get("_limits"),
             }
 
         return _node_fn
@@ -228,4 +294,9 @@ class PipelineBuilder:
                 graph.add_edge(name, END)
 
         compiled_app = graph.compile()
-        return PipelineGraph(name=self.name, compiled_graph=compiled_app, blocks=self.blocks)
+        return PipelineGraph(
+            name=self.name,
+            compiled_graph=compiled_app,
+            blocks=self.blocks,
+            limits=self.limits,
+        )
