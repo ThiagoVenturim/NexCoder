@@ -7,19 +7,94 @@ second-stage cross-encoder reranking, and HyDE query expansion.
 
 from __future__ import annotations
 
+import fnmatch
+import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 from faccoder_core.retrieval.embeddings import Embedder
 from faccoder_core.retrieval.fusion import mmr_select, rrf_fuse
 from faccoder_core.retrieval.rerank import NoReranker, Reranker
-from faccoder_core.store.sqlite_store import HybridStore
+from faccoder_core.store.sqlite_store import HybridStore, _unpack, fts_query
 
 from faccoder_code_intel.chunking import CodeChunk, SymbolChunker
 from faccoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_IGNORE_DIRS: set[str] = {
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+    "build",
+    "dist",
+    ".idea",
+    ".vscode",
+}
+
+DEFAULT_BINARY_EXTENSIONS: set[str] = {
+    ".exe",
+    ".dll",
+    ".so",
+    ".dylib",
+    ".obj",
+    ".o",
+    ".a",
+    ".bin",
+    ".pyc",
+    ".pyo",
+    ".pyd",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".pdf",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".7z",
+    ".db",
+    ".sqlite",
+    ".sqlite3",
+}
+
+
+def _parse_gitignore(gitignore_path: Path) -> list[str]:
+    """Parse pattern lines from a .gitignore file."""
+    if not gitignore_path.is_file():
+        return []
+    patterns: list[str] = []
+    try:
+        content = gitignore_path.read_text(encoding="utf-8", errors="replace")
+        for line in content.splitlines():
+            stripped = line.strip()
+            if stripped and not stripped.startswith("#"):
+                patterns.append(stripped)
+    except Exception as exc:
+        logger.debug("Failed reading .gitignore from %s: %s", gitignore_path, exc)
+    return patterns
+
+
+def _matches_any_pattern(rel_path_str: str, filename: str, patterns: list[str]) -> bool:
+    """Check whether a path or filename matches any glob / gitignore pattern."""
+    norm_path = rel_path_str.replace("\\", "/")
+    for pat in patterns:
+        clean_pat = pat.rstrip("/")
+        if fnmatch.fnmatch(filename, clean_pat) or fnmatch.fnmatch(norm_path, clean_pat):
+            return True
+        if pat.endswith("/") and (norm_path == clean_pat or norm_path.startswith(clean_pat + "/")):
+            return True
+    return False
 
 
 class CodeSearchIndex:
@@ -53,13 +128,30 @@ class CodeSearchIndex:
     def close(self) -> None:
         self.store.close()
 
+    def _delete_file_chunks(self, file_path: str) -> None:
+        """Delete existing chunks for a file before indexing to prevent stale symbols."""
+        try:
+            cur = self.store.conn.cursor()
+            rows = cur.execute(
+                "SELECT id FROM chunks WHERE json_extract(metadata, '$.file_path') = ?",
+                (file_path,),
+            ).fetchall()
+            old_ids = [r["id"] for r in rows]
+        except Exception:
+            rows = self.store.conn.execute("SELECT id, metadata FROM chunks").fetchall()
+            old_ids = [r["id"] for r in rows if json.loads(r["metadata"]).get("file_path") == file_path]
+        if old_ids:
+            self.store.delete(old_ids)
+
     def index_code(
         self,
         file_path: str,
         content: str,
         language: str | None = None,
     ) -> list[CodeChunk]:
-        """Parse, chunk, and index source code into the hybrid store."""
+        """Parse, chunk, and index source code, replacing existing chunks for file_path."""
+        self._delete_file_chunks(file_path)
+
         chunks = self.chunker.chunk_content(content, file_path=file_path, language=language)
         if not chunks:
             return []
@@ -84,24 +176,130 @@ class CodeSearchIndex:
         self,
         root_dir: Path | str,
         extensions: list[str] | None = None,
+        ignore_patterns: list[str] | None = None,
+        use_gitignore: bool = True,
     ) -> int:
-        """Recursively index all matching source files in a directory."""
+        """Recursively index source files ignoring binaries, caches, venvs, and .gitignore rules."""
         root = Path(root_dir)
         count = 0
-        ext_set = set(extensions) if extensions else None
+        ext_set = {e.lower() if e.startswith(".") else f".{e.lower()}" for e in extensions} if extensions else None
 
-        for path in root.rglob("*"):
-            if not path.is_file():
-                continue
-            if ext_set and path.suffix.lower() not in ext_set:
-                continue
-            try:
-                self.index_file(path)
-                count += 1
-            except Exception as exc:
-                logger.debug("Skipping unparseable file %s: %s", path, exc)
-                continue
+        active_patterns: list[str] = list(ignore_patterns or [])
+        if use_gitignore:
+            gi_path = root / ".gitignore"
+            active_patterns.extend(_parse_gitignore(gi_path))
+
+        for dirpath, dirnames, filenames in os.walk(root):
+            rel_dir = os.path.relpath(dirpath, root)
+            if rel_dir == ".":
+                rel_dir = ""
+
+            # Prune ignored directories in-place so os.walk avoids recursing into them
+            kept_dirs = []
+            for d in dirnames:
+                if d in DEFAULT_IGNORE_DIRS:
+                    continue
+                d_rel = f"{rel_dir}/{d}" if rel_dir else d
+                if active_patterns and _matches_any_pattern(d_rel, d, active_patterns):
+                    continue
+                kept_dirs.append(d)
+            dirnames[:] = kept_dirs
+
+            for f in filenames:
+                f_path = Path(dirpath) / f
+                suffix = f_path.suffix.lower()
+                if suffix in DEFAULT_BINARY_EXTENSIONS:
+                    continue
+                f_rel = f"{rel_dir}/{f}" if rel_dir else f
+                if active_patterns and _matches_any_pattern(f_rel, f, active_patterns):
+                    continue
+                if ext_set and suffix not in ext_set:
+                    continue
+
+                try:
+                    self.index_file(f_path)
+                    count += 1
+                except Exception as exc:
+                    logger.debug("Skipping unparseable file %s: %s", f_path, exc)
+                    continue
+
         return count
+
+    def _filtered_text_search(self, query: str, k: int, where: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        """Perform full-text search with metadata pushdown in SQL."""
+        if not where:
+            return self.store.text_search(query, k=k)
+        match = fts_query(query)
+        if not match:
+            return []
+
+        where_clauses = ["chunks_fts MATCH ?"]
+        params: list[Any] = [match]
+        for key, value in where.items():
+            safe_key = "".join(c for c in key if c.isalnum() or c == "_")
+            where_clauses.append(f"json_extract(c.metadata, '$.{safe_key}') = ?")
+            params.append(value)
+
+        where_sql = " AND ".join(where_clauses)
+        params.append(k)
+        rows = self.store.conn.execute(
+            f"SELECT c.*, bm25(chunks_fts) AS rank FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "  # noqa: S608
+            f"WHERE {where_sql} ORDER BY rank LIMIT ?",
+            params,
+        ).fetchall()
+        return [self.store._row(r, -float(r["rank"])) for r in rows]
+
+    def _filtered_vector_search(
+        self, query_vec: list[float], k: int, where: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
+        """Perform vector search with metadata pushdown."""
+        if not where:
+            return self.store.vector_search(query_vec, k=k)
+
+        where_clauses = ["embedding IS NOT NULL"]
+        params: list[Any] = []
+        for key, value in where.items():
+            safe_key = "".join(c for c in key if c.isalnum() or c == "_")
+            where_clauses.append(f"json_extract(metadata, '$.{safe_key}') = ?")
+            params.append(value)
+
+        where_sql = " AND ".join(where_clauses)
+        rows = self.store.conn.execute(
+            f"SELECT * FROM chunks WHERE {where_sql}",  # noqa: S608
+            params,
+        ).fetchall()
+        if not rows:
+            return []
+
+        matrix = np.vstack([_unpack(r["embedding"]) for r in rows])
+        query_arr = np.asarray(query_vec, dtype=np.float32)
+        norms = np.linalg.norm(matrix, axis=1) * (np.linalg.norm(query_arr) or 1.0)
+        norms[norms == 0] = 1.0
+        sims = (matrix @ query_arr) / norms
+        top = np.argsort(-sims)[:k]
+        return [self.store._row(rows[i], float(sims[i])) for i in top]
+
+    def _get_or_compute_embeddings(self, docs: list[dict[str, Any]], query_dim: int) -> list[list[float]]:
+        """Reuse stored vectors from SQLite chunks, computing embeddings only for missing ones."""
+        doc_ids = [d["id"] for d in docs]
+        stored: dict[str, list[float]] = {}
+        if doc_ids:
+            placeholders = ",".join("?" for _ in doc_ids)
+            rows = self.store.conn.execute(
+                f"SELECT id, embedding FROM chunks WHERE id IN ({placeholders}) AND embedding IS NOT NULL",  # noqa: S608
+                doc_ids,
+            ).fetchall()
+            for r in rows:
+                if r["embedding"]:
+                    stored[r["id"]] = _unpack(r["embedding"]).tolist()
+
+        missing_indices = [i for i, d in enumerate(docs) if d["id"] not in stored]
+        if missing_indices and self.embedder is not None:
+            computed = self.embedder.embed_documents([docs[i]["text"] for i in missing_indices])
+            for idx, emb in zip(missing_indices, computed, strict=False):
+                stored[docs[idx]["id"]] = emb
+
+        return [stored.get(d["id"], [0.0] * query_dim) for d in docs]
 
     def search(
         self,
@@ -118,17 +316,17 @@ class CodeSearchIndex:
         mmr_lambda: float = 0.5,
         where: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        """Retrieve code chunks via hybrid search with optional HyDE, Reranker, and MMR."""
+        """Retrieve code chunks via hybrid search with pushdown filters, HyDE, Reranker, and MMR."""
         # 1. Query Rewriting
         fts_query_str = query
         if rewrite_query and self.rewriter:
             rewritten = self.rewriter.rewrite(query)
             fts_query_str = rewritten.expanded_text
 
-        # 2. BM25 text search
-        text_results = self.store.text_search(fts_query_str, k=candidates)
+        # 2. BM25 text search with metadata filter pushdown
+        text_results = self._filtered_text_search(fts_query_str, k=candidates, where=where)
 
-        # 3. Vector search (optionally using HyDE)
+        # 3. Vector search (optionally using HyDE) with metadata filter pushdown
         query_vec: list[float] | None = None
         vector_results: list[dict[str, Any]] = []
 
@@ -139,7 +337,7 @@ class CodeSearchIndex:
             else:
                 query_vec = self.embedder.embed_query(query)
 
-            vector_results = self.store.vector_search(query_vec, k=candidates)
+            vector_results = self._filtered_vector_search(query_vec, k=candidates, where=where)
 
         # 4. Rank fusion (RRF)
         result_lists: list[list[dict[str, Any]]] = []
@@ -157,19 +355,15 @@ class CodeSearchIndex:
 
         fused = rrf_fuse(result_lists, weights=weights)
 
-        # Apply metadata filters if provided
-        if where:
-            fused = [doc for doc in fused if all(doc.get("metadata", {}).get(k) == v for k, v in where.items())]
-
         # 5. Second-stage reranker
         if rerank and self.reranker and not isinstance(self.reranker, NoReranker) and fused:
             pool = fused[:candidates]
             fused = self.reranker.rerank(query, pool, top_k=candidates)
 
-        # 6. Optional MMR diversification
+        # 6. Optional MMR diversification reusing stored embeddings
         if mmr and query_vec is not None and len(fused) > 1:
             pool = fused[:candidates]
-            doc_embeddings = self.embedder.embed_documents([doc["text"] for doc in pool])
+            doc_embeddings = self._get_or_compute_embeddings(pool, len(query_vec))
 
             selected_indices = mmr_select(
                 doc_embeddings,
