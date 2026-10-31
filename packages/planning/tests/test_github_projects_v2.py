@@ -235,3 +235,108 @@ def test_milestone_management_and_issue_linking():
     assert res_issue.action == "created"
     assert len(created_issues) == 1
     assert created_issues[0]["milestone"] == 1
+
+
+def test_execute_graphql_errors_raises_exception():
+    import pytest
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={"errors": [{"message": "Field 'unknownField' doesn't exist on type 'ProjectV2'"}]},
+        )
+
+    mock_client = httpx.Client(transport=httpx.MockTransport(handler))
+    adapter = GitHubAdapter(repo="org/repo", token="gh-token", client=mock_client, dry_run=False)
+
+    with pytest.raises(RuntimeError, match=r"GitHub GraphQL query failed.*Field 'unknownField'"):
+        adapter.execute_graphql("query { viewer { login } }")
+
+
+def test_list_project_items_draft_issue_and_content_type():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "data": {
+                    "node": {
+                        "items": {
+                            "pageInfo": {"hasNextPage": False},
+                            "nodes": [
+                                {
+                                    "id": "ITEM_ISSUE",
+                                    "content": {
+                                        "__typename": "Issue",
+                                        "id": "ISS_1",
+                                        "number": 10,
+                                        "title": "Standard Issue",
+                                    },
+                                    "fieldValueByName": {"name": "Todo"},
+                                },
+                                {
+                                    "id": "ITEM_PR",
+                                    "content": {
+                                        "__typename": "PullRequest",
+                                        "id": "PR_1",
+                                        "number": 11,
+                                        "title": "Feature PR",
+                                    },
+                                    "fieldValueByName": {"name": "In Review"},
+                                },
+                                {
+                                    "id": "ITEM_DRAFT",
+                                    "content": {
+                                        "__typename": "DraftIssue",
+                                        "id": "DRAFT_1",
+                                        "title": "Idea Draft Note",
+                                    },
+                                    "fieldValueByName": {"name": "Backlog"},
+                                },
+                            ],
+                        }
+                    }
+                }
+            },
+        )
+
+    mock_client = httpx.Client(transport=httpx.MockTransport(handler))
+    adapter = GitHubAdapter(repo="org/repo", token="gh-token", client=mock_client, dry_run=False)
+
+    items = adapter.list_project_items("PVT_123")
+    assert len(items) == 3
+    assert items[0].content_type == "Issue"
+    assert items[0].title == "Standard Issue"
+    assert items[1].content_type == "PullRequest"
+    assert items[1].title == "Feature PR"
+    assert items[2].content_type == "DraftIssue"
+    assert items[2].title == "Idea Draft Note"
+
+
+def test_update_project_item_status():
+    mutations = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json
+
+        data = json.loads(request.content.decode())
+        mutations.append(data)
+        return httpx.Response(
+            200,
+            json={"data": {"updateProjectV2ItemFieldValue": {"projectV2Item": {"id": "ITEM_1"}}}},
+        )
+
+    mock_client = httpx.Client(transport=httpx.MockTransport(handler))
+    adapter = GitHubAdapter(repo="org/repo", token="gh-token", client=mock_client, dry_run=False)
+
+    # Dry-run
+    res_dry = adapter.update_project_item_status("PVT_1", "ITEM_1", "FIELD_STATUS", "OPT_DONE", dry_run=True)
+    assert res_dry.dry_run is True
+    assert res_dry.action == "dry_run_update"
+    assert len(mutations) == 0
+
+    # Live update
+    res_live = adapter.update_project_item_status("PVT_1", "ITEM_1", "FIELD_STATUS", "OPT_DONE", dry_run=False)
+    assert res_live.dry_run is False
+    assert res_live.action == "updated"
+    assert len(mutations) == 1
+    assert "updateProjectV2ItemFieldValue" in mutations[0]["query"]

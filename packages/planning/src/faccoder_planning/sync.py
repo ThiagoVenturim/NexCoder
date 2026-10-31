@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -88,18 +89,23 @@ class BoardSynchronizer:
         if issue is None:
             return BoardColumn.BACKLOG, "No remote issue mapped"
 
-        # 1. Closed issue or merged PR -> Done
+        # 1. Closed issue -> Done
         if issue.status.lower() in ("closed", "done", "completed"):
             return BoardColumn.DONE, "Remote issue is closed"
 
-        if pr_state and pr_state.lower() in ("merged", "closed"):
+        # 2. Merged PR -> Done
+        if pr_state and pr_state.lower() == "merged":
             return BoardColumn.DONE, "Pull request is merged"
 
-        # 2. Open PR -> In Review
+        # 3. Closed PR without merge: Issue is still open, so work was not completed; return to Todo
+        if pr_state and pr_state.lower() == "closed":
+            return BoardColumn.TODO, "Pull request was closed without merge; issue remains open"
+
+        # 4. Open PR -> In Review
         if pr_state and pr_state.lower() in ("open", "draft", "in_review"):
             return BoardColumn.IN_REVIEW, f"Pull request is active ({pr_state})"
 
-        # 3. Label-based or in-progress status
+        # 5. Label-based or in-progress status
         effective_labels = labels or issue.labels
         lower_labels = [lbl.lower() for lbl in effective_labels]
 
@@ -108,48 +114,8 @@ class BoardSynchronizer:
         if any("progresso" in lbl or "progress" in lbl or "doing" in lbl for lbl in lower_labels):
             return BoardColumn.IN_PROGRESS, "Tagged as active work in progress"
 
-        # 4. Open issue without active PR -> Todo
+        # 6. Open issue without active PR -> Todo
         return BoardColumn.TODO, "Issue is open and ready to be worked on"
-
-    def detect_slippage(
-        self,
-        tasks: list[Task],
-        completed_task_ids: set[str],
-        available_capacity_hours: float,
-        sprint_name: str = "Active Sprint",
-    ) -> SlippageAlert | None:
-        """Evaluate if uncompleted task hours exceed available capacity, raising an alert if so."""
-        uncompleted_tasks = [t for t in tasks if t.id not in completed_task_ids]
-        remaining_hours = sum(t.estimate_hours for t in uncompleted_tasks)
-        planned_hours = sum(t.estimate_hours for t in tasks)
-
-        if remaining_hours <= available_capacity_hours:
-            return None
-
-        slippage = remaining_hours - available_capacity_hours
-        # Identify low-priority or leaf tasks to defer, walking backwards through task list
-        accumulated_to_cut = 0.0
-        deferrals: list[Task] = []
-        for task in reversed(uncompleted_tasks):
-            if accumulated_to_cut < slippage:
-                deferrals.append(task)
-                accumulated_to_cut += task.estimate_hours
-
-        msg = (
-            f"Sprint '{sprint_name}' capacity slipped: {remaining_hours:.1f}h remaining work "
-            f"exceeds available {available_capacity_hours:.1f}h by {slippage:.1f}h. "
-            f"Recommend deferring {len(deferrals)} task(s)."
-        )
-
-        return SlippageAlert(
-            sprint_name=sprint_name,
-            planned_hours=round(planned_hours, 1),
-            remaining_hours=round(remaining_hours, 1),
-            available_hours=round(available_capacity_hours, 1),
-            slippage_hours=round(slippage, 1),
-            message=msg,
-            recommended_deferrals=deferrals,
-        )
 
     def replan_backlog(
         self,
@@ -158,21 +124,78 @@ class BoardSynchronizer:
         available_capacity_hours: float,
         sprint_name: str = "Active Sprint",
     ) -> ReplanResult:
-        """Re-plan the sprint workload by retaining completed and fitting tasks, deferring excess."""
-        alert = self.detect_slippage(tasks, completed_task_ids, available_capacity_hours, sprint_name)
+        """Re-plan sprint workload respecting topological dependencies, capacity, and completed tasks."""
+        # 1. Topological sort tasks to ensure prerequisites are evaluated before dependents
+        task_map = {t.id: t for t in tasks}
+        in_degree: dict[str, int] = {t.id: 0 for t in tasks}
+        dependents: dict[str, list[str]] = {t.id: [] for t in tasks}
+
+        for t in tasks:
+            for dep in t.dependencies:
+                if dep in task_map:
+                    dependents[dep].append(t.id)
+                    in_degree[t.id] += 1
+
+        queue = [t.id for t in tasks if in_degree[t.id] == 0]
+        sorted_tasks: list[Task] = []
+        while queue:
+            curr = queue.pop(0)
+            sorted_tasks.append(task_map[curr])
+            for ch in dependents.get(curr, []):
+                in_degree[ch] -= 1
+                if in_degree[ch] == 0:
+                    queue.append(ch)
+
+        if len(sorted_tasks) < len(tasks):
+            for t in tasks:
+                if t not in sorted_tasks:
+                    sorted_tasks.append(t)
 
         retained: list[Task] = []
         deferred: list[Task] = []
+        deferred_ids: set[str] = set()
         accumulated_uncompleted_hours = 0.0
 
-        for task in tasks:
+        for task in sorted_tasks:
             if task.id in completed_task_ids:
                 retained.append(task)
+                continue
+
+            # Check if any dependency of this task was deferred
+            has_deferred_dep = any(dep in deferred_ids for dep in task.dependencies)
+
+            if has_deferred_dep:
+                deferred.append(task)
+                deferred_ids.add(task.id)
             elif accumulated_uncompleted_hours + task.estimate_hours <= available_capacity_hours:
                 retained.append(task)
                 accumulated_uncompleted_hours += task.estimate_hours
             else:
                 deferred.append(task)
+                deferred_ids.add(task.id)
+
+        # Build alert if there are deferrals caused by capacity slippage
+        alert: SlippageAlert | None = None
+        uncompleted_tasks = [t for t in tasks if t.id not in completed_task_ids]
+        remaining_hours = sum(t.estimate_hours for t in uncompleted_tasks)
+        planned_hours = sum(t.estimate_hours for t in tasks)
+
+        if remaining_hours > available_capacity_hours:
+            slippage = remaining_hours - available_capacity_hours
+            msg = (
+                f"Sprint '{sprint_name}' capacity slipped: {remaining_hours:.1f}h remaining work "
+                f"exceeds available {available_capacity_hours:.1f}h by {slippage:.1f}h. "
+                f"Recommend deferring {len(deferred)} task(s) respecting dependency chain."
+            )
+            alert = SlippageAlert(
+                sprint_name=sprint_name,
+                planned_hours=round(planned_hours, 1),
+                remaining_hours=round(remaining_hours, 1),
+                available_hours=round(available_capacity_hours, 1),
+                slippage_hours=round(slippage, 1),
+                message=msg,
+                recommended_deferrals=deferred,
+            )
 
         return ReplanResult(
             sprint_name=sprint_name,
@@ -181,14 +204,33 @@ class BoardSynchronizer:
             alert=alert,
         )
 
+    def detect_slippage(
+        self,
+        tasks: list[Task],
+        completed_task_ids: set[str],
+        available_capacity_hours: float,
+        sprint_name: str = "Active Sprint",
+    ) -> SlippageAlert | None:
+        """Evaluate capacity slippage aligning directly with replan_backlog recommendations."""
+        res = self.replan_backlog(
+            tasks=tasks,
+            completed_task_ids=completed_task_ids,
+            available_capacity_hours=available_capacity_hours,
+            sprint_name=sprint_name,
+        )
+        return res.alert
+
     def sync_board_and_sprint(
         self,
         plan: Plan,
+        project_id: str | None = None,
         pr_states_by_issue: dict[int, str] | None = None,
         remaining_capacity_hours: float | None = None,
+        status_field_id: str | None = None,
+        single_select_option_ids: dict[str, str] | None = None,
         dry_run: bool = True,
     ) -> BoardSyncSummary:
-        """Sync board items and evaluate potential slippage across all tasks in a Plan."""
+        """Sync board items, optionally applying column moves to remote board, and evaluating slippage."""
         pr_states = pr_states_by_issue or {}
         bindings: list[IssuePRBinding] = []
         completed_task_ids: set[str] = set()
@@ -197,9 +239,18 @@ class BoardSynchronizer:
         # Build map of remote issues by faccoder_id
         remote_issues = self.adapter.list_issues()
         issues_by_marker: dict[str, RemoteIssue] = {}
+        issues_by_id: dict[str, RemoteIssue] = {}
         for issue in remote_issues:
+            issues_by_id[issue.id] = issue
             if issue.faccoder_id:
                 issues_by_marker[issue.faccoder_id] = issue
+
+        # If project_id provided, fetch actual board items to read current column
+        board_items_by_content_id: dict[str, Any] = {}
+        if project_id and hasattr(self.adapter, "list_project_items"):
+            board_items = self.adapter.list_project_items(project_id)
+            for b_item in board_items:
+                board_items_by_content_id[b_item.content_id] = b_item
 
         for task in plan.all_tasks():
             remote = issues_by_marker.get(task.faccoder_id)
@@ -207,13 +258,35 @@ class BoardSynchronizer:
             pr_state = pr_states.get(issue_num) if issue_num else None
 
             target_col, reason = self.resolve_target_column(remote, pr_state)
+
+            # Read actual column from board if available
             current_col = BoardColumn.BACKLOG.value
-            if remote:
+            b_item = board_items_by_content_id.get(remote.id) if remote else None
+            if b_item and b_item.status:
+                current_col = b_item.status
+            elif remote:
                 current_col = BoardColumn.DONE.value if remote.status == "closed" else BoardColumn.TODO.value
 
             is_moved = current_col != target_col.value
             if is_moved:
                 moved_count += 1
+                # If board update is supported and not dry_run
+                if (
+                    b_item
+                    and project_id
+                    and status_field_id
+                    and single_select_option_ids
+                    and hasattr(self.adapter, "update_project_item_status")
+                ):
+                    opt_id = single_select_option_ids.get(target_col.value)
+                    if opt_id:
+                        self.adapter.update_project_item_status(
+                            project_id=project_id,
+                            item_id=b_item.id,
+                            field_id=status_field_id,
+                            single_select_option_id=opt_id,
+                            dry_run=dry_run,
+                        )
 
             if target_col == BoardColumn.DONE:
                 completed_task_ids.add(task.id)
@@ -230,7 +303,7 @@ class BoardSynchronizer:
                 )
             )
 
-        # Capacity re-planning if remaining capacity is provided or capacity_config exists
+        # Capacity re-planning
         replan_res: ReplanResult | None = None
         cap = remaining_capacity_hours
         if cap is None and self.capacity_config:
