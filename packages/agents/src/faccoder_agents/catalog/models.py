@@ -24,6 +24,7 @@ class AgentSector:
     MARKETING_GTM = "marketing-gtm"
     STACKS = "stacks"
     REGULATIONS = "regulations"
+    JURY = "jury"
 
     ALL = [
         DIRECTION,
@@ -38,6 +39,7 @@ class AgentSector:
         MARKETING_GTM,
         STACKS,
         REGULATIONS,
+        JURY,
     ]
 
 
