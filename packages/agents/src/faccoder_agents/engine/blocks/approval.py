@@ -60,11 +60,7 @@ class HumanApprovalBlock(BaseBlock):
             )
 
         # 2. Gate check: look for candidate token in inputs, data or context
-        candidate_token = (
-            inputs.get("approval_token")
-            or data.get("approval_token")
-            or context.get("approval_token")
-        )
+        candidate_token = inputs.get("approval_token") or data.get("approval_token") or context.get("approval_token")
 
         existing_approval_dict = state.get("approval")
         if existing_approval_dict:

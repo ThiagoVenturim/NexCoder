@@ -116,10 +116,12 @@ def test_pipeline_branching_with_condition_block() -> None:
 
 def test_pipeline_add_sequence() -> None:
     builder = PipelineBuilder("sequence-pipeline")
-    builder.add_sequence([
-        ValidatorBlock(name="step1", required_keys=["k1"]),
-        ValidatorBlock(name="step2", required_keys=["k2"]),
-    ])
+    builder.add_sequence(
+        [
+            ValidatorBlock(name="step1", required_keys=["k1"]),
+            ValidatorBlock(name="step2", required_keys=["k2"]),
+        ]
+    )
     pipeline = builder.compile()
     res = pipeline.run(inputs={"k1": "v1", "k2": "v2"})
     assert res.status == "completed"
@@ -160,4 +162,3 @@ def test_pipeline_builder_validation_errors() -> None:
     empty_builder = PipelineBuilder("empty")
     with pytest.raises(ValueError, match="zero blocks"):
         empty_builder.compile()
-

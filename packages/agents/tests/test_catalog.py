@@ -129,4 +129,3 @@ def test_load_agents_from_dir_empty_or_nonexistent(tmp_path: Path) -> None:
 
     non_existent = tmp_path / "does_not_exist"
     assert load_agents_from_dir(non_existent) == []
-

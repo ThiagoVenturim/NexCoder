@@ -225,4 +225,3 @@ def test_prompt_block_safe_format_with_missing_keys() -> None:
     res = block.execute({"data": {"action": "clean"}})
     assert res.status == BlockStatus.SUCCESS
     assert res.updates["llm_output"] == "Executed successfully."
-

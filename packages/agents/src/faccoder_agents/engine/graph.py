@@ -214,9 +214,7 @@ class PipelineBuilder:
             if isinstance(block, ConditionBlock) and not any(src == name for src, _ in self.edges):
                 if not any(src == name for src, _, _ in self.conditional_edges):
                     target_map = {route: (END if route == "end" else route) for route in block.branches.values()}
-                    target_map[block.default_branch] = (
-                        END if block.default_branch == "end" else block.default_branch
-                    )
+                    target_map[block.default_branch] = END if block.default_branch == "end" else block.default_branch
 
                     def make_router(b: ConditionBlock):
                         return lambda state: b.evaluate_route(state)
