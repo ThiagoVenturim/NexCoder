@@ -17,5 +17,8 @@ dependencies = [
   "langgraph>=0.2",
 ]
 
+[project.scripts]
+faccoder-agents = "faccoder_agents.cli:main"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/faccoder_agents"]
