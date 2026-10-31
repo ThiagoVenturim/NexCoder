@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import base64
 import logging
+import re
+from typing import Any
 
 import httpx
 
@@ -17,6 +19,8 @@ from faccoder_planning.adapters.base import (
 from faccoder_planning.models import Task
 
 logger = logging.getLogger(__name__)
+
+TAG_MARKER_REGEX = re.compile(r"\bfaccoder-id:([a-zA-Z0-9_\-]+)\b")
 
 
 class AzureDevOpsAdapter(PlatformAdapter):
@@ -39,21 +43,37 @@ class AzureDevOpsAdapter(PlatformAdapter):
         self.work_item_type = work_item_type
         self.api_url = api_url.rstrip("/")
         self._custom_client = client
+        self._client: httpx.Client | None = None
         self._cached_issues: list[RemoteIssue] | None = None
 
     def _get_client(self) -> httpx.Client:
         if self._custom_client is not None:
             return self._custom_client
 
-        headers = {
-            "Content-Type": "application/json-patch+json",
-            "User-Agent": "faccoder-planning",
-        }
-        if self.pat:
-            encoded_pat = base64.b64encode(f":{self.pat}".encode()).decode()
-            headers["Authorization"] = f"Basic {encoded_pat}"
+        if self._client is None:
+            headers = {
+                "Content-Type": "application/json-patch+json",
+                "User-Agent": "faccoder-planning",
+            }
+            if self.pat:
+                encoded_pat = base64.b64encode(f":{self.pat}".encode()).decode()
+                headers["Authorization"] = f"Basic {encoded_pat}"
+            self._client = httpx.Client(headers=headers, timeout=30.0)
 
-        return httpx.Client(headers=headers, timeout=30.0)
+        return self._client
+
+    def close(self) -> None:
+        """Close the underlying HTTP client if owned."""
+        if self._client is not None:
+            self._client.close()
+            self._client = None
+
+    def __enter__(self) -> AzureDevOpsAdapter:
+        self._get_client()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
 
     def list_issues(self) -> list[RemoteIssue]:
         """Query and return work items from Azure DevOps."""
@@ -68,7 +88,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
         # Query Wiql
         wiql_url = f"{self.api_url}/{self.organization}/{self.project}/_apis/wit/wiql?api-version=7.0"
         wiql_query_text = (
-            "SELECT [System.Id], [System.Title], [System.Description], [System.State] "  # noqa: S608
+            "SELECT [System.Id], [System.Title], [System.Description], [System.State], [System.Tags] "  # noqa: S608
             f"FROM WorkItems WHERE [System.TeamProject] = '{self.project}' "
             f"AND [System.WorkItemType] = '{self.work_item_type}'"
         )
@@ -97,7 +117,19 @@ class AzureDevOpsAdapter(PlatformAdapter):
             for wi in details_res.json().get("value", []):
                 fields = wi.get("fields", {})
                 body = fields.get("System.Description", "")
-                fid = extract_faccoder_id(body)
+                tags_str = fields.get("System.Tags", "")
+
+                # Check System.Tags first to protect against HTML stripping comments
+                fid = None
+                if tags_str:
+                    tag_match = TAG_MARKER_REGEX.search(tags_str)
+                    if tag_match:
+                        fid = tag_match.group(1)
+                if not fid:
+                    fid = extract_faccoder_id(body)
+
+                labels = [t.strip() for t in tags_str.split(";") if t.strip()] if tags_str else []
+
                 remote_issues.append(
                     RemoteIssue(
                         id=str(wi["id"]),
@@ -107,7 +139,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
                         faccoder_id=fid,
                         url=wi.get("url"),
                         status=fields.get("System.State", "To Do"),
-                        labels=[],
+                        labels=labels,
                     )
                 )
 
@@ -115,9 +147,10 @@ class AzureDevOpsAdapter(PlatformAdapter):
         return remote_issues
 
     def create_issue(self, task: Task, dry_run: bool | None = None) -> IssueSyncResult:
-        """Create a new work item in Azure DevOps."""
+        """Create a new work item in Azure DevOps storing tracking id in both tags and body."""
         is_dry = self.dry_run if dry_run is None else dry_run
         body = task.format_markdown_body()
+        tag_marker = f"faccoder-id:{task.faccoder_id}"
 
         if is_dry:
             simulated_id = 7777
@@ -140,6 +173,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
         patch_doc = [
             {"op": "add", "path": "/fields/System.Title", "value": task.title},
             {"op": "add", "path": "/fields/System.Description", "value": body},
+            {"op": "add", "path": "/fields/System.Tags", "value": tag_marker},
         ]
         res = client.post(url, json=patch_doc)
         res.raise_for_status()
@@ -157,9 +191,10 @@ class AzureDevOpsAdapter(PlatformAdapter):
         )
 
     def update_issue(self, remote: RemoteIssue, task: Task, dry_run: bool | None = None) -> IssueSyncResult:
-        """Update an existing work item in Azure DevOps."""
+        """Update an existing work item in Azure DevOps preserving marker in tags and body."""
         is_dry = self.dry_run if dry_run is None else dry_run
         body = embed_faccoder_id(task.format_markdown_body(), task.faccoder_id)
+        tag_marker = f"faccoder-id:{task.faccoder_id}"
 
         if is_dry:
             return IssueSyncResult(
@@ -175,9 +210,15 @@ class AzureDevOpsAdapter(PlatformAdapter):
 
         client = self._get_client()
         url = f"{self.api_url}/{self.organization}/{self.project}/_apis/wit/workitems/{remote.id}?api-version=7.0"
+
+        # Combine existing labels with tag_marker
+        existing_tags = [lbl for lbl in remote.labels if not lbl.startswith("faccoder-id:")]
+        combined_tags = "; ".join(existing_tags + [tag_marker])
+
         patch_doc = [
             {"op": "replace", "path": "/fields/System.Title", "value": task.title},
             {"op": "replace", "path": "/fields/System.Description", "value": body},
+            {"op": "add", "path": "/fields/System.Tags", "value": combined_tags},
         ]
         res = client.patch(url, json=patch_doc)
         res.raise_for_status()

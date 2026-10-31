@@ -41,28 +41,48 @@ class GitHubAdapter(PlatformAdapter):
         self._custom_client = client
         self._cached_issues: list[RemoteIssue] | None = None
         self._cached_milestones: list[RemoteMilestone] | None = None
+        self._client: httpx.Client | None = None
 
     def _get_client(self) -> httpx.Client:
         if self._custom_client is not None:
             return self._custom_client
 
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "faccoder-planning",
-        }
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
+        if self._client is None:
+            headers = {
+                "Accept": "application/vnd.github+json",
+                "User-Agent": "faccoder-planning",
+            }
+            if self.token:
+                headers["Authorization"] = f"Bearer {self.token}"
+            self._client = httpx.Client(headers=headers, timeout=30.0)
 
-        return httpx.Client(headers=headers, timeout=30.0)
+        return self._client
+
+    def close(self) -> None:
+        """Close the underlying HTTP client if owned."""
+        if self._client is not None:
+            self._client.close()
+            self._client = None
+
+    def __enter__(self) -> GitHubAdapter:
+        self._get_client()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
 
     def execute_graphql(self, query: str, variables: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Execute a GraphQL query against the GitHub API endpoint."""
+        """Execute a GraphQL query against the GitHub API endpoint, raising on errors."""
         client = self._get_client()
         graphql_url = f"{self.api_url}/graphql"
         payload = {"query": query, "variables": variables or {}}
         res = client.post(graphql_url, json=payload)
         res.raise_for_status()
-        return res.json()
+        data = res.json()
+        if isinstance(data, dict) and data.get("errors"):
+            err_details = "; ".join(e.get("message", str(e)) for e in data["errors"])
+            raise RuntimeError(f"GitHub GraphQL query failed: {err_details}")
+        return data
 
     # -------------------------------------------------------------------------
     # Issue Management (REST API)
@@ -430,6 +450,7 @@ class GitHubAdapter(PlatformAdapter):
                 nodes {
                   id
                   content {
+                    __typename
                     ... on Issue {
                       id
                       number
@@ -438,6 +459,10 @@ class GitHubAdapter(PlatformAdapter):
                     ... on PullRequest {
                       id
                       number
+                      title
+                    }
+                    ... on DraftIssue {
+                      id
                       title
                     }
                   }
@@ -467,17 +492,74 @@ class GitHubAdapter(PlatformAdapter):
             for node in items_data.get("nodes", []):
                 content = node.get("content") or {}
                 status_field = node.get("fieldValueByName") or {}
+                raw_type = content.get("__typename")
+                content_type = raw_type if raw_type in ("Issue", "PullRequest", "DraftIssue") else "Issue"
+                content_id = str(content.get("id") or node["id"])
                 items.append(
                     ProjectV2Item(
                         id=str(node["id"]),
-                        content_id=str(content.get("id", "")),
-                        content_type="PullRequest" if "PullRequest" in str(content) else "Issue",
+                        content_id=content_id,
+                        content_type=content_type,
                         title=content.get("title", ""),
                         status=status_field.get("name"),
                     )
                 )
 
         return items
+
+    def update_project_item_status(
+        self,
+        project_id: str,
+        item_id: str,
+        field_id: str,
+        single_select_option_id: str,
+        dry_run: bool | None = None,
+    ) -> ProjectV2ItemResult:
+        """Update single-select Status field of a Projects v2 item."""
+        is_dry = self.dry_run if dry_run is None else dry_run
+        if is_dry:
+            return ProjectV2ItemResult(
+                project_id=project_id,
+                item_id=item_id,
+                content_id=item_id,
+                action="dry_run_update",
+                message=f"[DRY-RUN] Would update status for item '{item_id}'",
+                dry_run=True,
+            )
+
+        mutation = """
+        mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optId: String!) {
+          updateProjectV2ItemFieldValue(
+            input: {
+              projectId: $projectId
+              itemId: $itemId
+              fieldId: $fieldId
+              value: { singleSelectOptionId: $optId }
+            }
+          ) {
+            projectV2Item {
+              id
+            }
+          }
+        }
+        """
+        self.execute_graphql(
+            mutation,
+            {
+                "projectId": project_id,
+                "itemId": item_id,
+                "fieldId": field_id,
+                "optId": single_select_option_id,
+            },
+        )
+        return ProjectV2ItemResult(
+            project_id=project_id,
+            item_id=item_id,
+            content_id=item_id,
+            action="updated",
+            message=f"Updated status for item '{item_id}'",
+            dry_run=False,
+        )
 
     def add_item_to_project_v2(
         self,

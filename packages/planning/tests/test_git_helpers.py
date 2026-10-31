@@ -7,6 +7,7 @@ from faccoder_planning.git_helpers import (
     create_pull_request,
     execute_commit,
     strip_co_author_trailers,
+    validate_branch_name,
     validate_no_emoji,
 )
 
@@ -19,7 +20,18 @@ def test_build_conventional_commit_valid():
         issue_number=4,
         body="Implements the board synchronizer.",
     )
-    assert msg.startswith("feat(planning): add sprint sync loop (#4)\n\nImplements the board synchronizer.")
+    assert msg.startswith("feat(planning): add sprint sync loop (Refs #4)\n\nImplements the board synchronizer.")
+
+
+def test_build_conventional_commit_multiple_issues():
+    msg = build_conventional_commit(
+        type_="feat",
+        scope="planning",
+        description="kanban sync loop",
+        issue_numbers=[4, 17, 21],
+        issue_action="Refs",
+    )
+    assert msg == "feat(planning): kanban sync loop (Refs #4, Refs #17, Refs #21)"
 
 
 def test_build_conventional_commit_without_scope_or_issue():
@@ -39,7 +51,6 @@ def test_build_conventional_commit_invalid_type():
 
 
 def test_validate_no_emoji_rejection():
-    # Attempting to use an emoji should raise ValueError
     emoji_rocket = chr(0x1F680)
     emoji_sparkle = chr(0x2728)
     with pytest.raises(ValueError, match="contains emoji"):
@@ -52,15 +63,35 @@ def test_validate_no_emoji_rejection():
         )
 
 
-def test_strip_co_author_trailers():
+def test_validate_branch_name():
+    # Valid names
+    validate_branch_name("develop")
+    validate_branch_name("layer/planning")
+    validate_branch_name("feature/add-sync-loop")
+
+    # Invalid names
+    with pytest.raises(ValueError, match="Invalid git branch name"):
+        validate_branch_name("layer/planning..bad")
+
+    with pytest.raises(ValueError, match="Invalid git branch name"):
+        validate_branch_name("feature with spaces")
+
+    with pytest.raises(ValueError, match="Invalid git branch name"):
+        validate_branch_name("branch:name")
+
+
+def test_strip_co_author_and_generated_lines():
     raw_message = (
         "feat(core): initial scaffold\n\n"
         "Some details.\n\n"
         "Co-Authored-By: Claude <noreply@anthropic.com>\n"
-        "Co-Authored-By: Assistant <bot@ai.org>"
+        "Generated with Claude Code\n"
+        "Generated-by: AI Assistant"
     )
     cleaned = strip_co_author_trailers(raw_message)
     assert "Co-Authored-By" not in cleaned
+    assert "Generated with" not in cleaned
+    assert "Generated-by" not in cleaned
     assert "Some details." in cleaned
 
 
@@ -80,7 +111,7 @@ def test_create_branch_dry_run():
 
 def test_execute_commit_dry_run():
     res = execute_commit(
-        message="feat(planning): implement kanban loop (#4)",
+        message="feat(planning): implement kanban loop (Refs #4)",
         stage_all=False,
         dry_run=True,
     )
@@ -89,10 +120,11 @@ def test_execute_commit_dry_run():
     assert "commit" in res.command
 
 
-def test_build_pull_request_body():
+def test_build_pull_request_body_refs_and_closes():
     body = build_pull_request_body(
         summary="Implement board synchronizer and Projects v2 integration.",
-        issue_number=4,
+        issue_numbers=[4, 17, 21],
+        issue_action="Refs",
         milestone="v0.1.0 (layer:planning)",
         verification_steps=[
             "All unit tests pass",
@@ -100,7 +132,10 @@ def test_build_pull_request_body():
         ],
     )
     assert "## Summary" in body
-    assert "Closes #4" in body
+    assert "## Related Issues" in body
+    assert "Refs #4" in body
+    assert "Refs #17" in body
+    assert "Refs #21" in body
     assert "v0.1.0 (layer:planning)" in body
     assert "- [x] All unit tests pass" in body
 
@@ -119,7 +154,7 @@ def test_create_pull_request_mock_client():
 
     mock_client = httpx.Client(transport=httpx.MockTransport(handler))
     res = create_pull_request(
-        title="feat(planning): sprint sync and projects v2 (#4)",
+        title="feat(planning): sprint sync and projects v2 (Refs #4)",
         body="Pull request body",
         head_branch="layer/planning",
         base_branch="develop",

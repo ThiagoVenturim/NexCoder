@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from enum import StrEnum
 from typing import Any
@@ -10,6 +11,8 @@ import networkx as nx
 from pydantic import BaseModel, ConfigDict, Field
 
 from faccoder_code_intel.models import RelationshipKind, Symbol, SymbolType
+
+logger = logging.getLogger(__name__)
 
 
 class EdgeType(StrEnum):
@@ -50,9 +53,9 @@ class CodeGraph:
     """Directed multirelational graph representing code architecture and dependencies."""
 
     def __init__(self) -> None:
-        self.graph = nx.DiGraph()
+        self.graph = nx.MultiDiGraph()
         self._name_index: dict[str, list[str]] = {}
-        self._qname_index: dict[str, str] = {}
+        self._qname_index: dict[str, list[str]] = {}
 
     def add_symbol(self, symbol: Symbol) -> None:
         """Add a symbol node into the code graph."""
@@ -73,7 +76,7 @@ class CodeGraph:
         )
 
         self._name_index.setdefault(symbol.name, []).append(node_id)
-        self._qname_index[symbol.qualified_name] = node_id
+        self._qname_index.setdefault(symbol.qualified_name, []).append(node_id)
 
         # Automatic parent-child contains edge
         if symbol.parent_id and self.graph.has_node(symbol.parent_id):
@@ -92,7 +95,10 @@ class CodeGraph:
 
             for rel_kind, targets in sym.relationships.items():
                 for target_name in targets:
-                    target_id = self.resolve_symbol_id(target_name, context_file=sym.location.file_path)
+                    try:
+                        target_id = self.resolve_symbol_id(target_name, context_file=sym.location.file_path)
+                    except ValueError:
+                        target_id = None
                     if target_id and target_id != node_id:
                         edge_type = self._map_rel_to_edge(rel_kind)
                         self.add_edge(node_id, target_id, edge_type)
@@ -105,18 +111,21 @@ class CodeGraph:
             return
         edge_kind = kind.value if isinstance(kind, EdgeType) else str(kind)
         meta = metadata or {}
-        # We store edge data with kind and metadata
-        self.graph.add_edge(source_id, target_id, kind=edge_kind, **meta)
+        # In MultiDiGraph, key distinguishes multiple edges between the same pair of symbols
+        self.graph.add_edge(source_id, target_id, key=edge_kind, kind=edge_kind, **meta)
 
     def resolve_symbol_id(self, name_or_id: str, context_file: str | None = None) -> str | None:
-        """Resolve a name or qualified name to a concrete symbol ID."""
+        """Resolve a name or qualified name to a concrete symbol ID without ambiguous fallbacks."""
         if self.graph.has_node(name_or_id):
             return name_or_id
 
-        if name_or_id in self._qname_index:
-            return self._qname_index[name_or_id]
+        # 1. Exact unique match in qualified name index
+        q_cands = self._qname_index.get(name_or_id, [])
+        if len(q_cands) == 1:
+            return q_cands[0]
 
-        candidates = self._name_index.get(name_or_id, [])
+        # 2. Gather candidates from qname or short name
+        candidates = q_cands if q_cands else self._name_index.get(name_or_id, [])
         if not candidates:
             return None
 
@@ -125,12 +134,19 @@ class CodeGraph:
 
         # Prioritize matching file context
         if context_file:
-            for cand in candidates:
-                cand_data = self.graph.nodes[cand]
-                if cand_data.get("file_path") == context_file:
-                    return cand
+            matching = [cand for cand in candidates if self.graph.nodes[cand].get("file_path") == context_file]
+            if len(matching) == 1:
+                return matching[0]
+            if len(matching) > 1:
+                raise ValueError(
+                    f"Ambiguous symbol name '{name_or_id}' in context file '{context_file}'. "
+                    f"Matches multiple symbols: {matching}. Use qualified_name to disambiguate."
+                )
 
-        return candidates[0]
+        raise ValueError(
+            f"Ambiguous symbol name '{name_or_id}' matches {len(candidates)} symbols: {candidates}. "
+            "Provide qualified_name or context_file to disambiguate."
+        )
 
     def _map_rel_to_edge(self, rel: str) -> EdgeType:
         rel_lower = rel.lower()
@@ -153,12 +169,19 @@ class CodeGraph:
         symbol_id: str,
         max_depth: int = 3,
         edge_kinds: list[str] | None = None,
+        include_contains: bool = False,
     ) -> ImpactReport:
         """Perform reverse-dependency blast radius analysis for a modified symbol.
 
         Finds all symbols directly or indirectly depending on `symbol_id`.
+        By default, `contains` edges are excluded so parent containers are not
+        falsely marked as dependents when an internal member changes.
         """
-        resolved_id = self.resolve_symbol_id(symbol_id)
+        try:
+            resolved_id = self.resolve_symbol_id(symbol_id)
+        except ValueError:
+            resolved_id = None
+
         if not resolved_id or not self.graph.has_node(resolved_id):
             return ImpactReport(
                 target_symbol_id=symbol_id,
@@ -189,35 +212,38 @@ class CodeGraph:
 
             # Look at predecessors: nodes that have an edge pointing TO curr_id
             for pred in self.graph.predecessors(curr_id):
-                edge_data = self.graph.get_edge_data(pred, curr_id) or {}
-                kind = edge_data.get("kind", "calls")
+                edge_dict = self.graph.get_edge_data(pred, curr_id) or {}
+                for key, edge_data in edge_dict.items():
+                    kind = edge_data.get("kind", key)
 
-                if edge_kinds and kind not in edge_kinds:
-                    continue
+                    if not include_contains and kind == EdgeType.CONTAINS:
+                        continue
+                    if edge_kinds and kind not in edge_kinds:
+                        continue
 
-                new_depth = depth + 1
-                if pred not in visited or visited[pred] > new_depth:
-                    visited[pred] = new_depth
-                    path = paths[curr_id] + [pred]
-                    paths[pred] = path
+                    new_depth = depth + 1
+                    if pred not in visited or visited[pred] > new_depth:
+                        visited[pred] = new_depth
+                        path = paths[curr_id] + [pred]
+                        paths[pred] = path
 
-                    pred_data = self.graph.nodes[pred]
-                    p_file = pred_data.get("file_path", "")
-                    if p_file:
-                        affected_files.add(p_file)
+                        pred_data = self.graph.nodes[pred]
+                        p_file = pred_data.get("file_path", "")
+                        if p_file:
+                            affected_files.add(p_file)
 
-                    affected.append(
-                        AffectedSymbol(
-                            symbol_id=pred,
-                            name=pred_data.get("name", pred),
-                            symbol_type=SymbolType(pred_data.get("symbol_type", "function")),
-                            file_path=p_file,
-                            depth=new_depth,
-                            relationship=kind,
-                            path=path,
+                        affected.append(
+                            AffectedSymbol(
+                                symbol_id=pred,
+                                name=pred_data.get("name", pred),
+                                symbol_type=SymbolType(pred_data.get("symbol_type", "function")),
+                                file_path=p_file,
+                                depth=new_depth,
+                                relationship=kind,
+                                path=path,
+                            )
                         )
-                    )
-                    queue.append((pred, new_depth))
+                        queue.append((pred, new_depth))
 
         # Calculate impact score based on breadth, depth, and file spread
         total_deps = len(affected)
@@ -249,9 +275,14 @@ class CodeGraph:
         symbol_id: str,
         max_depth: int = 3,
         edge_kinds: list[str] | None = None,
+        include_contains: bool = True,
     ) -> list[str]:
         """Return list of symbol IDs that `symbol_id` depends on (forward traversal)."""
-        resolved_id = self.resolve_symbol_id(symbol_id)
+        try:
+            resolved_id = self.resolve_symbol_id(symbol_id)
+        except ValueError:
+            resolved_id = None
+
         if not resolved_id or not self.graph.has_node(resolved_id):
             return []
 
@@ -264,13 +295,16 @@ class CodeGraph:
                 continue
 
             for succ in self.graph.successors(curr_id):
-                edge_data = self.graph.get_edge_data(curr_id, succ) or {}
-                kind = edge_data.get("kind", "calls")
-                if edge_kinds and kind not in edge_kinds:
-                    continue
-                if succ not in visited:
-                    visited.add(succ)
-                    queue.append((succ, depth + 1))
+                edge_dict = self.graph.get_edge_data(curr_id, succ) or {}
+                for key, edge_data in edge_dict.items():
+                    kind = edge_data.get("kind", key)
+                    if not include_contains and kind == EdgeType.CONTAINS:
+                        continue
+                    if edge_kinds and kind not in edge_kinds:
+                        continue
+                    if succ not in visited:
+                        visited.add(succ)
+                        queue.append((succ, depth + 1))
 
         return sorted(visited)
 

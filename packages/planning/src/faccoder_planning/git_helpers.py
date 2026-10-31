@@ -1,6 +1,6 @@
 """Git automation helpers: branches, conventional commits, and pull requests.
 
-Enforces zero emojis, strict rejection of AI co-author trailers,
+Enforces zero emojis, strict rejection of AI co-author trailers and generated-by notes,
 and dry-run safety across all write operations.
 """
 
@@ -28,8 +28,11 @@ EMOJI_PATTERN = re.compile(
     "]"
 )
 
-# Strips any co-author trailers from commit messages
-CO_AUTHOR_PATTERN = re.compile(r"(?im)^\s*co-authored-by:.*$", re.MULTILINE)
+# Strips any co-author trailers and 'Generated with' lines from commit messages and PR bodies
+ATTRIBUTION_STRIP_PATTERN = re.compile(
+    r"(?im)^\s*(?:co-authored-by|generated[- ](?:with|by)|authored-by)[:\s].*$",
+    re.MULTILINE,
+)
 
 ALLOWED_COMMIT_TYPES = {
     "feat",
@@ -77,10 +80,33 @@ def validate_no_emoji(text: str, context: str = "Text") -> None:
 
 
 def strip_co_author_trailers(text: str) -> str:
-    """Remove any Co-Authored-By trailers to honor open-source attribution policy."""
-    cleaned = CO_AUTHOR_PATTERN.sub("", text)
+    """Remove any Co-Authored-By and Generated-with lines to honor open-source attribution policy."""
+    cleaned = ATTRIBUTION_STRIP_PATTERN.sub("", text)
     # Remove consecutive blank lines left by trailer stripping
     return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+
+
+def validate_branch_name(name: str) -> None:
+    """Validate branch name according to git ref format and ban emojis."""
+    validate_no_emoji(name, "Branch name")
+    if not name or name.strip() != name:
+        raise ValueError(f"Branch name cannot be empty or have leading/trailing whitespace: '{name}'")
+    invalid_chars = [" ", "~", "^", ":", "\\", "?", "*", "[", "@{"]
+    if any(c in name for c in invalid_chars) or ".." in name or "//" in name or name.endswith("/"):
+        raise ValueError(f"Invalid git branch name: '{name}'")
+
+    try:
+        res = subprocess.run(  # noqa: S603
+            ["git", "check-ref-format", "--branch", name],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if res.returncode != 0:
+            err = res.stderr.strip() or "failed git check-ref-format"
+            raise ValueError(f"Invalid git branch name '{name}': {err}")
+    except FileNotFoundError:
+        pass
 
 
 def build_conventional_commit(
@@ -88,9 +114,11 @@ def build_conventional_commit(
     description: str,
     scope: str | None = None,
     issue_number: int | None = None,
+    issue_numbers: list[int] | None = None,
+    issue_action: str = "Refs",
     body: str | None = None,
 ) -> str:
-    """Construct a clean, conventional commit message with zero emojis and no co-author trailers."""
+    """Construct a clean conventional commit message with zero emojis and no co-author trailers."""
     type_normalized = type_.strip().lower()
     if type_normalized not in ALLOWED_COMMIT_TYPES:
         raise ValueError(f"Invalid commit type '{type_}'. Must be one of: {sorted(ALLOWED_COMMIT_TYPES)}")
@@ -99,9 +127,22 @@ def build_conventional_commit(
     validate_no_emoji(clean_desc, "Commit description")
 
     scope_part = f"({scope.strip().lower()})" if scope and scope.strip() else ""
-    issue_part = f" (#{issue_number})" if issue_number else ""
 
-    header = f"{type_normalized}{scope_part}: {clean_desc}{issue_part}"
+    # Collect issue numbers
+    all_issues: list[int] = []
+    if issue_number:
+        all_issues.append(issue_number)
+    if issue_numbers:
+        for num in issue_numbers:
+            if num not in all_issues:
+                all_issues.append(num)
+
+    if all_issues:
+        refs_formatted = ", ".join(f"{issue_action} #{num}" for num in all_issues)
+        header = f"{type_normalized}{scope_part}: {clean_desc} ({refs_formatted})"
+    else:
+        header = f"{type_normalized}{scope_part}: {clean_desc}"
+
     validate_no_emoji(header, "Commit header")
 
     if not body or not body.strip():
@@ -168,9 +209,9 @@ def create_branch(
     cwd: str | None = None,
     dry_run: bool = True,
 ) -> GitResult:
-    """Create a new working branch from base_branch safely."""
-    validate_no_emoji(name, "Branch name")
-    validate_no_emoji(base_branch, "Base branch name")
+    """Create a new working branch from base_branch safely after format validation."""
+    validate_branch_name(name)
+    validate_branch_name(base_branch)
 
     if checkout:
         cmd = ["checkout", "-b", name, base_branch]
@@ -212,17 +253,28 @@ def execute_commit(
 def build_pull_request_body(
     summary: str,
     issue_number: int | None = None,
+    issue_numbers: list[int] | None = None,
+    issue_action: str = "Refs",
     milestone: str | None = None,
     verification_steps: list[str] | None = None,
 ) -> str:
-    """Build a standard, clean pull request body without emojis."""
+    """Build a standard, clean pull request body without emojis, supporting Refs or Closes."""
     validate_no_emoji(summary, "PR summary")
     sections: list[str] = []
 
     sections.append(f"## Summary\n{summary.strip()}")
 
+    all_issues: list[int] = []
     if issue_number:
-        sections.append(f"## Related Issue\nCloses #{issue_number}")
+        all_issues.append(issue_number)
+    if issue_numbers:
+        for num in issue_numbers:
+            if num not in all_issues:
+                all_issues.append(num)
+
+    if all_issues:
+        lines = [f"{issue_action} #{num}" for num in all_issues]
+        sections.append("## Related Issues\n" + "\n".join(lines))
 
     if milestone:
         sections.append(f"## Milestone\n{milestone.strip()}")

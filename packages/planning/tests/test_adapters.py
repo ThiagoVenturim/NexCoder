@@ -198,3 +198,67 @@ def test_gitlab_and_azure_adapters_dry_run():
     res_az = azure.sync_task(task)
     assert res_az.action == "dry_run_create"
     assert res_az.dry_run is True
+
+
+def test_azure_devops_tag_persistence_and_lifecycle():
+    task = Task(
+        id="TSK-02",
+        faccoder_id="azure-tag-uuid-99",
+        title="Deploy Pipeline",
+        description="Task for CI/CD",
+        estimate_hours=3.0,
+    )
+
+    created_patch_ops = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url_str = str(request.url)
+        if "_apis/wit/workitems/$Task" in url_str and request.method == "POST":
+            import json
+
+            patch_ops = json.loads(request.content.decode())
+            created_patch_ops.extend(patch_ops)
+            return httpx.Response(
+                200,
+                json={
+                    "id": 501,
+                    "fields": {
+                        "System.Title": "Deploy Pipeline",
+                        "System.Description": "HTML desc without comment",  # simulation of HTML normalization
+                        "System.Tags": "faccoder-id:azure-tag-uuid-99; backend",
+                    },
+                    "_links": {"html": {"href": "https://dev.azure.com/org/proj/_workitems/edit/501"}},
+                },
+            )
+        return httpx.Response(404)
+
+    mock_client = httpx.Client(transport=httpx.MockTransport(handler))
+    with AzureDevOpsAdapter(
+        organization="org", project="proj", pat="pat-token", client=mock_client, dry_run=False
+    ) as adapter:
+        res = adapter.create_issue(task)
+        assert res.action == "created"
+        assert res.remote_id == "501"
+
+    # Verify that tags patch op included the tag faccoder-id:azure-tag-uuid-99
+    tag_op = next((op for op in created_patch_ops if op.get("path") == "/fields/System.Tags"), None)
+    assert tag_op is not None
+    assert "faccoder-id:azure-tag-uuid-99" in tag_op["value"]
+
+
+def test_client_context_manager_lifecycle():
+    adapter_gh = GitHubAdapter(repo="org/repo", token="dummy")
+    with adapter_gh as a:
+        client_gh = a._client
+        assert client_gh is not None
+        assert not client_gh.is_closed
+    assert client_gh.is_closed
+    assert adapter_gh._client is None
+
+    adapter_az = AzureDevOpsAdapter(organization="org", project="proj", pat="dummy")
+    with adapter_az as a:
+        client_az = a._client
+        assert client_az is not None
+        assert not client_az.is_closed
+    assert client_az.is_closed
+    assert adapter_az._client is None
