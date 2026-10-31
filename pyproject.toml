@@ -17,5 +17,11 @@ ignore = ["S101", "S105", "S106"]
 
 [tool.pytest.ini_options]
 testpaths = ["packages"]
-pythonpath = ["packages/core/src", "packages/code-intel/src", "packages/planning/src"]
-addopts = "-q"
+pythonpath = [
+    "packages/core/src",
+    "packages/code-intel/src",
+    "packages/agents/src",
+    "packages/planning/src",
+    "packages/ideation/src",
+]
+addopts = "-q --import-mode=importlib"
