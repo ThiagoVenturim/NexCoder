@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "faccoder-code-intel"
+version = "0.1.0"
+description = "Code intelligence for faccoder: symbol extraction, AST parsers (tree-sitter, Delphi), chunking, and code retrieval."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+  "faccoder-core>=0.1.0",
+  "tree-sitter>=0.22.0",
+  "tree-sitter-language-pack>=0.2.0",
+  "pydantic>=2.7",
+  "numpy>=1.26",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/faccoder_code_intel"]
