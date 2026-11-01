@@ -35,15 +35,16 @@ def test_file_scheme_always_allowed() -> None:
 
 
 def test_domain_allowlist() -> None:
-    config = WebCaptureConfig(allowed_domains=["example.com", "api.internal.org"])
+    config = WebCaptureConfig(allowed_domains=["example.com", "api.example.org", "localhost:8080"])
     enforcer = PolicyEnforcer(config)
 
     enforcer.validate_url("https://example.com/home")
     enforcer.validate_url("https://sub.example.com/profile")
-    enforcer.validate_url("https://api.internal.org/v1")
+    enforcer.validate_url("https://api.example.org/v1")
+    enforcer.validate_url("http://localhost:8080/app")
 
     with pytest.raises(DomainNotAllowedError):
-        enforcer.validate_url("https://external.org/landing")
+        enforcer.validate_url("https://example.net/landing")
 
     with pytest.raises(DomainNotAllowedError):
         enforcer.validate_url("https://fakeexample.com")

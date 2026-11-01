@@ -20,7 +20,8 @@ Web and desktop capture, stable selectors extraction, test generation, and QA ch
 
 ## Origin
 
-This package is part of the faccoder software development platform. It synthesizes architectural principles and testing patterns developed across large-scale enterprise automation platforms (including ApoIA and lochome), providing a clean, generic, and vendor-neutral capture and QA pipeline.
+Ported and generalized for the faccoder open-source platform, distilling testing patterns and screen
+capture mechanisms from earlier enterprise platforms into a vendor-neutral, offline-capable package.
 
 ## Installation
 

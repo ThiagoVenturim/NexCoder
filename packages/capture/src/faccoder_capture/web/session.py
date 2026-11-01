@@ -3,11 +3,34 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 from faccoder_capture.models import CaptchaDetectedError, ReadOnlyViolationError, WebCaptureConfig
 from faccoder_capture.web.policy import PolicyEnforcer
+
+MUTATING_KEYWORDS = (
+    "delete",
+    "post",
+    "put",
+    "patch",
+    "update",
+    "submit",
+    "create",
+    "remove",
+    "drop",
+    "click",
+    "fill",
+    "type",
+    "press",
+    "check",
+    "uncheck",
+    "select_option",
+    "drag",
+    "dispatch_event",
+    "set_input_files",
+)
 
 
 class SessionManager:
@@ -34,6 +57,10 @@ class SessionManager:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
+        try:
+            os.chmod(file_path, 0o600)
+        except OSError:
+            pass
 
     def validate_session_page(self, url: str, content: str) -> None:
         """Ensure session page navigation complies with safety policies."""
@@ -45,8 +72,7 @@ class SessionManager:
 
     def execute_read_only_action(self, action_name: str, fn: Any, *args: Any, **kwargs: Any) -> Any:
         """Execute action only if non-mutating when in read-only mode."""
-        mutating_keywords = ("delete", "post", "update", "submit", "create", "remove", "drop")
-        is_mutating = any(kw in action_name.lower() for kw in mutating_keywords)
+        is_mutating = any(kw in action_name.lower() for kw in MUTATING_KEYWORDS)
         if self.config.read_only and is_mutating:
             raise ReadOnlyViolationError(
                 f"Action '{action_name}' is disallowed in read-only session mode."

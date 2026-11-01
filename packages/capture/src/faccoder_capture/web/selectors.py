@@ -9,6 +9,9 @@ from faccoder_capture.models import StableSelector
 
 TEST_ID_ATTRS = ("data-testid", "data-test", "data-cy", "data-qa", "data-test-id")
 INTERACTIVE_TAGS = {"button", "input", "select", "textarea", "a", "form"}
+VOID_TAGS = {
+    "input", "img", "br", "hr", "meta", "link", "area", "base", "col", "embed", "param", "source", "track", "wbr"
+}
 
 
 class ElementNode:
@@ -78,14 +81,18 @@ class DOMParser(HTMLParser):
         self.elements: list[ElementNode] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        tag_lower = tag.lower()
         attr_dict = {k.lower(): v or "" for k, v in attrs}
-        sibling_count = sum(1 for c in self.current.children if c.tag == tag.lower()) + 1
-        node = ElementNode(tag, attr_dict, parent=self.current, index_in_parent=sibling_count)
+        sibling_count = sum(1 for c in self.current.children if c.tag == tag_lower) + 1
+        node = ElementNode(tag_lower, attr_dict, parent=self.current, index_in_parent=sibling_count)
         self.current.children.append(node)
         self.elements.append(node)
-        self.current = node
+        if tag_lower not in VOID_TAGS:
+            self.current = node
 
     def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in VOID_TAGS:
+            return
         if self.current.parent:
             self.current = self.current.parent
 
@@ -161,14 +168,15 @@ class SelectorExtractor:
         # 3. Role + accessible name
         if role and name:
             safe_name = name.replace("'", "\\'")
-            if "aria-label" in el.attrs:
-                css = f"[role='{role}'][aria-label='{safe_name}']"
-            else:
-                css = f"{tag}[aria-label='{safe_name}']"
+            css = (
+                f"[role='{role}'][aria-label='{safe_name}']"
+                if "aria-label" in el.attrs
+                else f"{tag}[aria-label='{safe_name}']"
+            )
             return StableSelector(
                 primary=f"getByRole('{role}', name='{safe_name}')",
                 css=css if "aria-label" in el.attrs else f"{tag}:has-text('{safe_name}')",
-                xpath=f"//{tag}[@role='{role}' and contains(., '{safe_name}')]",
+                xpath=f"//{tag}[(@role='{role}' or not(@role)) and contains(., '{safe_name}')]",
                 tag=tag,
                 role=role,
                 name=name,
@@ -229,4 +237,9 @@ class SelectorExtractor:
                 break
             parts.append(f"{curr.tag}[{curr.index_in_parent}]")
             curr = curr.parent
-        return "/" + "/".join(reversed(parts)) if parts else f"//{el.tag}"
+        if not parts:
+            return f"//{el.tag}"
+        rev = list(reversed(parts))
+        if rev[0].startswith("//"):
+            return rev[0] + ("/" + "/".join(rev[1:]) if len(rev) > 1 else "")
+        return "/" + "/".join(rev)

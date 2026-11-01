@@ -61,7 +61,17 @@ def test_execute_read_only_action() -> None:
     assert called is True
 
     # Mutating actions prohibited in read-only mode
-    for mutating_action in ("submit_form", "delete_item", "post_message", "update_profile", "remove_user"):
+    for mutating_action in (
+        "submit_form",
+        "delete_item",
+        "post_message",
+        "update_profile",
+        "remove_user",
+        "click_button",
+        "fill_input",
+        "press_key",
+        "check_box",
+    ):
         with pytest.raises(ReadOnlyViolationError):
             manager_ro.execute_read_only_action(mutating_action, dummy_func, 1)
 

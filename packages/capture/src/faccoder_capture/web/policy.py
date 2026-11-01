@@ -53,15 +53,17 @@ class PolicyEnforcer:
             # Local file fixtures are always allowed
             return
 
-        domain = parsed.netloc.lower()
+        hostname = (parsed.hostname or "").lower()
         if self.config.allowed_domains:
             matched = any(
-                domain == allowed.lower() or domain.endswith("." + allowed.lower())
+                hostname == allowed.lower()
+                or hostname.endswith("." + allowed.lower())
+                or parsed.netloc.lower() == allowed.lower()
                 for allowed in self.config.allowed_domains
             )
             if not matched:
                 raise DomainNotAllowedError(
-                    f"Domain '{domain}' is not in allowed domains: {self.config.allowed_domains}"
+                    f"Domain '{parsed.netloc}' is not in allowed domains: {self.config.allowed_domains}"
                 )
 
         if self.config.honor_robots_txt:

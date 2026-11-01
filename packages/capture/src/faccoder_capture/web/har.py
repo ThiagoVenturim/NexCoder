@@ -7,7 +7,17 @@ from typing import Any
 
 from faccoder_capture.models import NetworkEntry
 
-SENSITIVE_HEADERS = {"authorization", "cookie", "set-cookie", "x-api-key", "proxy-authorization"}
+SENSITIVE_HEADERS = {
+    "authorization",
+    "cookie",
+    "set-cookie",
+    "x-api-key",
+    "proxy-authorization",
+    "x-auth-token",
+    "x-csrf-token",
+    "x-session-token",
+    "x-xsrf-token",
+}
 
 
 def sanitize_headers(headers: dict[str, str]) -> dict[str, str]:

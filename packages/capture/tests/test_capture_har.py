@@ -15,6 +15,9 @@ def test_sanitize_headers() -> None:
         "Set-Cookie": "jwt=abcd; Secure",
         "X-API-KEY": "supersecretkey",
         "Proxy-Authorization": "Basic dXNlcjpwYXNz",
+        "X-Auth-Token": "token-123",
+        "x-csrf-token": "csrf-456",
+        "X-Session-Token": "sess-789",
         "User-Agent": "test-agent",
     }
     sanitized = sanitize_headers(headers)
@@ -26,6 +29,9 @@ def test_sanitize_headers() -> None:
     assert sanitized["Set-Cookie"] == "[REDACTED]"
     assert sanitized["X-API-KEY"] == "[REDACTED]"
     assert sanitized["Proxy-Authorization"] == "[REDACTED]"
+    assert sanitized["X-Auth-Token"] == "[REDACTED]"
+    assert sanitized["x-csrf-token"] == "[REDACTED]"
+    assert sanitized["X-Session-Token"] == "[REDACTED]"
 
 
 def test_har_recorder_add_entry() -> None:

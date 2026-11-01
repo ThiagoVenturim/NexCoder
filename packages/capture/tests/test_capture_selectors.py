@@ -129,3 +129,40 @@ def test_tabindex_makes_element_candidate() -> None:
     selectors = extractor.extract_from_html(html)
     assert len(selectors) == 1
     assert selectors[0].tag == "div"
+
+
+def test_void_elements_do_not_parent_siblings() -> None:
+    html = """
+    <form id="login-form">
+      <input type="text" id="username" placeholder="User">
+      <input type="password" id="password" placeholder="Pass">
+      <button type="submit" id="submit-btn">Login</button>
+    </form>
+    """
+    parser = DOMParser()
+    parser.feed(html)
+
+    form_node = next(el for el in parser.elements if el.tag == "form")
+    input_nodes = [el for el in parser.elements if el.tag == "input"]
+    button_node = next(el for el in parser.elements if el.tag == "button")
+
+    # Void inputs must have 0 children
+    for inp in input_nodes:
+        assert len(inp.children) == 0
+
+    # Form node must be parent of inputs and button
+    assert button_node.parent == form_node
+    assert len(form_node.children) == 3
+
+
+def test_xpath_inside_id_container_has_no_triple_slashes() -> None:
+    html = """
+    <form id="login-form">
+      <input type="text">
+    </form>
+    """
+    extractor = SelectorExtractor()
+    selectors = extractor.extract_from_html(html)
+    input_sel = next(s for s in selectors if s.tag == "input")
+    assert not input_sel.xpath.startswith("///")
+    assert input_sel.xpath.startswith("//*[@id='login-form']/input")
