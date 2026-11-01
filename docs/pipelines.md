@@ -75,8 +75,10 @@ Enables dynamic routing based on Boolean conditions or predicate functions:
 ```python
 from faccoder_agents.engine.blocks import ConditionBlock
 
+
 def tests_passed(state: dict) -> bool:
     return state.get("test_exit_code") == 0
+
 
 router = ConditionBlock(
     name="check-test-result",

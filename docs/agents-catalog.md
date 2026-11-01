@@ -91,10 +91,7 @@ qa_engineer = catalog.get("test-engineer")
 print(f"Loaded: {qa_engineer.name} [Tier: {qa_engineer.tier}]")
 
 # Render parameterized prompt
-prompt = qa_engineer.render_prompt(
-    module_name="billing",
-    coverage_target="85%"
-)
+prompt = qa_engineer.render_prompt(module_name="billing", coverage_target="85%")
 ```
 
 ### Exporting for Claude Code and External Agents

@@ -110,7 +110,7 @@ index = CodeSearchIndex("codebase.db", embedder=embedder)
 index.index_code(
     file_path="service/payment.py",
     content="class PaymentService:\n    def charge(self, amount: float): pass",
-    language="python"
+    language="python",
 )
 
 # 3. Query using hybrid retrieval with RRF

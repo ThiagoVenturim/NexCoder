@@ -80,7 +80,7 @@ config = SprintCapacityConfig(
     sprint_duration_days=10,
     daily_working_hours=8.0,
     buffer_reserve_percent=0.20,  # 20% reserve for meetings and unplanned overhead
-    historical_velocity_factor=0.90, # 90% completion rate based on past sprints
+    historical_velocity_factor=0.90,  # 90% completion rate based on past sprints
 )
 
 team = [

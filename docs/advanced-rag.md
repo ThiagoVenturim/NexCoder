@@ -44,7 +44,7 @@ In `faccoder-code-intel`:
 results = index.search(
     query="how do we handle expired authentication sessions?",
     top_k=5,
-    hyde=True  # Enables HyDE synthesis before vector lookup
+    hyde=True,  # Enables HyDE synthesis before vector lookup
 )
 ```
 

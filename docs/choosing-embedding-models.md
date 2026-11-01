@@ -41,22 +41,14 @@ Models specifically trained for code (such as `voyage-code-3` or `bge-m3` with i
 ```python
 from faccoder_core.retrieval.embeddings import build_embedder
 
-embedder = build_embedder(
-    provider="sentence-transformers",
-    model_name="BAAI/bge-m3",
-    dimensions=1024
-)
+embedder = build_embedder(provider="sentence-transformers", model_name="BAAI/bge-m3", dimensions=1024)
 vectors = embedder.embed_documents(["def calculate_tax(subtotal): return subtotal * 0.08"])
 ```
 
 ### 2. Ollama Embeddings
 
 ```python
-embedder = build_embedder(
-    provider="ollama",
-    model_name="nomic-embed-text",
-    base_url="http://localhost:11434"
-)
+embedder = build_embedder(provider="ollama", model_name="nomic-embed-text", base_url="http://localhost:11434")
 ```
 
 ### 3. Commercial API (OpenAI / Voyage)
@@ -65,7 +57,7 @@ embedder = build_embedder(
 embedder = build_embedder(
     provider="openai",
     model_name="text-embedding-3-small",
-    dimensions=512  # MRL dimension truncation
+    dimensions=512,  # MRL dimension truncation
 )
 ```
 

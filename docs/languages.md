@@ -26,16 +26,16 @@ Regardless of source language, `faccoder-code-intel` maps parsed entities into a
 
 ```python
 class Symbol(BaseModel):
-    id: str                    # Unique fully-qualified symbol identifier
-    name: str                  # Symbol identifier name (e.g. "charge_card")
-    symbol_type: SymbolType    # FUNCTION, METHOD, CLASS, INTERFACE, ENUM, VARIABLE
-    file_path: str             # Relative file path inside repository
-    line_start: int            # 1-indexed start line
-    line_end: int              # 1-indexed end line
-    signature: str             # Parameter list, return types, qualifiers
-    enclosing_symbol: str | None # Parent class or module ID
-    docstring: str | None      # Extracted documentation or comment header
-    language: str              # Standard language identifier
+    id: str  # Unique fully-qualified symbol identifier
+    name: str  # Symbol identifier name (e.g. "charge_card")
+    symbol_type: SymbolType  # FUNCTION, METHOD, CLASS, INTERFACE, ENUM, VARIABLE
+    file_path: str  # Relative file path inside repository
+    line_start: int  # 1-indexed start line
+    line_end: int  # 1-indexed end line
+    signature: str  # Parameter list, return types, qualifiers
+    enclosing_symbol: str | None  # Parent class or module ID
+    docstring: str | None  # Extracted documentation or comment header
+    language: str  # Standard language identifier
 ```
 
 This unified representation enables cross-language RAG, GraphRAG community detection, and consistent agent reasoning.
