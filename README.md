@@ -169,10 +169,10 @@ Every contribution to `faccoder` adheres to strict automated repository standard
 
 ## Origin
 
-`faccoder` originated from field-tested enterprise artificial intelligence systems developed by Thiago Venturim:
+`faccoder` originated from field-tested enterprise artificial intelligence systems developed by Thiago Venturim across large-scale production environments:
 
-- **ApoIA**: Internal enterprise GenAI platform proven across 100+ production autonomous agents, 11 specialized skills, and multi-million token legacy codebases.
-- **lochome**: Architectural design framework spanning 70+ specialized engineering personas, capacity models, and automated project tracking.
+- **Enterprise Autonomous Agents Platform**: Proven in production across 100+ autonomous agents, specialized skills catalog, and legacy multi-million line codebases.
+- **Engineering Delivery Framework**: Covering 70+ specialized engineering personas, capacity models, and automated development synchronization.
 
 The techniques, retrieval mechanisms, and governance patterns forged in these systems have been synthesized into `faccoder` as a vendor-neutral, generic, open-source software delivery framework.
 

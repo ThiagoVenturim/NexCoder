@@ -76,15 +76,17 @@ Where:
 - $\lambda$ is the diversity tuning parameter (default: 0.70). A value of 1.0 is pure relevance; lower values penalize redundancy.
 
 ```python
-from faccoder_core.retrieval import mmr_select
+from faccoder_core import mmr_select
 
-selected_docs = mmr_select(
-    query_vector=q_vec,
-    candidate_vectors=doc_vecs,
-    candidate_docs=doc_list,
-    top_k=5,
-    lambda_param=0.70
+# doc_embeddings: matrix/list of embedding vectors for candidate documents
+# query_embedding: vector for the search query
+selected_indices = mmr_select(
+    doc_embeddings=candidate_vectors,
+    query_embedding=query_vector,
+    k=5,
+    lambda_mult=0.70,
 )
+selected_docs = [candidate_docs[i] for i in selected_indices]
 ```
 
 ---

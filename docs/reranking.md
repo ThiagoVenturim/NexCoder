@@ -70,23 +70,23 @@ By restricting the computationally expensive cross-encoder to the top 20-30 cand
 from faccoder_core.retrieval import CrossEncoderReranker
 
 # Initialize reranker (e.g. BGE-Reranker-v2-M3)
-reranker = CrossEncoderReranker(model_name="BAAI/bge-reranker-v2-m3")
+reranker = CrossEncoderReranker(model="BAAI/bge-reranker-v2-m3")
 
 candidates = [
     {"id": "doc1", "text": "def process_payment(amount): ..."},
     {"id": "doc2", "text": "class PaymentLogger: ..."},
-    {"id": "doc3", "text": "def refund_payment(transaction_id): ..."}
+    {"id": "doc3", "text": "def refund_payment(transaction_id): ..."},
 ]
 
 # Rerank candidates against the query
 reranked = reranker.rerank(
     query="how to issue a refund to a customer",
-    documents=candidates,
-    top_k=2
+    docs=candidates,
+    top_k=2,
 )
 
 for hit in reranked:
-    print(f"Score: {hit['rerank_score']:.4f} | ID: {hit['id']}")
+    print(f"Score: {hit['_rerank_score']:.4f} | ID: {hit['id']}")
 ```
 
 If cross-encoder libraries are not installed or offline testing is requested, `faccoder` gracefully falls back to normalized RRF ranks without raising exceptions.

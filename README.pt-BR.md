@@ -169,10 +169,10 @@ Qualquer contribuicao para o `faccoder` deve cumprir os seguintes padroes automa
 
 ## Origem
 
-O `faccoder` tem sua origem em sistemas corporativos de inteligencia artificial aplicados em larga escala concebidos por Thiago Venturim:
+O `faccoder` originou-se de sistemas corporativos de inteligencia artificial testados em producao desenvolvidos por Thiago Venturim em ambientes de larga escala:
 
-- **ApoIA**: Plataforma corporativa interna validada em producao com mais de 100 agentes autonomos, 11 habilidades especializadas e sistemas legados com milhoes de linhas de codigo.
-- **lochome**: Framework de engenharia cobrindo mais de 70 personas tecnicas especializadas, modelos de capacidade e sincronizacao automatizada de desenvolvimento.
+- **Plataforma de Agentes Autonomos Corporativos**: Validada em producao com mais de 100 agentes autonomos, catalogo de habilidades especializadas e sistemas legados com milhoes de linhas de codigo.
+- **Framework de Entrega de Engenharia**: Cobrindo mais de 70 personas tecnicas especializadas, modelos de capacidade e sincronizacao automatizada de desenvolvimento.
 
 Os aprendizados, mecanismos de busca semantica e padroes de governanca desses projetos foram consolidados no `faccoder` como uma plataforma aberta, generica e independente de fornecedor.
 

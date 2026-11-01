@@ -33,14 +33,15 @@ Autonomous agent loops can accidentally consume extensive token budgets if unbou
 - **Circuit Trip**: When budget reaches 100%, subsequent model calls are rejected with `BudgetExceededError`, terminating recursive execution safely.
 
 ```python
-from faccoder_core.governance import BudgetGuard
+from faccoder_core.observability.usage import BudgetExceededError, usage_scope
 
-guard = BudgetGuard(max_usd_per_run=1.50)
-
-# Inside the agent step loop
-guard.record_usage(prompt_tokens=1200, completion_tokens=450, model="claude-3-5-sonnet")
-if guard.is_exhausted:
-    raise RuntimeError("Run halted: execution budget cap reached.")
+# Enforce budget scope during pipeline or agent execution
+try:
+    with usage_scope(max_cost_usd=1.50, max_tokens=100_000) as meter:
+        # Agent execution steps...
+        print(f"Current spend: ${meter.cost_usd:.4f}")
+except BudgetExceededError as err:
+    print(f"Run halted safely: {err}")
 ```
 
 ---
@@ -49,10 +50,10 @@ if guard.is_exhausted:
 
 Agents equipped with file system access must be strictly prohibited from modifying files outside the designated workspace or accessing sensitive host configuration (e.g. `~/.ssh`, `/etc/passwd`, `C:\Windows`).
 
-`faccoder_core.utils.path_sandbox` provides path containment validation:
+`faccoder_core.sandbox` provides path containment validation:
 
 ```python
-from faccoder_core.utils import resolve_inside
+from faccoder_core.sandbox import PathOutsideSandboxError, resolve_inside
 
 workspace_root = "/path/to/project"
 
@@ -61,8 +62,10 @@ safe_path = resolve_inside(workspace_root, "src/billing/service.py")
 # Returns: /path/to/project/src/billing/service.py
 
 # Malicious path traversal
-unsafe_path = resolve_inside(workspace_root, "../../.env")
-# Raises: PathTraversalError("Target path escapes designated workspace boundary")
+try:
+    unsafe_path = resolve_inside(workspace_root, "../../.env")
+except PathOutsideSandboxError as err:
+    print(f"Blocked directory traversal: {err}")
 ```
 
 ---

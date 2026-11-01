@@ -73,35 +73,33 @@ If `LANGFUSE_PUBLIC_KEY` is omitted, `faccoder` automatically disables telemetry
 
 ### Automatic Pipeline Tracing
 
-When executing a LangGraph pipeline using `faccoder-agents`, tracing is automatically attached to each block:
+When invoking models or executing pipelines via `faccoder`, tracing is attached automatically through `default_callbacks`:
 
 ```python
-from faccoder_agents.engine import PipelineBuilder
-from faccoder_agents.engine.blocks import PromptBlock
-from faccoder_core.observability import get_langfuse_callback
+from faccoder_core import get_chat_model, load_config
 
-# Obtain the safe callback handler
-handler = get_langfuse_callback(session_id="sprint-planning-42", user_id="lead-architect")
+config = load_config()
 
-builder = PipelineBuilder("sprint-generator")
-builder.add_block(PromptBlock(name="generate-stories", prompt_template="..."))
-pipeline = builder.build()
-
-# Execute with callback attached
-state = pipeline.invoke({"prd": prd_text}, config={"callbacks": [handler]})
+# Models obtained through get_chat_model automatically attach default_callbacks:
+# - Langfuse safe tracing (with automatic circuit breaker)
+# - UsageCallback for per-run token and cost metering
+model = get_chat_model("medium", config=config)
+response = model.invoke("Draft a unit test plan for the authentication module.")
 ```
 
-### Custom Spans and Metrics
+### Attaching Callbacks to Custom Pipelines
 
-You can enrich traces with custom business metadata:
+For explicit callback injection into custom LangGraph pipelines:
 
 ```python
-from faccoder_core.observability import get_trace_manager
+from faccoder_core import load_config
+from faccoder_core.observability.callbacks import default_callbacks
 
-manager = get_trace_manager()
-with manager.span(name="impact-analysis", metadata={"file": "billing.py", "depth": 3}):
-    # Perform code graph blast radius calculation
-    impact_report = graph.impact_analysis("BillingService")
+config = load_config()
+callbacks = default_callbacks(config, tier="medium", model="claude-3-5-sonnet")
+
+# Pass callbacks to LangGraph invoke config
+state = pipeline.invoke({"prd": prd_text}, config={"callbacks": callbacks})
 ```
 
 ---
