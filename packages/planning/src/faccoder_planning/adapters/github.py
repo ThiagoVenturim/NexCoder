@@ -124,6 +124,7 @@ class GitHubAdapter(PlatformAdapter):
                     RemoteIssue(
                         id=str(item["id"]),
                         number=item.get("number"),
+                        node_id=item.get("node_id"),
                         title=item.get("title", ""),
                         body=body,
                         faccoder_id=fid,
@@ -495,10 +496,12 @@ class GitHubAdapter(PlatformAdapter):
                 raw_type = content.get("__typename")
                 content_type = raw_type if raw_type in ("Issue", "PullRequest", "DraftIssue") else "Issue"
                 content_id = str(content.get("id") or node["id"])
+                content_number = content.get("number")
                 items.append(
                     ProjectV2Item(
                         id=str(node["id"]),
                         content_id=content_id,
+                        content_number=content_number,
                         content_type=content_type,
                         title=content.get("title", ""),
                         status=status_field.get("name"),
@@ -513,6 +516,7 @@ class GitHubAdapter(PlatformAdapter):
         item_id: str,
         field_id: str,
         single_select_option_id: str,
+        content_id: str | None = None,
         dry_run: bool | None = None,
     ) -> ProjectV2ItemResult:
         """Update single-select Status field of a Projects v2 item."""
@@ -521,7 +525,7 @@ class GitHubAdapter(PlatformAdapter):
             return ProjectV2ItemResult(
                 project_id=project_id,
                 item_id=item_id,
-                content_id=item_id,
+                content_id=content_id,
                 action="dry_run_update",
                 message=f"[DRY-RUN] Would update status for item '{item_id}'",
                 dry_run=True,
@@ -555,7 +559,7 @@ class GitHubAdapter(PlatformAdapter):
         return ProjectV2ItemResult(
             project_id=project_id,
             item_id=item_id,
-            content_id=item_id,
+            content_id=content_id,
             action="updated",
             message=f"Updated status for item '{item_id}'",
             dry_run=False,
