@@ -6,6 +6,15 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from faccoder_capture.desktop.models import (
+    DesktopBoundingBox,
+    DesktopCaptureConfig,
+    DesktopCaptureResult,
+    DesktopControlNode,
+    DesktopWindowInfo,
+    OCRTextBlock,
+)
+
 
 class AccessibilityNode(BaseModel):
     """Represents a node in the accessibility tree."""
@@ -111,3 +120,23 @@ class DomainNotAllowedError(CapturePolicyError):
 
 class ReadOnlyViolationError(CapturePolicyError):
     """Raised when an operation attempts a mutating action in read-only mode."""
+
+
+__all__ = [
+    "AccessibilityNode",
+    "CaptchaDetectedError",
+    "CapturePolicyError",
+    "DesktopBoundingBox",
+    "DesktopCaptureConfig",
+    "DesktopCaptureResult",
+    "DesktopControlNode",
+    "DesktopWindowInfo",
+    "DomainNotAllowedError",
+    "NetworkEntry",
+    "OCRTextBlock",
+    "ReadOnlyViolationError",
+    "RobotsDisallowedError",
+    "StableSelector",
+    "WebCaptureConfig",
+    "WebCaptureResult",
+]

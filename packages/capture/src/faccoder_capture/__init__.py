@@ -1,5 +1,24 @@
 """faccoder-capture: Web and desktop capture, stable selectors, test generation, and QA checks."""
 
+from faccoder_capture.desktop.capture import DesktopCaptureEngine
+from faccoder_capture.desktop.engine import (
+    MockUIAutomationProvider,
+    UIAutomationProvider,
+    WindowsUIAutomationProvider,
+)
+from faccoder_capture.desktop.models import (
+    DesktopBoundingBox,
+    DesktopCaptureConfig,
+    DesktopCaptureResult,
+    DesktopControlNode,
+    DesktopWindowInfo,
+    OCRTextBlock,
+)
+from faccoder_capture.desktop.ocr import (
+    MockOCRProvider,
+    OCRProvider,
+    TesseractOCRProvider,
+)
 from faccoder_capture.models import (
     AccessibilityNode,
     CaptchaDetectedError,
@@ -18,12 +37,25 @@ __all__ = [
     "AccessibilityNode",
     "CaptchaDetectedError",
     "CapturePolicyError",
+    "DesktopBoundingBox",
+    "DesktopCaptureConfig",
+    "DesktopCaptureEngine",
+    "DesktopCaptureResult",
+    "DesktopControlNode",
+    "DesktopWindowInfo",
     "DomainNotAllowedError",
+    "MockOCRProvider",
+    "MockUIAutomationProvider",
     "NetworkEntry",
+    "OCRProvider",
+    "OCRTextBlock",
     "ReadOnlyViolationError",
     "RobotsDisallowedError",
     "StableSelector",
+    "TesseractOCRProvider",
+    "UIAutomationProvider",
     "WebCaptureConfig",
-    "WebCaptureResult",
     "WebCaptureEngine",
+    "WebCaptureResult",
+    "WindowsUIAutomationProvider",
 ]
