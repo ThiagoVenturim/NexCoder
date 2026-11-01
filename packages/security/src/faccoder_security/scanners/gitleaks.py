@@ -38,6 +38,7 @@ class GitleaksScanner(BaseScanner):
                     str(target),
                     "--report-format",
                     "json",
+                    "--redact",
                     "--exit-code",
                     "0",
                 ]
@@ -53,11 +54,16 @@ class GitleaksScanner(BaseScanner):
         for item in items:
             rule_id = item.get("RuleID", "generic-secret")
             desc = item.get("Description", "Secret detected")
+
+            # Ensure complete secret is redacted from snippet and raw_data
+            clean_raw = {k: v for k, v in item.items() if k not in ("Secret", "Match")}
+            match_text = "Match: REDACTED"
+
             loc = Location(
                 file_path=item.get("File", str(target)),
                 line_start=item.get("StartLine"),
                 line_end=item.get("EndLine"),
-                snippet=item.get("Match", "secret redacted"),
+                snippet=match_text,
             )
             finding = Finding(
                 id=f"gitleaks-{len(findings) + 1}",
@@ -72,7 +78,7 @@ class GitleaksScanner(BaseScanner):
                 remediation=Remediation(
                     summary="Revoke the secret immediately and move credentials to secure environment variables."
                 ),
-                raw_data=item,
+                raw_data=clean_raw,
             )
             findings.append(finding)
 
@@ -121,12 +127,6 @@ class GitleaksScanner(BaseScanner):
                     for rule_id, regex, desc, sev in patterns:
                         match = re.search(regex, line)
                         if match:
-                            secret_snippet = match.group(0)
-                            # Mask middle of secret in snippet
-                            if len(secret_snippet) > 8:
-                                masked = secret_snippet[:3] + "..." + secret_snippet[-3:]
-                            else:
-                                masked = "***"
                             findings.append(
                                 Finding(
                                     id=f"gitleaks-offline-{len(findings) + 1}",
@@ -140,16 +140,17 @@ class GitleaksScanner(BaseScanner):
                                         file_path=str(file_path),
                                         line_start=line_num,
                                         line_end=line_num,
-                                        snippet=f"Match: {masked}",
+                                        snippet="Match: REDACTED",
                                     ),
                                     cwe_ids=["CWE-798"],
                                     remediation=Remediation(
                                         summary="Revoke key, remove from source code, and use environment variables."
                                     ),
+                                    raw_data={"rule_id": rule_id, "description": desc, "secret": "REDACTED"},
                                 )
                             )
 
-        return self._create_result(target, findings, start_time, version="gitleaks-offline-engine")
+        return self._create_result(target, findings, start_time, version="gitleaks-offline-engine", is_fallback=True)
 
     @staticmethod
     def shannon_entropy(data: str) -> float:

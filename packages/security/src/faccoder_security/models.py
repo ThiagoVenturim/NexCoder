@@ -115,24 +115,7 @@ class ScanMetadata(BaseModel):
     timestamp: str = ""
     success: bool = True
     error_message: str | None = None
-
-
-class ScanResult(BaseModel):
-    scanner: str
-    target_path: str
-    findings: list[Finding] = Field(default_factory=list)
-    metadata: ScanMetadata | None = None
-
-    def by_severity(self, severity: Severity) -> list[Finding]:
-        return [f for f in self.findings if f.severity == severity and not f.is_suppressed]
-
-    def has_high_or_critical(self) -> bool:
-        return any(f.severity in (Severity.CRITICAL, Severity.HIGH) and not f.is_suppressed for f in self.findings)
-
-    def total_findings(self, include_suppressed: bool = False) -> int:
-        if include_suppressed:
-            return len(self.findings)
-        return len([f for f in self.findings if not f.is_suppressed])
+    is_fallback: bool = False
 
 
 class SBOMComponent(BaseModel):
@@ -149,3 +132,31 @@ class SBOMDocument(BaseModel):
     schema_version: str = "1.5"
     components: list[SBOMComponent] = Field(default_factory=list)
     raw_content: str = ""
+
+
+class ScanResult(BaseModel):
+    scanner: str
+    target_path: str
+    findings: list[Finding] = Field(default_factory=list)
+    metadata: ScanMetadata | None = None
+    errors: list[str] = Field(default_factory=list)
+    fallback_scanners: list[str] = Field(default_factory=list)
+    sbom: SBOMDocument | None = None
+
+    def by_severity(self, severity: Severity) -> list[Finding]:
+        return [f for f in self.findings if f.severity == severity and not f.is_suppressed]
+
+    def has_high_or_critical(self) -> bool:
+        return any(f.severity in (Severity.CRITICAL, Severity.HIGH) and not f.is_suppressed for f in self.findings)
+
+    def has_errors(self) -> bool:
+        if self.errors:
+            return True
+        if self.metadata and not self.metadata.success:
+            return True
+        return False
+
+    def total_findings(self, include_suppressed: bool = False) -> int:
+        if include_suppressed:
+            return len(self.findings)
+        return len([f for f in self.findings if not f.is_suppressed])

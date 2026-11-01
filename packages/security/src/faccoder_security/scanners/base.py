@@ -43,6 +43,7 @@ class BaseScanner(abc.ABC):
         success: bool = True,
         error_message: str | None = None,
         version: str = "1.0.0-fallback",
+        is_fallback: bool = False,
     ) -> ScanResult:
         duration = time.perf_counter() - start_time
         meta = ScanMetadata(
@@ -53,10 +54,12 @@ class BaseScanner(abc.ABC):
             timestamp=datetime.now(UTC).isoformat(),
             success=success,
             error_message=error_message,
+            is_fallback=is_fallback,
         )
         return ScanResult(
             scanner=self.name,
             target_path=str(target_path),
             findings=findings,
             metadata=meta,
+            fallback_scanners=[self.name] if is_fallback else [],
         )

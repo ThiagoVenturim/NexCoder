@@ -36,6 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     gate_p.add_argument("--offline", action="store_true", help="Run scanners offline")
     gate_p.add_argument("--max-critical", type=int, default=0, help="Maximum allowed critical findings")
     gate_p.add_argument("--max-high", type=int, default=0, help="Maximum allowed high findings")
+    gate_p.add_argument("--require-sbom", action="store_true", help="Require a valid SBOM to approve release")
 
     # sbom
     sbom_p = subparsers.add_parser("sbom", help="Generate SBOM (CycloneDX / SPDX) for a repository or application")
@@ -72,14 +73,20 @@ def main(argv: list[str] | None = None) -> int:
             for f in result.findings:
                 loc = f"{f.location.file_path}:{f.location.line_start}" if f.location else "general"
                 print(f"  [{f.severity.upper()}] {f.scanner} - {f.title} ({loc})")
+        if result.has_errors() or (result.metadata and not result.metadata.success):
+            return 1
         return 0
 
     if args.command == "gate":
         engine = MultiScannerEngine()
         scan_res = engine.scan(target_path=args.path, force_offline=args.offline)
-        policy = GatePolicy(max_critical=args.max_critical, max_high=args.max_high)
+        policy = GatePolicy(
+            max_critical=args.max_critical,
+            max_high=args.max_high,
+            require_sbom=args.require_sbom,
+        )
         evaluator = SecurityGateEvaluator(default_policy=policy)
-        verdict = evaluator.evaluate(scan_res, policy=policy)
+        verdict = evaluator.evaluate(scan_res, policy=policy, sbom=scan_res.sbom)
 
         print(verdict.summary)
         for r in verdict.reasons:
@@ -87,10 +94,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if verdict.passed else 1
 
     if args.command == "sbom":
-        syft = SyftScanner()
-        doc = syft.generate_sbom(target_path=args.path, output_format=args.format, force_offline=args.offline)
-        print(doc.raw_content)
-        return 0
+        try:
+            syft = SyftScanner()
+            doc = syft.generate_sbom(target_path=args.path, output_format=args.format, force_offline=args.offline)
+            print(doc.raw_content)
+            return 0
+        except Exception as exc:
+            print(f"SBOM generation failed: {exc}", file=sys.stderr)
+            return 1
 
     if args.command == "init-app-security":
         assets = scaffold_app_security(

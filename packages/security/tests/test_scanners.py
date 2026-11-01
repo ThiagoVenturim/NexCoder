@@ -78,10 +78,54 @@ api_key = "abcdef1234567890abcdef123456"
     assert all(f.category == FindingCategory.SECRET for f in res.findings)
     assert any(f.severity == Severity.CRITICAL for f in res.findings)
 
+    # Verify that secret content is redacted from snippets and raw_data
+    for f in res.findings:
+        assert f.location is not None
+        assert "AKIA1234567890ABCDEF" not in f.location.snippet
+        assert "REDACTED" in f.location.snippet
+        assert f.raw_data.get("secret") == "REDACTED"
+
     # Entropy test
     entropy_high = GitleaksScanner.shannon_entropy("8fA9xL!2#qZ91$kL09mN")
     entropy_low = GitleaksScanner.shannon_entropy("aaaaaaaaaaaaaaaaaaaa")
     assert entropy_high > entropy_low
+
+
+def test_gitleaks_redact_flag_and_parsing(monkeypatch, tmp_path: Path):
+    scanner = GitleaksScanner()
+    monkeypatch.setattr(scanner, "is_available", lambda: True)
+
+    captured_cmd = []
+
+    def mock_run(cmd, **kwargs):
+        captured_cmd.extend(cmd)
+        raw_items = [
+            {
+                "Description": "Generic Secret",
+                "StartLine": 1,
+                "EndLine": 1,
+                "File": str(tmp_path / "test.py"),
+                "RuleID": "test-secret",
+                "Match": "SECRET_KEY=supersecretpassword123",
+                "Secret": "supersecretpassword123",
+            }
+        ]
+        return type("Proc", (), {"stdout": json.dumps(raw_items), "returncode": 0})()
+
+    import subprocess
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
+
+    res = scanner.scan(tmp_path, force_offline_fallback=False)
+    assert "--redact" in captured_cmd
+    assert len(res.findings) == 1
+    finding = res.findings[0]
+    assert "supersecretpassword123" not in finding.location.snippet
+    assert "Secret" not in finding.raw_data
+    assert "Match" not in finding.raw_data
+    # Assert secret appears nowhere in serialized ScanResult
+    serialized_res = res.model_dump_json()
+    assert "supersecretpassword123" not in serialized_res
 
 
 def test_osv_offline_scan(tmp_path: Path):

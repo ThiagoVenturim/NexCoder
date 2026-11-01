@@ -14,6 +14,8 @@ class GatePolicy(BaseModel):
     allowed_rules: list[str] = Field(default_factory=list)
     block_on_secrets: bool = True
     require_sbom: bool = False
+    allow_fallbacks: bool = True
+    disallow_fallback_scanners: list[str] = Field(default_factory=list)
 
 
 class GateVerdict(BaseModel):

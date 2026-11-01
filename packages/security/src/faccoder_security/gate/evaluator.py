@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from faccoder_security.gate.policy import GatePolicy, GateVerdict
-from faccoder_security.models import Finding, ScanResult, Severity
+from faccoder_security.models import Finding, SBOMDocument, ScanResult, Severity
 
 
 class SecurityGateEvaluator:
@@ -10,7 +10,12 @@ class SecurityGateEvaluator:
     def __init__(self, default_policy: GatePolicy | None = None) -> None:
         self.default_policy = default_policy or GatePolicy()
 
-    def evaluate(self, scan_result: ScanResult, policy: GatePolicy | None = None) -> GateVerdict:
+    def evaluate(
+        self,
+        scan_result: ScanResult,
+        policy: GatePolicy | None = None,
+        sbom: SBOMDocument | None = None,
+    ) -> GateVerdict:
         pol = policy or self.default_policy
         blocking: list[Finding] = []
         reasons: list[str] = []
@@ -22,6 +27,39 @@ class SecurityGateEvaluator:
         high_count = 0
         medium_count = 0
 
+        # Fail-closed check: any scanner failure or exception blocks the release
+        has_scanner_errors = scan_result.has_errors()
+        if has_scanner_errors:
+            err_list = scan_result.errors or [
+                scan_result.metadata.error_message
+                if scan_result.metadata and scan_result.metadata.error_message
+                else "Unspecified scanner failure"
+            ]
+            for err in err_list:
+                reasons.append(f"Scanner failure detected (fail-closed enforced): {err}")
+
+        # Check require_sbom requirement
+        missing_sbom = False
+        if pol.require_sbom:
+            active_sbom = sbom or scan_result.sbom
+            if not active_sbom or len(active_sbom.components) == 0 or not active_sbom.raw_content.strip():
+                missing_sbom = True
+                reasons.append("Policy require_sbom is enabled, but no valid SBOM document was generated or provided.")
+
+        # Check fallback execution
+        has_forbidden_fallbacks = False
+        if not pol.allow_fallbacks and scan_result.fallback_scanners:
+            has_forbidden_fallbacks = True
+            for s in scan_result.fallback_scanners:
+                reasons.append(f"Scanner '{s}' ran in fallback mode, but policy forbids fallback execution.")
+        for s in pol.disallow_fallback_scanners:
+            if s in scan_result.fallback_scanners or (
+                scan_result.metadata and scan_result.metadata.scanner == s and scan_result.metadata.is_fallback
+            ):
+                has_forbidden_fallbacks = True
+                reasons.append(f"Required scanner '{s}' ran only in fallback mode.")
+
+        # Check findings against thresholds and allowlists
         for f in scan_result.findings:
             if f.is_suppressed:
                 continue
@@ -50,18 +88,36 @@ class SecurityGateEvaluator:
                 if medium_count > pol.max_medium:
                     blocking.append(f)
 
-        passed = len(blocking) == 0
+        if critical_count > pol.max_critical:
+            reasons.append(f"Critical findings ({critical_count}) exceed threshold ({pol.max_critical}).")
+        if high_count > pol.max_high:
+            reasons.append(f"High findings ({high_count}) exceed threshold ({pol.max_high}).")
+        if pol.max_medium is not None and medium_count > pol.max_medium:
+            reasons.append(f"Medium findings ({medium_count}) exceed threshold ({pol.max_medium}).")
+        if any(f.category.value == "secret" for f in blocking):
+            reasons.append("Unsuppressed secrets detected in target repository/code.")
+
+        passed = len(blocking) == 0 and not has_scanner_errors and not missing_sbom and not has_forbidden_fallbacks
 
         if not passed:
-            summary = f"Release BLOCKED by security gate '{pol.name}': {len(blocking)} blocking findings detected."
-            if critical_count > pol.max_critical:
-                reasons.append(f"Critical findings ({critical_count}) exceed threshold ({pol.max_critical}).")
-            if high_count > pol.max_high:
-                reasons.append(f"High findings ({high_count}) exceed threshold ({pol.max_high}).")
-            if pol.max_medium is not None and medium_count > pol.max_medium:
-                reasons.append(f"Medium findings ({medium_count}) exceed threshold ({pol.max_medium}).")
-            if any(f.category.value == "secret" for f in blocking):
-                reasons.append("Unsuppressed secrets detected in target repository/code.")
+            details_count = len(blocking)
+            if has_scanner_errors:
+                summary = (
+                    f"Release BLOCKED by security gate '{pol.name}': "
+                    "scanner execution failed (fail-closed) or security thresholds breached."
+                )
+            elif missing_sbom:
+                summary = (
+                    f"Release BLOCKED by security gate '{pol.name}': "
+                    "missing required SBOM or security thresholds breached."
+                )
+            elif has_forbidden_fallbacks:
+                summary = (
+                    f"Release BLOCKED by security gate '{pol.name}': "
+                    "required scanner ran in fallback mode or security thresholds breached."
+                )
+            else:
+                summary = f"Release BLOCKED by security gate '{pol.name}': {details_count} blocking findings detected."
         else:
             summary = f"Release APPROVED by security gate '{pol.name}'."
 

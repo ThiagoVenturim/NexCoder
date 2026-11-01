@@ -54,6 +54,25 @@ def test_cli_gate_pass(tmp_path: Path, capsys):
     assert "Release APPROVED" in captured.out
 
 
+def test_cli_gate_require_sbom(tmp_path: Path, capsys):
+    f = tmp_path / "clean.py"
+    f.write_text("def hello(): return 'world'\n", encoding="utf-8")
+
+    # 1. Without requirements/SBOM -> blocked by require_sbom
+    rc_fail = main(["gate", str(tmp_path), "--offline", "--require-sbom"])
+    assert rc_fail == 1
+    out_fail = capsys.readouterr().out
+    assert "Release BLOCKED" in out_fail
+
+    # 2. Add requirements.txt so Syft generates valid SBOM -> passes
+    req = tmp_path / "requirements.txt"
+    req.write_text("pydantic==2.8.2\n", encoding="utf-8")
+    rc_pass = main(["gate", str(tmp_path), "--offline", "--require-sbom"])
+    assert rc_pass == 0
+    out_pass = capsys.readouterr().out
+    assert "Release APPROVED" in out_pass
+
+
 def test_cli_sbom(tmp_path: Path, capsys):
     f = tmp_path / "requirements.txt"
     f.write_text("fastapi==0.111.0\n", encoding="utf-8")

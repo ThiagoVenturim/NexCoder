@@ -1,5 +1,15 @@
 from faccoder_security.gate import GatePolicy, SecurityGateEvaluator
-from faccoder_security.models import Finding, FindingCategory, ScanMetadata, ScanResult, Severity
+from faccoder_security.models import (
+    Finding,
+    FindingCategory,
+    SBOMComponent,
+    SBOMDocument,
+    ScanMetadata,
+    ScanResult,
+    Severity,
+)
+from faccoder_security.scanners.base import BaseScanner
+from faccoder_security.scanners.engine import MultiScannerEngine
 
 
 def test_security_gate_blocks_critical_and_high():
@@ -101,3 +111,98 @@ def test_security_gate_blocks_on_secrets():
     verdict = evaluator.evaluate(res)
     assert verdict.passed is False
     assert any("secrets" in r.lower() for r in verdict.reasons)
+
+
+def test_security_gate_fail_closed_on_scanner_error():
+    # Zero findings, but scanner crashed/errored
+    res = ScanResult(
+        scanner="semgrep",
+        target_path=".",
+        findings=[],
+        metadata=ScanMetadata(
+            scanner="semgrep",
+            target_path=".",
+            success=False,
+            error_message="Semgrep syntax error parsing rules",
+        ),
+        errors=["Semgrep syntax error parsing rules"],
+    )
+
+    evaluator = SecurityGateEvaluator()
+    verdict = evaluator.evaluate(res)
+    assert verdict.passed is False
+    assert "Release BLOCKED" in verdict.summary
+    assert any("fail-closed" in r for r in verdict.reasons)
+
+
+def test_security_gate_fail_closed_engine_exception(tmp_path):
+    class CrashingScanner(BaseScanner):
+        def __init__(self):
+            super().__init__(executable_name="crash", name="crash")
+
+        def scan(self, target_path, options=None, force_offline_fallback=False):
+            raise RuntimeError("Unexpected internal crash in scanner binary execution")
+
+    engine = MultiScannerEngine()
+    engine.register_scanner("crash", CrashingScanner())
+
+    scan_res = engine.scan(tmp_path, enabled_scanners=["crash"])
+    assert scan_res.has_errors() is True
+    assert len(scan_res.errors) >= 1
+
+    evaluator = SecurityGateEvaluator()
+    verdict = evaluator.evaluate(scan_res)
+    assert verdict.passed is False
+    assert "Release BLOCKED" in verdict.summary
+    assert any("fail-closed" in r for r in verdict.reasons)
+
+
+def test_security_gate_require_sbom():
+    policy = GatePolicy(require_sbom=True)
+    evaluator = SecurityGateEvaluator(default_policy=policy)
+
+    clean_res = ScanResult(
+        scanner="multi",
+        target_path=".",
+        findings=[],
+        metadata=ScanMetadata(scanner="multi", target_path=".", success=True),
+    )
+
+    # 1. Missing SBOM blocks release
+    verdict_missing = evaluator.evaluate(clean_res, policy=policy)
+    assert verdict_missing.passed is False
+    assert "Release BLOCKED" in verdict_missing.summary
+    assert any("require_sbom" in r for r in verdict_missing.reasons)
+
+    # 2. Empty SBOM blocks release
+    empty_sbom = SBOMDocument(format="cyclonedx", components=[], raw_content="")
+    verdict_empty = evaluator.evaluate(clean_res, policy=policy, sbom=empty_sbom)
+    assert verdict_empty.passed is False
+
+    # 3. Valid SBOM approves release
+    valid_sbom = SBOMDocument(
+        format="cyclonedx",
+        components=[SBOMComponent(name="requests", version="2.32.0")],
+        raw_content='{"bomFormat": "CycloneDX"}',
+    )
+    verdict_valid = evaluator.evaluate(clean_res, policy=policy, sbom=valid_sbom)
+    assert verdict_valid.passed is True
+    assert "Release APPROVED" in verdict_valid.summary
+
+
+def test_security_gate_fail_closed_on_fallback():
+    policy = GatePolicy(disallow_fallback_scanners=["gitleaks"])
+    evaluator = SecurityGateEvaluator(default_policy=policy)
+
+    fallback_res = ScanResult(
+        scanner="gitleaks",
+        target_path=".",
+        findings=[],
+        metadata=ScanMetadata(scanner="gitleaks", target_path=".", success=True, is_fallback=True),
+        fallback_scanners=["gitleaks"],
+    )
+
+    verdict = evaluator.evaluate(fallback_res, policy=policy)
+    assert verdict.passed is False
+    assert "Release BLOCKED" in verdict.summary
+    assert any("fallback" in r for r in verdict.reasons)
