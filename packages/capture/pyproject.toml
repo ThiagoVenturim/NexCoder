@@ -17,7 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 web = ["playwright>=1.40"]
-desktop = ["pywinauto>=0.6.8", "pillow>=10.0"]
+desktop = ["pywinauto>=0.6.8", "pillow>=10.0", "pytesseract>=0.3.10"]
 qa = ["axe-core-python>=0.1.0"]
 
 [tool.hatch.build.targets.wheel]

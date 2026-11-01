@@ -105,18 +105,28 @@ class TesseractOCRProvider(OCRProvider):
             num_boxes = len(data.get("text", []))
             for i in range(num_boxes):
                 text = str(data["text"][i]).strip()
-                raw_conf = float(data["conf"][i]) if i < len(data["conf"]) else -1.0
-                if not text or raw_conf < 0:
+                if not text:
+                    continue
+
+                try:
+                    raw_conf = float(data["conf"][i]) if i < len(data["conf"]) else -1.0
+                except (ValueError, TypeError):
+                    raw_conf = -1.0
+
+                if raw_conf < 0:
                     continue
 
                 conf = max(0.0, min(1.0, raw_conf / 100.0))
                 if conf < min_confidence:
                     continue
 
-                left = int(data["left"][i])
-                top = int(data["top"][i])
-                width = int(data["width"][i])
-                height = int(data["height"][i])
+                try:
+                    left = int(data["left"][i])
+                    top = int(data["top"][i])
+                    width = int(data["width"][i])
+                    height = int(data["height"][i])
+                except (ValueError, TypeError, KeyError):
+                    continue
 
                 blocks.append(
                     OCRTextBlock(

@@ -189,13 +189,51 @@ class WindowsUIAutomationProvider(UIAutomationProvider):
             root_wrapper = window.wrapper_object()
 
             def _traverse(wrapper: Any, depth: int) -> DesktopControlNode:
-                rect = wrapper.rectangle()
-                bounds = DesktopBoundingBox(
-                    left=rect.left,
-                    top=rect.top,
-                    right=rect.right,
-                    bottom=rect.bottom,
-                )
+                bounds: DesktopBoundingBox | None = None
+                try:
+                    rect = wrapper.rectangle()
+                    bounds = DesktopBoundingBox(
+                        left=rect.left,
+                        top=rect.top,
+                        right=rect.right,
+                        bottom=rect.bottom,
+                    )
+                except Exception as exc:
+                    logger.debug("Failed getting rectangle for control: %s", exc)
+
+                try:
+                    raw_name = wrapper.window_text()
+                    name = str(raw_name) if isinstance(raw_name, str) else ""
+                except Exception:
+                    name = ""
+
+                try:
+                    raw_type = getattr(wrapper.element_info, "control_type", None)
+                    control_type = str(raw_type) if isinstance(raw_type, str) and raw_type else "Control"
+                except Exception:
+                    control_type = "Control"
+
+                try:
+                    raw_class = wrapper.class_name()
+                    class_name = str(raw_class) if isinstance(raw_class, str) else ""
+                except Exception:
+                    class_name = ""
+
+                try:
+                    is_enabled = bool(wrapper.is_enabled())
+                except Exception:
+                    is_enabled = True
+
+                try:
+                    is_visible = bool(wrapper.is_visible())
+                except Exception:
+                    is_visible = True
+
+                try:
+                    raw_id = getattr(wrapper.element_info, "automation_id", None)
+                    automation_id = str(raw_id) if isinstance(raw_id, str) and raw_id else None
+                except Exception:
+                    automation_id = None
 
                 children: list[DesktopControlNode] = []
                 if depth < max_depth:
@@ -205,20 +243,27 @@ class WindowsUIAutomationProvider(UIAutomationProvider):
                     except Exception as exc:
                         logger.debug("Failed traversing child controls: %s", exc)
 
+                try:
+                    raw_handle = getattr(wrapper, "handle", 0)
+                    handle_val = int(raw_handle) if isinstance(raw_handle, int) else 0
+                except Exception:
+                    handle_val = 0
+
                 return DesktopControlNode(
-                    handle=getattr(wrapper, "handle", 0) or 0,
-                    name=wrapper.window_text() or "",
-                    control_type=wrapper.element_info.control_type or "Control",
-                    class_name=wrapper.class_name() or "",
+                    handle=handle_val,
+                    name=name,
+                    control_type=control_type,
+                    class_name=class_name,
                     bounds=bounds,
-                    is_enabled=wrapper.is_enabled(),
-                    is_visible=wrapper.is_visible(),
-                    automation_id=getattr(wrapper.element_info, "automation_id", None),
+                    is_enabled=is_enabled,
+                    is_visible=is_visible,
+                    automation_id=automation_id,
                     children=children,
                 )
 
             return [_traverse(root_wrapper, depth=0)]
-        except Exception:
+        except Exception as exc:
+            logger.debug("Failed getting window controls for handle %s: %s", handle, exc)
             return []
 
     def capture_window_screenshot(self, handle: int) -> bytes | None:

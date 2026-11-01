@@ -99,3 +99,26 @@ def test_tesseract_provider_exception_handling() -> None:
     with patch.dict(sys.modules, {"pytesseract": mock_pytesseract, "PIL": mock_pil}):
         with patch.object(provider, "is_available", return_value=True):
             assert provider.extract_text_blocks(b"invalid-image") == []
+
+
+def test_tesseract_provider_non_numeric_confidence() -> None:
+    provider = TesseractOCRProvider()
+    mock_pytesseract = MagicMock()
+    mock_pytesseract.Output.DICT = "dict"
+    mock_pytesseract.image_to_data.return_value = {
+        "text": ["StructureRow", "ValidWord"],
+        "conf": ["", "92"],
+        "left": [0, 10],
+        "top": [0, 20],
+        "width": [50, 40],
+        "height": [20, 15],
+    }
+    mock_pil = MagicMock()
+    mock_pil.Image.open.return_value = MagicMock()
+
+    with patch.dict(sys.modules, {"pytesseract": mock_pytesseract, "PIL": mock_pil, "PIL.Image": mock_pil.Image}):
+        with patch.object(provider, "is_available", return_value=True):
+            blocks = provider.extract_text_blocks(b"dummy-image")
+            assert len(blocks) == 1
+            assert blocks[0].text == "ValidWord"
+            assert blocks[0].confidence == 0.92

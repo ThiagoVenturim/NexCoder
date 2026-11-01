@@ -180,3 +180,54 @@ def test_windows_provider_capture_screenshot_mocked() -> None:
         with patch.object(provider, "is_available", return_value=True):
             screenshot = provider.capture_window_screenshot(handle=1234)
             assert screenshot == b"fake-window-png"
+
+
+def test_windows_provider_control_traversal_resilient_to_failing_properties() -> None:
+    provider = WindowsUIAutomationProvider()
+
+    # Child control whose rectangle() raises RuntimeError (e.g. offscreen/transient element)
+    failing_child = MagicMock()
+    failing_child.rectangle.side_effect = RuntimeError("Element not available")
+    failing_child.window_text.return_value = "Hidden"
+    failing_child.element_info.control_type = "Pane"
+    failing_child.class_name.return_value = "TPane"
+    failing_child.is_enabled.return_value = True
+    failing_child.is_visible.return_value = False
+    failing_child.children.return_value = []
+    failing_child.handle = 9999
+
+    # Root window
+    mock_wrapper = MagicMock()
+    mock_wrapper.handle = 1234
+    mock_rect = MagicMock()
+    mock_rect.left = 0
+    mock_rect.top = 0
+    mock_rect.right = 800
+    mock_rect.bottom = 600
+    mock_wrapper.rectangle.return_value = mock_rect
+    mock_wrapper.window_text.return_value = "Root Window"
+    mock_wrapper.element_info.control_type = "Window"
+    mock_wrapper.class_name.return_value = "TMainForm"
+    mock_wrapper.is_enabled.return_value = True
+    mock_wrapper.is_visible.return_value = True
+    mock_wrapper.children.return_value = [failing_child]
+
+    mock_win_obj = MagicMock()
+    mock_win_obj.wrapper_object.return_value = mock_wrapper
+
+    mock_app = MagicMock()
+    mock_app.window.return_value = mock_win_obj
+
+    mock_pywinauto = MagicMock()
+    mock_pywinauto.Application.return_value.connect.return_value = mock_app
+
+    with patch.dict(sys.modules, {"pywinauto": mock_pywinauto}):
+        with patch.object(provider, "is_available", return_value=True):
+            controls = provider.get_window_controls(handle=1234)
+            assert len(controls) == 1
+            root = controls[0]
+            assert root.name == "Root Window"
+            assert len(root.children) == 1
+            child = root.children[0]
+            assert child.name == "Hidden"
+            assert child.bounds is None
