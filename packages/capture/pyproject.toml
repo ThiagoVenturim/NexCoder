@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "faccoder-capture"
+version = "0.1.0"
+description = "Web and desktop capture, stable selectors, test generation and QA checks for faccoder."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "faccoder-core>=0.1.0",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+web = ["playwright>=1.40"]
+desktop = ["pywinauto>=0.6.8", "pillow>=10.0"]
+qa = ["axe-core-python>=0.1.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/faccoder_capture"]
