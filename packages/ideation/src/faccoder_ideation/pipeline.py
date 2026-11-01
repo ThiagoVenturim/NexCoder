@@ -115,7 +115,7 @@ class IdeationPipeline:
         """Authorize the b85 human approval gate for the deliverable."""
         success = self.gate_manager.approve(
             gate=output.approval_gate,
-            provided_token_or_secret=token_or_secret,
+            provided_token=token_or_secret,
             approver=approver,
             comments=comments,
         )

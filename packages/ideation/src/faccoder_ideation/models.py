@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -281,13 +282,26 @@ class ArchitectureProposal(BaseModel):
     deployment_model: str = "Cloud-native / Containerized"
 
 
+class GateStatus(StrEnum):
+    """Lifecycle status of the human approval gate."""
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    EXPIRED = "expired"
+
+
 class HumanApprovalGate(BaseModel):
     """b85 human gate status before proceeding to planning layer."""
 
     required: bool = True
+    status: GateStatus = GateStatus.PENDING
+    token_hash: str = ""
+    created_at: float = Field(default_factory=time.time)
+    expires_at: float = Field(default_factory=lambda: time.time() + 1800.0)  # 30 minutes default
+    consumed: bool = False
     approved: bool = False
     approved_by: str | None = None
-    approval_token: str | None = None
     approval_timestamp: datetime | None = None
     comments: str = ""
 

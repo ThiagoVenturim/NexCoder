@@ -22,7 +22,7 @@ class PRDGenerator:
     ) -> str:
         """Render complete Markdown PRD document."""
         gate = gate or HumanApprovalGate()
-        gate_status_str = "APPROVED" if gate.approved else "PENDING_APPROVAL"
+        gate_status_str = gate.status.value.upper()
 
         lines: list[str] = [
             f"# PRD: {idea.title}",
@@ -195,7 +195,6 @@ class PRDGenerator:
                 f"- **Status**: `{gate_status_str}`",
                 f"- **Gate Required**: {gate.required}",
                 f"- **Approved By**: {gate.approved_by or 'None'}",
-                f"- **Approval Token**: `{gate.approval_token or 'N/A'}`",
                 f"- **Approval Notes**: {gate.comments or 'Awaiting human authorization before planning handoff.'}",
                 "",
                 "<!-- faccoder-id: prd-" + idea.id + " -->",

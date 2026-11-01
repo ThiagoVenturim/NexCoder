@@ -4,6 +4,7 @@ import html
 
 from faccoder_ideation.models import (
     ArchitectureProposal,
+    GateStatus,
     HumanApprovalGate,
     JuryVerdict,
     ResearchSquadReport,
@@ -24,7 +25,9 @@ class ReportGenerator:
     ) -> str:
         """Generate comprehensive Markdown executive report."""
         gate = gate or HumanApprovalGate()
-        gate_status = "Approved" if gate.approved else "Pending Approval"
+        gate_status = (
+            "Approved" if gate.status == GateStatus.APPROVED else gate.status.value.replace("_", " ").capitalize()
+        )
 
         lines = [
             f"# Ideation & Diligence Executive Report: {idea.title}",
@@ -95,8 +98,8 @@ class ReportGenerator:
         gate = gate or HumanApprovalGate()
         gate_badge = (
             '<span class="badge badge-success">Approved</span>'
-            if gate.approved
-            else '<span class="badge badge-warning">Pending Approval</span>'
+            if gate.status == GateStatus.APPROVED
+            else f'<span class="badge badge-warning">{gate.status.value.replace("_", " ").capitalize()}</span>'
         )
         verdict_badge = (
             f'<span class="badge badge-verdict badge-{verdict.verdict.value}">{verdict.verdict.value.upper()}</span>'

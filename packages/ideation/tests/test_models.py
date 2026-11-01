@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 from faccoder_ideation.models import (
     AudienceSegment,
+    GateStatus,
     HumanApprovalGate,
     JurorBallot,
     JuryVerdict,
@@ -100,3 +101,5 @@ def test_jury_verdict_and_approval_gate() -> None:
     gate = HumanApprovalGate()
     assert gate.required is True
     assert gate.approved is False
+    assert gate.status == GateStatus.PENDING
+    assert gate.consumed is False
