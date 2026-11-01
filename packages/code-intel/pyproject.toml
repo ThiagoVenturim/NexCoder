@@ -18,5 +18,10 @@ dependencies = [
   "networkx>=3.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/ThiagoVenturim/faccoder"
+Repository = "https://github.com/ThiagoVenturim/faccoder"
+Documentation = "https://github.com/ThiagoVenturim/faccoder/tree/main/docs"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/faccoder_code_intel"]
