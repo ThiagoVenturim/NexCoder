@@ -10,7 +10,20 @@ from faccoder_capture.models import StableSelector
 TEST_ID_ATTRS = ("data-testid", "data-test", "data-cy", "data-qa", "data-test-id")
 INTERACTIVE_TAGS = {"button", "input", "select", "textarea", "a", "form"}
 VOID_TAGS = {
-    "input", "img", "br", "hr", "meta", "link", "area", "base", "col", "embed", "param", "source", "track", "wbr"
+    "input",
+    "img",
+    "br",
+    "hr",
+    "meta",
+    "link",
+    "area",
+    "base",
+    "col",
+    "embed",
+    "param",
+    "source",
+    "track",
+    "wbr",
 }
 
 

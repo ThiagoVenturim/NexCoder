@@ -40,7 +40,9 @@ from faccoder_capture.web import WebCaptureEngine, WebCaptureConfig
 
 engine = WebCaptureEngine(config=WebCaptureConfig(capture_har=True, capture_screenshot=True))
 # Capture from local fixture or URL
-result = engine.capture_html("<html><body><button id='submit-btn'>Submit</button></body></html>", base_url="https://example.com")
+result = engine.capture_html(
+    "<html><body><button id='submit-btn'>Submit</button></body></html>", base_url="https://example.com"
+)
 
 print("DOM length:", len(result.dom))
 print("Selectors found:", len(result.selectors))

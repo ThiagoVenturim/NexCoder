@@ -84,13 +84,9 @@ class PolicyEnforcer:
     def assert_no_captcha(self, content: str) -> None:
         """Raise CaptchaDetectedError if any CAPTCHA challenge is found."""
         if self.detect_captcha(content):
-            raise CaptchaDetectedError(
-                "CAPTCHA challenge detected. Bypassing CAPTCHAs is strictly prohibited."
-            )
+            raise CaptchaDetectedError("CAPTCHA challenge detected. Bypassing CAPTCHAs is strictly prohibited.")
 
     def validate_action(self, action_name: str, is_mutating: bool) -> None:
         """Validate that action respects read-only mode."""
         if self.config.read_only and is_mutating:
-            raise ReadOnlyViolationError(
-                f"Action '{action_name}' is a mutating action, prohibited in read-only mode."
-            )
+            raise ReadOnlyViolationError(f"Action '{action_name}' is a mutating action, prohibited in read-only mode.")

@@ -74,7 +74,5 @@ class SessionManager:
         """Execute action only if non-mutating when in read-only mode."""
         is_mutating = any(kw in action_name.lower() for kw in MUTATING_KEYWORDS)
         if self.config.read_only and is_mutating:
-            raise ReadOnlyViolationError(
-                f"Action '{action_name}' is disallowed in read-only session mode."
-            )
+            raise ReadOnlyViolationError(f"Action '{action_name}' is disallowed in read-only session mode.")
         return fn(*args, **kwargs)
