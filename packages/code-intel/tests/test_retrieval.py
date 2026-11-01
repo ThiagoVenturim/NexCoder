@@ -239,6 +239,33 @@ def test_index_directory_purges_deleted_files(tmp_path: Path) -> None:
         assert any("outside.py" in str(h.get("metadata", {}).get("file_path", "")) for h in hits_out)
 
 
+def test_index_directory_preserves_unfiltered_existing_files(tmp_path: Path) -> None:
+    """Ensure re-indexing with extension filter does NOT purge existing files with different extensions."""
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    py_file = src_dir / "service.py"
+    java_file = src_dir / "Service.java"
+    py_file.write_text("def service_call(): return 'py'\n", encoding="utf-8")
+    java_file.write_text("public class Service { public void run() {} }\n", encoding="utf-8")
+
+    db_path = tmp_path / "multi_ext.db"
+    embedder = HashEmbedder(dimensions=64)
+
+    with CodeSearchIndex(db_path, embedder=embedder) as idx:
+        # Index both .py and .java files
+        indexed = idx.index_directory(src_dir)
+        assert indexed == 2
+        assert idx.store.count() >= 2
+
+        # Re-index specifying only extensions=[".py"]
+        indexed_py = idx.index_directory(src_dir, extensions=[".py"])
+        assert indexed_py == 1
+
+        # .java chunks must remain in store because Service.java still exists on disk
+        java_hits = idx.search("Service", top_k=5)
+        assert any("Service.java" in str(h.get("metadata", {}).get("file_path", "")) for h in java_hits)
+
+
 def test_gitignore_anchored_and_directory_patterns(tmp_path: Path) -> None:
     """Ensure root-anchored (/pattern) and directory (dir/) gitignore patterns are respected."""
     src_dir = tmp_path / "repo"

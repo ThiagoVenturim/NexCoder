@@ -222,8 +222,6 @@ class CodeSearchIndex:
             gi_path = root / ".gitignore"
             active_patterns.extend(_parse_gitignore(gi_path))
 
-        seen_files: set[Path] = set()
-
         for dirpath, dirnames, filenames in os.walk(root):
             rel_dir = os.path.relpath(dirpath, root)
             if rel_dir == ".":
@@ -253,17 +251,16 @@ class CodeSearchIndex:
 
                 try:
                     self.index_file(f_path)
-                    seen_files.add(f_path.resolve())
                     count += 1
                 except Exception as exc:
                     logger.debug("Skipping unparseable file %s: %s", f_path, exc)
                     continue
 
-        self._purge_deleted_files(root, seen_files)
+        self._purge_deleted_files(root)
         return count
 
-    def _purge_deleted_files(self, root: Path, seen_files: set[Path]) -> int:
-        """Purge chunks whose file_path is under root but was not seen during directory indexing."""
+    def _purge_deleted_files(self, root: Path) -> int:
+        """Purge chunks whose file_path is under root and no longer exists on disk."""
         all_file_chunks = self.store.get_metadata_values("file_path")
         stale_ids: list[str] = []
         for cid, fp_val in all_file_chunks.items():
@@ -272,7 +269,7 @@ class CodeSearchIndex:
             fp = Path(fp_val)
             try:
                 resolved_fp = fp.resolve()
-                if resolved_fp.is_relative_to(root) and resolved_fp not in seen_files:
+                if resolved_fp.is_relative_to(root) and not resolved_fp.exists():
                     stale_ids.append(cid)
             except Exception as exc:
                 logger.debug("Failed resolving file path %s during purge: %s", fp_val, exc)
