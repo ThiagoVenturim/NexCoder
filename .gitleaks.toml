@@ -1,0 +1,13 @@
+# Gitleaks configuration for CI. Extends the default rules.
+# The allowlist names the exact fake values used as fixtures by the security
+# package tests; any other secret, in tests or not, still fails the scan.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake credentials used as scanner test fixtures"
+regexTarget = "match"
+regexes = [
+  '''AKIA1234567890ABCDEF''',
+  '''abcdef1234567890abcdef123456''',
+]

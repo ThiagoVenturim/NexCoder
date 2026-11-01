@@ -20,8 +20,9 @@ testpaths = ["packages"]
 pythonpath = [
     "packages/core/src",
     "packages/code-intel/src",
-    "packages/agents/src",
     "packages/planning/src",
+    "packages/agents/src",
     "packages/ideation/src",
+    "packages/security/src",
 ]
 addopts = "-q --import-mode=importlib"
