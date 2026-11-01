@@ -1,5 +1,7 @@
 # Ideation and Jury: From Concept to PRD
 
+> **Status**: This module is currently In Progress ([Issue #5](https://github.com/ThiagoVenturim/faccoder/issues/5), [PR #29](https://github.com/ThiagoVenturim/faccoder/pull/29)). Code examples illustrate the upcoming release API.
+
 Software projects often fail before writing code due to flawed market assumptions, unnoticed competitors, or unvetted technical risks.
 
 The `faccoder` ideation subsystem automates the front of the software lifecycle: turning an unstructured idea into an evidenced Product Requirement Document (PRD) vetted by an automated multi-persona jury.
