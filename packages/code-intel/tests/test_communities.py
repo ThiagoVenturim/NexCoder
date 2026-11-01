@@ -61,3 +61,29 @@ def test_community_detection_and_summaries() -> None:
 
     assert len(context["symbols"]) == 2
     assert len(context["communities"]) >= 1
+
+
+def test_assemble_query_context_ambiguous_symbol() -> None:
+    graph = CodeGraph()
+
+    user1 = _sym("UserService", "auth1.py")
+    user2 = _sym("UserService", "auth2.py")
+    billing = _sym("BillingService", "billing.py")
+
+    graph.add_symbols([user1, user2, billing])
+    detector = CommunityDetector(seed=42)
+    communities = detector.detect_communities(graph, resolutions=[1.0])
+
+    rag = GraphRAGContext(code_graph=graph, communities=communities)
+    # Query with ambiguous short name "UserService" alongside concrete ID billing.id
+    context = rag.assemble_query_context(["UserService", billing.id])
+
+    # billing.id should resolve properly
+    assert len(context["symbols"]) == 1
+    assert context["symbols"][0]["id"] == billing.id
+
+    # Ambiguous symbol should be reported without breaking context assembly
+    assert "ambiguous_symbols" in context
+    assert len(context["ambiguous_symbols"]) == 1
+    assert context["ambiguous_symbols"][0]["id"] == "UserService"
+    assert "Ambiguous symbol name" in context["ambiguous_symbols"][0]["reason"]

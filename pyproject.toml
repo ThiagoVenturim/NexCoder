@@ -22,6 +22,7 @@ pythonpath = [
     "packages/code-intel/src",
     "packages/planning/src",
     "packages/agents/src",
+    "packages/ideation/src",
     "packages/security/src",
 ]
-addopts = "-q"
+addopts = "-q --import-mode=importlib"
