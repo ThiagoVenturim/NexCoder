@@ -6,6 +6,24 @@ An open-source, modular platform for automated software development from idea to
 
 ---
 
+## Package Status
+
+| Package / Module | Status | Tracking Issue |
+| :--- | :--- | :--- |
+| `faccoder-core` | Available | Merged in `develop` |
+| `faccoder-code-intel` | Available | PR [#33](https://github.com/ThiagoVenturim/faccoder/pull/33) |
+| `faccoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/faccoder/issues/3) / [#31](https://github.com/ThiagoVenturim/faccoder/issues/31) |
+| `faccoder-planning` | Available | Issue [#4](https://github.com/ThiagoVenturim/faccoder/issues/4) |
+| `faccoder-ideation` | In progress | Issue [#5](https://github.com/ThiagoVenturim/faccoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/faccoder/pull/29) |
+| `faccoder-security` | In progress | Issue [#7](https://github.com/ThiagoVenturim/faccoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/faccoder/pull/30) |
+| `faccoder-capture` | In progress | Issue [#6](https://github.com/ThiagoVenturim/faccoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/faccoder/pull/38) |
+| `faccoder-control` | Planned | Issue [#9](https://github.com/ThiagoVenturim/faccoder/issues/9) |
+| `faccoder-interfaces` | Planned | Issue [#10](https://github.com/ThiagoVenturim/faccoder/issues/10) |
+| `faccoder-serving` | Planned | Issue [#11](https://github.com/ThiagoVenturim/faccoder/issues/11) |
+| `faccoder-continuous-improvement` | Planned | Issue [#8](https://github.com/ThiagoVenturim/faccoder/issues/8) |
+
+---
+
 ## Architecture Overview
 
 `faccoder` is organized as a modular Python monorepo with installable packages in `packages/`:
@@ -27,7 +45,7 @@ faccoder/
    - Tiered model registry (`small`, `medium`, `large`) abstracting paid APIs (Anthropic, OpenAI, Google Gemini, Azure, Bedrock) and open-source models (Ollama, vLLM, LM Studio, llama.cpp).
    - Resilient Langfuse tracing with an automatic circuit breaker that degrades safely to a no-op if the telemetry backend is unreachable.
    - Usage and cost metering per agent, pipeline, and run, with configurable budget caps.
-   - Robust structured outputs (`call_structured`) with corrective retry on schema validation failures.
+   - Structured outputs (`call_structured`) with corrective retry on schema validation failures.
    - Local hybrid search store combining SQLite FTS5 (BM25 lexical search) with `sqlite-vec` (dense vector embeddings), reciprocal rank fusion (RRF), and cross-encoder reranking.
    - Path sandboxing to prevent directory traversal across agent tools.
 
@@ -128,7 +146,7 @@ for hit in hits:
 
 ## Documentation Directory
 
-Comprehensive documentation guides are available in the [docs/](docs/) directory:
+Documentation guides are available in the [docs/](docs/) directory:
 
 - **Foundations & Infrastructure**:
   - [Getting Started](docs/getting-started.md): Installation, environment configuration, and workspace setup.

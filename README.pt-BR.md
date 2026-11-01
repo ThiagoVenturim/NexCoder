@@ -6,6 +6,24 @@ O `faccoder` orquestra o ciclo completo de entrega de software: intake de ideias
 
 ---
 
+## Status dos Pacotes
+
+| Pacote / Modulo | Status | Rastreamento |
+| :--- | :--- | :--- |
+| `faccoder-core` | Disponivel | Incorporado em `develop` |
+| `faccoder-code-intel` | Disponivel | PR [#33](https://github.com/ThiagoVenturim/faccoder/pull/33) |
+| `faccoder-agents` | Disponivel | Issue [#3](https://github.com/ThiagoVenturim/faccoder/issues/3) / [#31](https://github.com/ThiagoVenturim/faccoder/issues/31) |
+| `faccoder-planning` | Disponivel | Issue [#4](https://github.com/ThiagoVenturim/faccoder/issues/4) |
+| `faccoder-ideation` | Em andamento | Issue [#5](https://github.com/ThiagoVenturim/faccoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/faccoder/pull/29) |
+| `faccoder-security` | Em andamento | Issue [#7](https://github.com/ThiagoVenturim/faccoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/faccoder/pull/30) |
+| `faccoder-capture` | Em andamento | Issue [#6](https://github.com/ThiagoVenturim/faccoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/faccoder/pull/38) |
+| `faccoder-control` | Planejado | Issue [#9](https://github.com/ThiagoVenturim/faccoder/issues/9) |
+| `faccoder-interfaces` | Planejado | Issue [#10](https://github.com/ThiagoVenturim/faccoder/issues/10) |
+| `faccoder-serving` | Planejado | Issue [#11](https://github.com/ThiagoVenturim/faccoder/issues/11) |
+| `faccoder-continuous-improvement` | Planejado | Issue [#8](https://github.com/ThiagoVenturim/faccoder/issues/8) |
+
+---
+
 ## Visao Geral da Arquitetura
 
 O `faccoder` e estruturado como um monorepositorio Python modular, contendo pacotes instalaveis no diretorio `packages/`:
@@ -121,7 +139,7 @@ O `faccoder` permite selecionar o modo de execucao dos modelos por meio do param
 - `offline`: Utiliza `FakeChatModel` e calculo de embeddings deterministico, permitindo execucao completa de testes sem rede ou custos.
 - `all-open-source`: Direciona todas as camadas para instancias locais do Ollama ou vLLM.
 - `local-vllm`: Servidores vLLM locais de alto desempenho com paralelismo de tensores.
-- `all-paid`: Utiliza modelos de ponta (Anthropic Claude, OpenAI e Google Gemini) distribuidos conforme a complexidade.
+- `all-paid`: Utiliza provedores proprietarios (Anthropic Claude, OpenAI e Google Gemini) distribuidos conforme a complexidade.
 - `hybrid`: Encaminha tarefas volumosas (extracao, classificacao, chunking) para modelos locais e tarefas de raciocinio complexo (comite, arquitetura, sintese) para modelos proprietarios de alta capacidade.
 
 ---

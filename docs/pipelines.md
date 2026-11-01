@@ -63,7 +63,7 @@ from faccoder_agents.engine.blocks import PromptBlock
 
 prompt_block = PromptBlock(
     name="generate-unit-tests",
-    prompt_template="Write comprehensive pytest unit tests for the following {language} code:\n\n{code_snippet}",
+    prompt_template="Write pytest unit tests covering edge cases for the following {language} code:\n\n{code_snippet}",
     output_key="generated_tests",
     tier="medium",
 )

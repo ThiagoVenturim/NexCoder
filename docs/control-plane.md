@@ -1,5 +1,7 @@
 # Control Plane: Governance, Budgets and Security
 
+> **Status**: This module is currently Planned ([Issue #9](https://github.com/ThiagoVenturim/faccoder/issues/9)). Code examples illustrate the upcoming release API.
+
 Autonomous coding agents possess significant capabilities: editing files, running test scripts, invoking LLM reasoning engines, and interacting with remote issue trackers.
 
 The `faccoder` **Control Plane** establishes governance boundaries: API key budgeting, per-tool rate limiting, immutable audit logging, path sandboxing, and human approval gates.

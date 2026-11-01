@@ -1,5 +1,7 @@
 # Serving: vLLM vs Ollama
 
+> **Status**: This module is currently Planned ([Issue #11](https://github.com/ThiagoVenturim/faccoder/issues/11)). Code examples illustrate the upcoming release API.
+
 When running open-source models locally or on private cloud infrastructure, selecting the proper inference engine is critical for latency, throughput, and GPU utilization.
 
 This guide provides a comparative evaluation between **vLLM** and **Ollama**, including Docker Compose configurations and hardware recommendations.
