@@ -332,11 +332,15 @@ def test_update_project_item_status():
     res_dry = adapter.update_project_item_status("PVT_1", "ITEM_1", "FIELD_STATUS", "OPT_DONE", dry_run=True)
     assert res_dry.dry_run is True
     assert res_dry.action == "dry_run_update"
+    assert res_dry.content_id is None
     assert len(mutations) == 0
 
-    # Live update
-    res_live = adapter.update_project_item_status("PVT_1", "ITEM_1", "FIELD_STATUS", "OPT_DONE", dry_run=False)
+    # Live update with content_id
+    res_live = adapter.update_project_item_status(
+        "PVT_1", "ITEM_1", "FIELD_STATUS", "OPT_DONE", content_id="REAL_CONTENT_ID", dry_run=False
+    )
     assert res_live.dry_run is False
     assert res_live.action == "updated"
+    assert res_live.content_id == "REAL_CONTENT_ID"
     assert len(mutations) == 1
     assert "updateProjectV2ItemFieldValue" in mutations[0]["query"]

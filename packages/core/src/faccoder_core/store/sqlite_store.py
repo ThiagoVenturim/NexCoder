@@ -178,8 +178,22 @@ class HybridStore:
     def count(self) -> int:
         return int(self.conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0])
 
-    def vector_search(self, query_vector: list[float], k: int = 20) -> list[dict]:
-        if self._vec and self.dimensions:
+    def vector_search(self, query_vector: list[float], k: int = 20, where: dict | None = None) -> list[dict]:
+        """Search chunks by cosine similarity with optional metadata filtering.
+
+        Note: When `where` is provided, candidates are pre-filtered via SQLite JSON pushdown
+        and scored in memory using vectorized NumPy operations. For ultra-large repositories,
+        partition indices or combine with external vector indexes.
+        """
+        where_clauses = ["embedding IS NOT NULL"]
+        params: list[object] = []
+        if where:
+            for key, value in where.items():
+                safe_key = "".join(c for c in key if c.isalnum() or c == "_")
+                where_clauses.append(f"json_extract(metadata, '$.{safe_key}') = ?")
+                params.append(value)
+
+        if self._vec and self.dimensions and not where:
             rows = self.conn.execute(
                 "SELECT c.*, v.distance FROM chunks_vec v JOIN chunks c ON c.rowid = v.rowid "
                 "WHERE v.embedding MATCH ? AND k = ? ORDER BY v.distance",
@@ -187,7 +201,11 @@ class HybridStore:
             ).fetchall()
             return [self._row(r, 1.0 - float(r["distance"])) for r in rows]
 
-        rows = self.conn.execute("SELECT * FROM chunks WHERE embedding IS NOT NULL").fetchall()
+        where_sql = " AND ".join(where_clauses)
+        rows = self.conn.execute(
+            f"SELECT * FROM chunks WHERE {where_sql}",  # noqa: S608
+            params,
+        ).fetchall()
         if not rows:
             return []
         matrix = np.vstack([_unpack(r["embedding"]) for r in rows])
@@ -198,27 +216,73 @@ class HybridStore:
         top = np.argsort(-sims)[:k]
         return [self._row(rows[i], float(sims[i])) for i in top]
 
-    def text_search(self, query: str, k: int = 20) -> list[dict]:
+    def text_search(self, query: str, k: int = 20, where: dict | None = None) -> list[dict]:
+        """Full-text search using SQLite FTS5 BM25 with optional metadata filtering."""
         match = fts_query(query)
         if not match:
             return []
+        where_clauses = ["chunks_fts MATCH ?"]
+        params: list[object] = [match]
+        if where:
+            for key, value in where.items():
+                safe_key = "".join(c for c in key if c.isalnum() or c == "_")
+                where_clauses.append(f"json_extract(c.metadata, '$.{safe_key}') = ?")
+                params.append(value)
+
+        where_sql = " AND ".join(where_clauses)
+        params.append(k)
         rows = self.conn.execute(
-            "SELECT c.*, bm25(chunks_fts) AS rank FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "
-            "WHERE chunks_fts MATCH ? ORDER BY rank LIMIT ?",
-            (match, k),
+            f"SELECT c.*, bm25(chunks_fts) AS rank FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "  # noqa: S608
+            f"WHERE {where_sql} ORDER BY rank LIMIT ?",
+            params,
         ).fetchall()
         # bm25() is lower-is-better; flip the sign so higher is better like the other searches.
         return [self._row(r, -float(r["rank"])) for r in rows]
 
-    def hybrid_search(self, query: str, query_vector: list[float] | None, k: int = 10,
-                      candidates: int = 40, where: dict | None = None) -> list[dict]:
-        lists = [self.text_search(query, candidates)]
+    def hybrid_search(
+        self,
+        query: str,
+        query_vector: list[float] | None,
+        k: int = 10,
+        candidates: int = 40,
+        where: dict | None = None,
+    ) -> list[dict]:
+        lists = [self.text_search(query, candidates, where=where)]
         if query_vector is not None:
-            lists.insert(0, self.vector_search(query_vector, candidates))
+            lists.insert(0, self.vector_search(query_vector, candidates, where=where))
         fused = rrf_fuse(lists)
-        if where:
-            fused = [d for d in fused if all(d["metadata"].get(key) == value for key, value in where.items())]
         return fused[:k]
+
+    def get_embeddings(self, ids: list[str]) -> dict[str, list[float]]:
+        """Return a mapping of chunk id to embedding vector for the requested chunk ids."""
+        if not ids:
+            return {}
+        placeholders = ",".join("?" for _ in ids)
+        rows = self.conn.execute(
+            f"SELECT id, embedding FROM chunks WHERE id IN ({placeholders}) AND embedding IS NOT NULL",  # noqa: S608
+            ids,
+        ).fetchall()
+        return {r["id"]: _unpack(r["embedding"]).tolist() for r in rows if r["embedding"]}
+
+    def delete_by_metadata(self, key: str, value: object) -> int:
+        """Delete all chunks where metadata[key] == value. Returns count of deleted chunks."""
+        safe_key = "".join(c for c in key if c.isalnum() or c == "_")
+        rows = self.conn.execute(
+            f"SELECT id FROM chunks WHERE json_extract(metadata, '$.{safe_key}') = ?",  # noqa: S608
+            (value,),
+        ).fetchall()
+        ids = [r["id"] for r in rows]
+        if ids:
+            self.delete(ids)
+        return len(ids)
+
+    def get_metadata_values(self, key: str) -> dict[str, object]:
+        """Return a mapping of chunk id to metadata[key] for chunks that have that metadata key."""
+        safe_key = "".join(c for c in key if c.isalnum() or c == "_")
+        rows = self.conn.execute(
+            f"SELECT id, json_extract(metadata, '$.{safe_key}') AS val FROM chunks WHERE val IS NOT NULL"  # noqa: S608
+        ).fetchall()
+        return {r["id"]: r["val"] for r in rows}
 
     def close(self) -> None:
         self.conn.close()

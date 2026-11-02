@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import networkx as nx
@@ -9,6 +10,8 @@ from networkx.algorithms.community import louvain_communities
 from pydantic import BaseModel, ConfigDict, Field
 
 from faccoder_code_intel.graph.code_graph import CodeGraph
+
+logger = logging.getLogger(__name__)
 
 
 class Community(BaseModel):
@@ -146,9 +149,16 @@ class GraphRAGContext:
         """Assemble structured context for a set of relevant symbols including their architectural clusters."""
         relevant_communities: dict[int, Community] = {}
         symbol_details: list[dict[str, Any]] = []
+        ambiguous_symbols: list[dict[str, str]] = []
 
         for sid in symbol_ids:
-            resolved = self.code_graph.resolve_symbol_id(sid)
+            try:
+                resolved = self.code_graph.resolve_symbol_id(sid)
+            except ValueError as exc:
+                logger.warning("Ambiguous symbol query '%s': %s", sid, exc)
+                ambiguous_symbols.append({"id": sid, "reason": str(exc)})
+                continue
+
             if not resolved or not self.code_graph.graph.has_node(resolved):
                 continue
 
@@ -169,7 +179,10 @@ class GraphRAGContext:
                 }
             )
 
-        return {
+        context: dict[str, Any] = {
             "communities": [c.model_dump() for c in relevant_communities.values()],
             "symbols": symbol_details,
         }
+        if ambiguous_symbols:
+            context["ambiguous_symbols"] = ambiguous_symbols
+        return context
