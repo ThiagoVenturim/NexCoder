@@ -50,9 +50,11 @@ def create_control_router(
     budget_mgr: BudgetManager,
     machine_mgr: MachineApprovalManager,
     audit_log: AppendOnlyAuditLog,
+    token_mgr: ApprovalTokenManager | None = None,
 ) -> APIRouter:
     """Factory creating an APIRouter wired to control plane subsystems."""
     router = APIRouter(prefix="/control", tags=["Control Plane"])
+    effective_token_mgr = token_mgr or ApprovalTokenManager()
 
     # ---------------------------------------------------------
     # Status, Overview & Web Panel
@@ -189,7 +191,7 @@ def create_control_router(
 
     @router.post("/approval/tokens")
     def issue_approval_token(req: IssueTokenRequest) -> dict[str, Any]:
-        record, raw_token = token_mgr.issue_token(
+        record, raw_token = effective_token_mgr.issue_token(
             action_name=req.action_name,
             target_resource=req.target_resource,
             approver=req.approver,
@@ -209,7 +211,7 @@ def create_control_router(
     @router.post("/approval/tokens/verify", response_model=ApprovalTokenRecord)
     def verify_approval_token(req: VerifyTokenRequest) -> ApprovalTokenRecord:
         try:
-            record = token_mgr.verify_and_consume(
+            record = effective_token_mgr.verify_and_consume(
                 raw_token=req.raw_token,
                 action_name=req.action_name,
                 target_resource=req.target_resource,
@@ -279,7 +281,3 @@ def create_control_router(
             raise HTTPException(status_code=404, detail="Machine not found") from None
 
     return router
-
-
-# Internal default token manager instance for convenience
-token_mgr = ApprovalTokenManager()

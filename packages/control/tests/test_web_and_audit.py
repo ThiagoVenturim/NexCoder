@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 from faccoder_control.approval.machines import MachineApprovalManager
+from faccoder_control.approval.tokens import ApprovalTokenManager
 from faccoder_control.keys.store import APIKeyService
 from faccoder_control.metering.audit import AppendOnlyAuditLog
 from faccoder_control.metering.budgets import BudgetManager
@@ -23,6 +24,7 @@ def client(
     budget_manager: BudgetManager,
     machine_manager: MachineApprovalManager,
     audit_log: AppendOnlyAuditLog,
+    approval_manager: ApprovalTokenManager,
 ) -> TestClient:
     app = FastAPI()
     router = create_control_router(
@@ -32,6 +34,7 @@ def client(
         budget_mgr=budget_manager,
         machine_mgr=machine_manager,
         audit_log=audit_log,
+        token_mgr=approval_manager,
     )
     app.include_router(router)
     return TestClient(app)
@@ -92,6 +95,61 @@ class TestControlWebAPI:
         app_resp = client.post("/control/machines/box_alpha/approve")
         assert app_resp.status_code == 200
         assert app_resp.json()["status"] == "approved"
+
+    def test_approval_tokens_api(self, client: TestClient) -> None:
+        issue_resp = client.post(
+            "/control/approval/tokens",
+            json={
+                "action_name": "db_drop_table",
+                "target_resource": "db:users",
+                "approver": "security_officer",
+                "ttl_minutes": 10,
+            },
+        )
+        assert issue_resp.status_code == 200
+        data = issue_resp.json()
+        assert "token_id" in data
+        assert "raw_token" in data
+        raw_token = data["raw_token"]
+
+        # Verify dry-run
+        dry_run_resp = client.post(
+            "/control/approval/tokens/verify",
+            json={
+                "raw_token": raw_token,
+                "action_name": "db_drop_table",
+                "target_resource": "db:users",
+                "dry_run": True,
+            },
+        )
+        assert dry_run_resp.status_code == 200
+        assert dry_run_resp.json()["dry_run_count"] == 1
+        assert not dry_run_resp.json()["is_consumed"]
+
+        # Final consume
+        consume_resp = client.post(
+            "/control/approval/tokens/verify",
+            json={
+                "raw_token": raw_token,
+                "action_name": "db_drop_table",
+                "target_resource": "db:users",
+                "dry_run": False,
+            },
+        )
+        assert consume_resp.status_code == 200
+        assert consume_resp.json()["is_consumed"]
+
+        # Re-consuming fails closed (HTTP 403)
+        fail_resp = client.post(
+            "/control/approval/tokens/verify",
+            json={
+                "raw_token": raw_token,
+                "action_name": "db_drop_table",
+                "target_resource": "db:users",
+                "dry_run": False,
+            },
+        )
+        assert fail_resp.status_code == 403
 
     def test_html_panel_rendering(
         self,
