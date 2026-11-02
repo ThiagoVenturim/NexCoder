@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import re
 import subprocess
 import time
@@ -10,6 +11,8 @@ from typing import Any
 
 from faccoder_security.models import Finding, FindingCategory, Location, Remediation, Severity
 from faccoder_security.scanners.base import BaseScanner
+
+logger = logging.getLogger(__name__)
 
 
 class PipAuditScanner(BaseScanner):
@@ -28,7 +31,7 @@ class PipAuditScanner(BaseScanner):
         target = Path(target_path)
 
         if not force_offline_fallback and self.is_available():
-            with contextlib.suppress(Exception):
+            try:
                 cmd = [self.executable_name, "-f", "json"]
                 if target.is_file() and target.name.endswith(".txt"):
                     cmd.extend(["-r", str(target)])
@@ -36,6 +39,12 @@ class PipAuditScanner(BaseScanner):
                 if proc.stdout.strip():
                     raw_json = json.loads(proc.stdout)
                     return self._parse_pip_audit_json(raw_json, target, start_time)
+            except Exception as exc:
+                logger.warning(
+                    "Scanner '%s' CLI execution failed, falling back to heuristic engine: %s",
+                    self.name,
+                    exc,
+                )
 
         return self._offline_scan(target, start_time)
 
@@ -70,7 +79,7 @@ class PipAuditScanner(BaseScanner):
                 )
                 findings.append(finding)
 
-        return self._create_result(target, findings, start_time, version="pip-audit-cli")
+        return self._create_result(target, findings, start_time, version="pip-audit-cli", is_fallback=False)
 
     def _offline_scan(self, target: Path, start_time: float) -> Any:
         findings: list[Finding] = []
@@ -114,4 +123,4 @@ class PipAuditScanner(BaseScanner):
                                 )
                             )
 
-        return self._create_result(target, findings, start_time, version="pip-audit-offline")
+        return self._create_result(target, findings, start_time, version="pip-audit-offline", is_fallback=True)

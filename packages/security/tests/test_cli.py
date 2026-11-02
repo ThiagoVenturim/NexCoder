@@ -73,6 +73,33 @@ def test_cli_gate_require_sbom(tmp_path: Path, capsys):
     assert "Release APPROVED" in out_pass
 
 
+def test_cli_gate_production_policy(monkeypatch, tmp_path: Path, capsys):
+    f = tmp_path / "clean.py"
+    f.write_text("def hello(): return 'world'\n", encoding="utf-8")
+    req = tmp_path / "requirements.txt"
+    req.write_text("pydantic==2.8.2\n", encoding="utf-8")
+
+    # 1. In production policy with fallbacks (e.g. offline scan), gate blocks release
+    rc_prod = main(["gate", str(tmp_path), "--offline", "--policy", "production"])
+    assert rc_prod == 1
+    out_prod = capsys.readouterr().out
+    assert "Release BLOCKED" in out_prod
+    assert "fallback" in out_prod.lower()
+
+    # 2. In CI environment, production policy is used by default
+    monkeypatch.setenv("CI", "1")
+    rc_ci = main(["gate", str(tmp_path), "--offline"])
+    assert rc_ci == 1
+    out_ci = capsys.readouterr().out
+    assert "Release BLOCKED" in out_ci
+
+    # 3. Explicitly allowing fallbacks overrides production restriction
+    rc_allowed = main(["gate", str(tmp_path), "--offline", "--allow-fallbacks"])
+    assert rc_allowed == 0
+    out_allowed = capsys.readouterr().out
+    assert "Release APPROVED" in out_allowed
+
+
 def test_cli_sbom(tmp_path: Path, capsys):
     f = tmp_path / "requirements.txt"
     f.write_text("fastapi==0.111.0\n", encoding="utf-8")

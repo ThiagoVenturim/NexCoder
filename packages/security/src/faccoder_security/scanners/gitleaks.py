@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import math
 import re
 import subprocess
@@ -11,6 +12,8 @@ from typing import Any
 
 from faccoder_security.models import Finding, FindingCategory, Location, Remediation, Severity
 from faccoder_security.scanners.base import BaseScanner
+
+logger = logging.getLogger(__name__)
 
 
 class GitleaksScanner(BaseScanner):
@@ -29,7 +32,7 @@ class GitleaksScanner(BaseScanner):
         target = Path(target_path)
 
         if not force_offline_fallback and self.is_available():
-            with contextlib.suppress(Exception):
+            try:
                 cmd = [
                     self.executable_name,
                     "detect",
@@ -46,6 +49,12 @@ class GitleaksScanner(BaseScanner):
                 if proc.stdout.strip():
                     raw_json = json.loads(proc.stdout)
                     return self._parse_gitleaks_json(raw_json, target, start_time)
+            except Exception as exc:
+                logger.warning(
+                    "Scanner '%s' CLI execution failed, falling back to heuristic engine: %s",
+                    self.name,
+                    exc,
+                )
 
         return self._offline_scan(target, start_time)
 
@@ -56,8 +65,12 @@ class GitleaksScanner(BaseScanner):
             desc = item.get("Description", "Secret detected")
 
             # Ensure complete secret is redacted from snippet and raw_data
-            clean_raw = {k: v for k, v in item.items() if k not in ("Secret", "Match")}
-            match_text = "Match: REDACTED"
+            clean_raw = dict(item)
+            secret_val = clean_raw.pop("Secret", None)
+            match_text = item.get("Match", "REDACTED")
+            if secret_val and secret_val in match_text:
+                match_text = match_text.replace(secret_val, "REDACTED")
+            clean_raw["Match"] = match_text
 
             loc = Location(
                 file_path=item.get("File", str(target)),
@@ -82,7 +95,7 @@ class GitleaksScanner(BaseScanner):
             )
             findings.append(finding)
 
-        return self._create_result(target, findings, start_time, version="gitleaks-cli")
+        return self._create_result(target, findings, start_time, version="gitleaks-cli", is_fallback=False)
 
     def _offline_scan(self, target: Path, start_time: float) -> Any:
         findings: list[Finding] = []
