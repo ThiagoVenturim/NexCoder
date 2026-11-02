@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "faccoder-interfaces"
+version = "0.1.0"
+description = "Unified CLI, MCP server, and REST API for the faccoder platform."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "faccoder-core>=0.1.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+    "typer>=0.12.0",
+    "pydantic>=2.7",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.0.0"]
+
+[project.scripts]
+faccoder = "faccoder_interfaces.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/faccoder_interfaces"]
