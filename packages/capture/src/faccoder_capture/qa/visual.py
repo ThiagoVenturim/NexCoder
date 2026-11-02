@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import io
+import logging
 import struct
 
 from faccoder_capture.qa.models import VisualDiffResult
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_png_dimensions(data: bytes) -> tuple[int, int] | None:
@@ -112,7 +115,8 @@ def compare_screenshots(
             diff_image_bytes=diff_image_bytes,
             metadata={"engine": "pillow", "bbox": bbox},
         )
-    except Exception:
+    except Exception as exc:
+        logger.debug("Pillow comparison failed, falling back to byte comparison: %s", exc)
         # Pure Python fallback for environments without Pillow
         dim_base = _parse_png_dimensions(baseline_bytes)
         dim_cand = _parse_png_dimensions(candidate_bytes)
