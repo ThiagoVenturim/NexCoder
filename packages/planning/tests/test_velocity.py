@@ -35,10 +35,21 @@ def test_velocity_tracker_empty_history():
     assert metrics.velocity_trend == "stable"
     assert metrics.carryover_rate_percentage == 0.0
 
+    # Default fallback velocity 80h per sprint without history
     forecast = tracker.forecast(remaining_backlog_hours=160.0)
     assert forecast.remaining_backlog_hours == 160.0
-    # Fallback velocity 80h per sprint
     assert forecast.estimated_sprints_needed == 2.0
+    assert forecast.based_on_history is False
+    assert forecast.forecast_model == "default_estimate"
+    assert forecast.recommended_capacity_per_sprint == 80.0
+
+    # Parametrized default_velocity
+    custom_forecast = tracker.forecast(remaining_backlog_hours=150.0, default_velocity=50.0)
+    assert custom_forecast.remaining_backlog_hours == 150.0
+    assert custom_forecast.estimated_sprints_needed == 3.0
+    assert custom_forecast.based_on_history is False
+    assert custom_forecast.forecast_model == "default_estimate"
+    assert custom_forecast.recommended_capacity_per_sprint == 50.0
 
 
 def test_velocity_tracker_metrics_calculation_and_trends():
@@ -88,6 +99,8 @@ def test_velocity_tracker_forecast():
     min_s, max_s = forecast.confidence_range_sprints
     assert min_s <= max_s
     assert min_s >= 1
+    assert forecast.based_on_history is True
+    assert forecast.forecast_model == "rolling_average"
 
 
 def test_velocity_tracker_evaluate_carryover():
