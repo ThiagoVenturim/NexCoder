@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import time
 from pathlib import Path
 from typing import Any
@@ -14,8 +13,6 @@ from faccoder_security.scanners.pip_audit import PipAuditScanner
 from faccoder_security.scanners.semgrep import SemgrepScanner
 from faccoder_security.scanners.syft import SyftScanner
 from faccoder_security.scanners.trivy import TrivyScanner
-
-logger = logging.getLogger(__name__)
 
 
 class MultiScannerEngine:
@@ -48,7 +45,7 @@ class MultiScannerEngine:
         selected_names = [s.lower() for s in enabled_scanners] if enabled_scanners else list(self.scanners.keys())
         all_findings: list[Finding] = []
         scanner_errors: list[str] = []
-        fallback_scanners: list[str] = []
+        fallbacks_used: list[str] = []
         generated_sbom: SBOMDocument | None = None
 
         for name in selected_names:
@@ -58,20 +55,17 @@ class MultiScannerEngine:
             try:
                 res = scanner.scan(target, options=options, force_offline_fallback=force_offline)
                 all_findings.extend(res.findings)
-                if res.metadata:
-                    if not res.metadata.success:
-                        err_msg = res.metadata.error_message or "Unknown scanner failure"
-                        scanner_errors.append(f"{name}: {err_msg}")
-                    if res.metadata.is_fallback:
-                        fallback_scanners.append(name)
+                if res.has_fallbacks():
+                    fallbacks_used.extend(res.fallbacks or [name])
+                if res.metadata and not res.metadata.success:
+                    err_msg = res.metadata.error_message or "Unknown scanner failure"
+                    scanner_errors.append(f"{name}: {err_msg}")
                 if isinstance(scanner, SyftScanner):
                     try:
                         generated_sbom = scanner.generate_sbom(target, force_offline=force_offline)
                     except Exception as s_exc:
-                        logger.exception("Syft SBOM generation failed: %s", s_exc)
                         scanner_errors.append(f"syft-sbom: {s_exc}")
             except Exception as exc:
-                logger.exception("Scanner '%s' failed during execution: %s", name, exc)
                 scanner_errors.append(f"{name}: {exc}")
 
         deduplicated = self._deduplicate(all_findings)
@@ -80,6 +74,8 @@ class MultiScannerEngine:
         success = len(scanner_errors) == 0
         error_msg = "; ".join(scanner_errors) if scanner_errors else None
 
+        unique_fallbacks = list(dict.fromkeys(fallbacks_used))
+
         metadata = ScanMetadata(
             scanner="multi-scanner-engine",
             version="1.0.0",
@@ -87,7 +83,7 @@ class MultiScannerEngine:
             duration_seconds=duration,
             success=success,
             error_message=error_msg,
-            is_fallback=bool(fallback_scanners),
+            is_fallback=len(unique_fallbacks) > 0,
         )
 
         return ScanResult(
@@ -96,8 +92,8 @@ class MultiScannerEngine:
             findings=deduplicated,
             metadata=metadata,
             errors=scanner_errors,
-            fallback_scanners=fallback_scanners,
             sbom=generated_sbom,
+            fallbacks=unique_fallbacks,
         )
 
     def _deduplicate(self, findings: list[Finding]) -> list[Finding]:

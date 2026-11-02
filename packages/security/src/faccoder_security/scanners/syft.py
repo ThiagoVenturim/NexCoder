@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import re
 import subprocess
 import time
@@ -10,6 +11,8 @@ from typing import Any
 
 from faccoder_security.models import Finding, FindingCategory, Location, SBOMComponent, SBOMDocument
 from faccoder_security.scanners.base import BaseScanner
+
+logger = logging.getLogger(__name__)
 
 
 class SyftScanner(BaseScanner):
@@ -43,7 +46,13 @@ class SyftScanner(BaseScanner):
                     )
                 )
 
-        result = self._create_result(target, findings, start_time, version="syft-engine")
+        result = self._create_result(
+            target,
+            findings,
+            start_time,
+            version="syft-engine",
+            is_fallback=force_offline_fallback or not self.is_available(),
+        )
         if result.metadata:
             result.metadata.error_message = json.dumps({"component_count": len(sbom_doc.components)})
         return result
@@ -57,7 +66,7 @@ class SyftScanner(BaseScanner):
         target = Path(target_path)
 
         if not force_offline and self.is_available():
-            with contextlib.suppress(Exception):
+            try:
                 cmd = [self.executable_name, "packages", f"dir:{target}", "-o", output_format, "-q"]
                 proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
                 if proc.stdout.strip():
@@ -79,6 +88,12 @@ class SyftScanner(BaseScanner):
                         components=components,
                         raw_content=raw_text,
                     )
+            except Exception as exc:
+                logger.warning(
+                    "Scanner '%s' CLI execution failed, falling back to heuristic engine: %s",
+                    self.name,
+                    exc,
+                )
 
         return self._offline_generate_sbom(target, output_format)
 

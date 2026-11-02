@@ -38,6 +38,13 @@ class SecurityGateEvaluator:
             for err in err_list:
                 reasons.append(f"Scanner failure detected (fail-closed enforced): {err}")
 
+        # Check allow_fallbacks policy
+        has_disallowed_fallbacks = False
+        if not pol.allow_fallbacks and scan_result.has_fallbacks():
+            has_disallowed_fallbacks = True
+            fallback_scanners = ", ".join(scan_result.fallbacks) if scan_result.fallbacks else "heuristic scanner"
+            reasons.append(f"Fallback heuristic scans not permitted by policy '{pol.name}': {fallback_scanners}.")
+
         # Check require_sbom requirement
         missing_sbom = False
         if pol.require_sbom:
@@ -45,19 +52,6 @@ class SecurityGateEvaluator:
             if not active_sbom or len(active_sbom.components) == 0 or not active_sbom.raw_content.strip():
                 missing_sbom = True
                 reasons.append("Policy require_sbom is enabled, but no valid SBOM document was generated or provided.")
-
-        # Check fallback execution
-        has_forbidden_fallbacks = False
-        if not pol.allow_fallbacks and scan_result.fallback_scanners:
-            has_forbidden_fallbacks = True
-            for s in scan_result.fallback_scanners:
-                reasons.append(f"Scanner '{s}' ran in fallback mode, but policy forbids fallback execution.")
-        for s in pol.disallow_fallback_scanners:
-            if s in scan_result.fallback_scanners or (
-                scan_result.metadata and scan_result.metadata.scanner == s and scan_result.metadata.is_fallback
-            ):
-                has_forbidden_fallbacks = True
-                reasons.append(f"Required scanner '{s}' ran only in fallback mode.")
 
         # Check findings against thresholds and allowlists
         for f in scan_result.findings:
@@ -97,7 +91,7 @@ class SecurityGateEvaluator:
         if any(f.category.value == "secret" for f in blocking):
             reasons.append("Unsuppressed secrets detected in target repository/code.")
 
-        passed = len(blocking) == 0 and not has_scanner_errors and not missing_sbom and not has_forbidden_fallbacks
+        passed = len(blocking) == 0 and not has_scanner_errors and not missing_sbom and not has_disallowed_fallbacks
 
         if not passed:
             details_count = len(blocking)
@@ -106,15 +100,15 @@ class SecurityGateEvaluator:
                     f"Release BLOCKED by security gate '{pol.name}': "
                     "scanner execution failed (fail-closed) or security thresholds breached."
                 )
+            elif has_disallowed_fallbacks:
+                summary = (
+                    f"Release BLOCKED by security gate '{pol.name}': "
+                    "fallback heuristic scans detected with allow_fallbacks=False."
+                )
             elif missing_sbom:
                 summary = (
                     f"Release BLOCKED by security gate '{pol.name}': "
                     "missing required SBOM or security thresholds breached."
-                )
-            elif has_forbidden_fallbacks:
-                summary = (
-                    f"Release BLOCKED by security gate '{pol.name}': "
-                    "required scanner ran in fallback mode or security thresholds breached."
                 )
             else:
                 summary = f"Release BLOCKED by security gate '{pol.name}': {details_count} blocking findings detected."

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import re
 import subprocess
 import time
@@ -10,6 +11,8 @@ from typing import Any
 
 from faccoder_security.models import Finding, FindingCategory, Location, Remediation, Severity
 from faccoder_security.scanners.base import BaseScanner
+
+logger = logging.getLogger(__name__)
 
 
 class OSVScanner(BaseScanner):
@@ -28,12 +31,18 @@ class OSVScanner(BaseScanner):
         target = Path(target_path)
 
         if not force_offline_fallback and self.is_available():
-            with contextlib.suppress(Exception):
+            try:
                 cmd = [self.executable_name, "--format", "json", "-r", str(target)]
                 proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
                 if proc.stdout.strip():
                     raw_json = json.loads(proc.stdout)
                     return self._parse_osv_json(raw_json, target, start_time)
+            except Exception as exc:
+                logger.warning(
+                    "Scanner '%s' CLI execution failed, falling back to heuristic engine: %s",
+                    self.name,
+                    exc,
+                )
 
         return self._offline_scan(target, start_time)
 
@@ -77,7 +86,7 @@ class OSVScanner(BaseScanner):
                     )
                     findings.append(finding)
 
-        return self._create_result(target, findings, start_time, version="osv-cli")
+        return self._create_result(target, findings, start_time, version="osv-cli", is_fallback=False)
 
     def _offline_scan(self, target: Path, start_time: float) -> Any:
         findings: list[Finding] = []
@@ -157,4 +166,4 @@ class OSVScanner(BaseScanner):
                                 )
                                 findings.append(finding)
 
-        return self._create_result(target, findings, start_time, version="osv-offline-engine")
+        return self._create_result(target, findings, start_time, version="osv-offline-engine", is_fallback=True)
