@@ -190,19 +190,36 @@ def test_security_gate_require_sbom():
     assert "Release APPROVED" in verdict_valid.summary
 
 
-def test_security_gate_fail_closed_on_fallback():
-    policy = GatePolicy(disallow_fallback_scanners=["gitleaks"])
-    evaluator = SecurityGateEvaluator(default_policy=policy)
+def test_gate_production_policy_preset():
+    prod_policy = GatePolicy.production(require_sbom=True)
+    assert prod_policy.name == "production"
+    assert prod_policy.allow_fallbacks is False
+    assert prod_policy.max_critical == 0
+    assert prod_policy.max_high == 0
+    assert prod_policy.require_sbom is True
+    assert prod_policy.block_on_secrets is True
+
+
+def test_security_gate_blocks_fallbacks_in_production():
+    prod_policy = GatePolicy.production(require_sbom=False)
+    evaluator = SecurityGateEvaluator(default_policy=prod_policy)
 
     fallback_res = ScanResult(
-        scanner="gitleaks",
+        scanner="semgrep",
         target_path=".",
         findings=[],
-        metadata=ScanMetadata(scanner="gitleaks", target_path=".", success=True, is_fallback=True),
-        fallback_scanners=["gitleaks"],
+        metadata=ScanMetadata(scanner="semgrep", target_path=".", success=True, is_fallback=True),
+        fallbacks=["semgrep"],
     )
 
-    verdict = evaluator.evaluate(fallback_res, policy=policy)
+    # In production policy (allow_fallbacks=False), fallback scans must BLOCK release
+    verdict = evaluator.evaluate(fallback_res, policy=prod_policy)
     assert verdict.passed is False
     assert "Release BLOCKED" in verdict.summary
-    assert any("fallback" in r for r in verdict.reasons)
+    assert any("Fallback heuristic scans not permitted" in r for r in verdict.reasons)
+
+    # In default policy (allow_fallbacks=True), fallback scans are permitted
+    default_policy = GatePolicy(allow_fallbacks=True, require_sbom=False)
+    verdict_allowed = evaluator.evaluate(fallback_res, policy=default_policy)
+    assert verdict_allowed.passed is True
+    assert "Release APPROVED" in verdict_allowed.summary

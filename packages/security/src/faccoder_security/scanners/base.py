@@ -61,5 +61,5 @@ class BaseScanner(abc.ABC):
             target_path=str(target_path),
             findings=findings,
             metadata=meta,
-            fallback_scanners=[self.name] if is_fallback else [],
+            fallbacks=[self.name] if is_fallback else [],
         )
