@@ -24,5 +24,6 @@ pythonpath = [
     "packages/agents/src",
     "packages/ideation/src",
     "packages/security/src",
+    "packages/control/src",
 ]
 addopts = "-q --import-mode=importlib"
