@@ -6,6 +6,7 @@ from pathlib import Path
 
 from faccoder_agents.catalog.registry import AgentCatalog
 from faccoder_agents.catalog.skills import SkillCatalog
+from faccoder_agents.engine.pipelines import get_pipeline_template, list_pipeline_templates
 from faccoder_agents.export import export_claude_package
 
 
@@ -37,6 +38,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     # list-skills subcommand
     subparsers.add_parser("list-skills", help="List registered skills in catalog.")
+
+    # list-pipelines subcommand
+    list_pipelines_parser = subparsers.add_parser("list-pipelines", help="List ready-made pipeline templates.")
+    list_pipelines_parser.add_argument("--category", "-c", type=str, default=None, help="Filter by category.")
+
+    # show-pipeline subcommand
+    show_pipeline_parser = subparsers.add_parser("show-pipeline", help="Show details of a pipeline template.")
+    show_pipeline_parser.add_argument("name", type=str, help="Pipeline template name.")
 
     return parser
 
@@ -84,6 +93,25 @@ def main(args: list[str] | None = None) -> int:
         for s in all_skills:
             print(f"  - {s.slug:<32} {s.description}")
         return 0
+
+    if parsed.command == "list-pipelines":
+        templates = list_pipeline_templates(category=parsed.category)
+        print(f"Found {len(templates)} pipeline template(s):")
+        for t in templates:
+            print(f"  - {t.name:<24} [{t.category:<12}] {t.description}")
+        return 0
+
+    if parsed.command == "show-pipeline":
+        try:
+            tmpl = get_pipeline_template(parsed.name)
+            print(f"Pipeline: {tmpl.name}")
+            print(f"Category: {tmpl.category}")
+            print(f"Description: {tmpl.description}")
+            print(f"Required Inputs: {', '.join(tmpl.required_inputs)}")
+            return 0
+        except KeyError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
 
     return 0
 

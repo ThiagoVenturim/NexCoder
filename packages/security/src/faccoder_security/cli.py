@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -37,6 +38,24 @@ def main(argv: list[str] | None = None) -> int:
     gate_p.add_argument("--max-critical", type=int, default=0, help="Maximum allowed critical findings")
     gate_p.add_argument("--max-high", type=int, default=0, help="Maximum allowed high findings")
     gate_p.add_argument("--require-sbom", action="store_true", help="Require a valid SBOM to approve release")
+    gate_p.add_argument(
+        "--policy",
+        choices=["default", "production"],
+        default=None,
+        help="Gate policy preset (defaults to 'production' if CI=1 is set, otherwise 'default')",
+    )
+    gate_p.add_argument(
+        "--allow-fallbacks",
+        action="store_true",
+        default=None,
+        help="Explicitly permit fallback heuristic scans",
+    )
+    gate_p.add_argument(
+        "--forbid-fallbacks",
+        action="store_true",
+        default=None,
+        help="Explicitly forbid fallback heuristic scans",
+    )
 
     # sbom
     sbom_p = subparsers.add_parser("sbom", help="Generate SBOM (CycloneDX / SPDX) for a repository or application")
@@ -80,11 +99,31 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "gate":
         engine = MultiScannerEngine()
         scan_res = engine.scan(target_path=args.path, force_offline=args.offline)
-        policy = GatePolicy(
-            max_critical=args.max_critical,
-            max_high=args.max_high,
-            require_sbom=args.require_sbom,
-        )
+
+        is_ci = bool(os.environ.get("CI"))
+        preset = args.policy or ("production" if is_ci else "default")
+
+        if preset == "production":
+            policy = GatePolicy.production(require_sbom=args.require_sbom)
+        else:
+            policy = GatePolicy(
+                name="default",
+                max_critical=args.max_critical,
+                max_high=args.max_high,
+                require_sbom=args.require_sbom,
+                allow_fallbacks=True,
+            )
+
+        if args.allow_fallbacks is True:
+            policy.allow_fallbacks = True
+        elif args.forbid_fallbacks is True:
+            policy.allow_fallbacks = False
+
+        if args.max_critical != 0:
+            policy.max_critical = args.max_critical
+        if args.max_high != 0:
+            policy.max_high = args.max_high
+
         evaluator = SecurityGateEvaluator(default_policy=policy)
         verdict = evaluator.evaluate(scan_res, policy=policy, sbom=scan_res.sbom)
 
@@ -94,14 +133,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if verdict.passed else 1
 
     if args.command == "sbom":
-        try:
-            syft = SyftScanner()
-            doc = syft.generate_sbom(target_path=args.path, output_format=args.format, force_offline=args.offline)
-            print(doc.raw_content)
-            return 0
-        except Exception as exc:
-            print(f"SBOM generation failed: {exc}", file=sys.stderr)
-            return 1
+        syft = SyftScanner()
+        doc = syft.generate_sbom(target_path=args.path, output_format=args.format, force_offline=args.offline)
+        print(doc.raw_content)
+        return 0
 
     if args.command == "init-app-security":
         assets = scaffold_app_security(

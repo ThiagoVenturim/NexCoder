@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import contextlib
 import json
+import logging
 import subprocess
 import time
 from pathlib import Path
@@ -10,6 +11,8 @@ from typing import Any
 
 from faccoder_security.models import Finding, FindingCategory, Location, Remediation, Severity
 from faccoder_security.scanners.base import BaseScanner
+
+logger = logging.getLogger(__name__)
 
 
 class BanditScanner(BaseScanner):
@@ -28,12 +31,18 @@ class BanditScanner(BaseScanner):
         target = Path(target_path)
 
         if not force_offline_fallback and self.is_available():
-            with contextlib.suppress(Exception):
+            try:
                 cmd = [self.executable_name, "-r", str(target), "-f", "json", "-q"]
                 proc = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
                 if proc.stdout.strip():
                     raw_json = json.loads(proc.stdout)
                     return self._parse_bandit_json(raw_json, target, start_time)
+            except Exception as exc:
+                logger.warning(
+                    "Scanner '%s' CLI execution failed, falling back to heuristic engine: %s",
+                    self.name,
+                    exc,
+                )
 
         return self._offline_scan(target, start_time)
 
@@ -70,7 +79,7 @@ class BanditScanner(BaseScanner):
             )
             findings.append(finding)
 
-        return self._create_result(target, findings, start_time, version="bandit-cli")
+        return self._create_result(target, findings, start_time, version="bandit-cli", is_fallback=False)
 
     def _offline_scan(self, target: Path, start_time: float) -> Any:
         findings: list[Finding] = []
@@ -148,4 +157,4 @@ class BanditScanner(BaseScanner):
                                 )
                             )
 
-        return self._create_result(target, findings, start_time, version="bandit-offline-ast")
+        return self._create_result(target, findings, start_time, version="bandit-offline-ast", is_fallback=True)
