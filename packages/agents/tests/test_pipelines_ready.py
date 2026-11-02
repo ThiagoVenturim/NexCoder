@@ -195,7 +195,6 @@ def test_refactor_pipeline_execution() -> None:
     assert res.approval.status == ApprovalStatus.DRY_RUN
 
 
-
 def test_cli_pipeline_commands(capsys) -> None:
     # 1. list-pipelines
     code = main(["list-pipelines"])

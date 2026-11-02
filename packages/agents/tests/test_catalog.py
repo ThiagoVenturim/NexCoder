@@ -129,3 +129,14 @@ def test_load_agents_from_dir_empty_or_nonexistent(tmp_path: Path) -> None:
 
     non_existent = tmp_path / "does_not_exist"
     assert load_agents_from_dir(non_existent) == []
+
+
+def test_validate_safe_slug_centralized() -> None:
+    from faccoder_agents.catalog.models import validate_safe_slug
+
+    assert validate_safe_slug("python-dev_1") == "python-dev_1"
+    assert validate_safe_slug("security_auditor") == "security_auditor"
+
+    for invalid in ["", "  ", "../escape", "bad/path", "name with spaces", "semi;colon", "null\0byte"]:
+        with pytest.raises(ValueError, match="Invalid"):
+            validate_safe_slug(invalid, category="test")

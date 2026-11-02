@@ -81,6 +81,7 @@ def test_pipeline_approval_gate_halt_and_resume() -> None:
     assert res2.status == "completed"
     assert res2.approval is not None
     assert res2.approval.status == ApprovalStatus.APPROVED
+    assert "approval_token_deploy_gate" not in res2.data
 
 
 def test_pipeline_branching_with_condition_block() -> None:
@@ -163,3 +164,28 @@ def test_pipeline_builder_validation_errors() -> None:
     empty_builder = PipelineBuilder("empty")
     with pytest.raises(ValueError, match="zero blocks"):
         empty_builder.compile()
+
+
+def test_pipeline_approval_token_scrubbing_and_registry_instance() -> None:
+    builder = PipelineBuilder("token-scrub-pipeline")
+    builder.add_block(ValidatorBlock(name="val", required_keys=["task"]))
+    builder.set_entry_point("val")
+    pipeline = builder.compile()
+
+    # Verify instance-level approval registry attribute exists
+    assert hasattr(pipeline, "_approval_registry")
+    assert isinstance(pipeline._approval_registry, dict)
+
+    # Run with operator token in inputs
+    res = pipeline.run(
+        inputs={
+            "task": "unit-test",
+            "approval_token_gate_block": "secret-operator-token-xyz",
+            "approval_token_another": "another-secret",
+        }
+    )
+    assert res.status == "completed"
+    assert res.data["task"] == "unit-test"
+    # Ensure sensitive operator tokens are scrubbed from output data
+    assert "approval_token_gate_block" not in res.data
+    assert "approval_token_another" not in res.data
