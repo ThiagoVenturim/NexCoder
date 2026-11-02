@@ -38,7 +38,7 @@ def test_cli_gate_block(tmp_path: Path, capsys):
     f = tmp_path / "vuln.py"
     f.write_text("import subprocess\nsubprocess.call('ls', shell=True)\n", encoding="utf-8")
 
-    rc = main(["gate", str(tmp_path), "--offline"])
+    rc = main(["gate", str(tmp_path), "--offline", "--policy", "default"])
     assert rc == 1
     captured = capsys.readouterr()
     assert "Release BLOCKED" in captured.out
@@ -48,7 +48,7 @@ def test_cli_gate_pass(tmp_path: Path, capsys):
     f = tmp_path / "clean.py"
     f.write_text("def hello(): return 'world'\n", encoding="utf-8")
 
-    rc = main(["gate", str(tmp_path), "--offline"])
+    rc = main(["gate", str(tmp_path), "--offline", "--policy", "default"])
     assert rc == 0
     captured = capsys.readouterr()
     assert "Release APPROVED" in captured.out
@@ -59,7 +59,7 @@ def test_cli_gate_require_sbom(tmp_path: Path, capsys):
     f.write_text("def hello(): return 'world'\n", encoding="utf-8")
 
     # 1. Without requirements/SBOM -> blocked by require_sbom
-    rc_fail = main(["gate", str(tmp_path), "--offline", "--require-sbom"])
+    rc_fail = main(["gate", str(tmp_path), "--offline", "--require-sbom", "--policy", "default"])
     assert rc_fail == 1
     out_fail = capsys.readouterr().out
     assert "Release BLOCKED" in out_fail
@@ -67,7 +67,7 @@ def test_cli_gate_require_sbom(tmp_path: Path, capsys):
     # 2. Add requirements.txt so Syft generates valid SBOM -> passes
     req = tmp_path / "requirements.txt"
     req.write_text("pydantic==2.8.2\n", encoding="utf-8")
-    rc_pass = main(["gate", str(tmp_path), "--offline", "--require-sbom"])
+    rc_pass = main(["gate", str(tmp_path), "--offline", "--require-sbom", "--policy", "default"])
     assert rc_pass == 0
     out_pass = capsys.readouterr().out
     assert "Release APPROVED" in out_pass
