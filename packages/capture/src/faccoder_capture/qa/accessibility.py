@@ -118,7 +118,15 @@ def audit_accessibility_tree(
             return True
         return False
 
-    for node in nodes:
+    def _flatten(items: list[AccessibilityNode]) -> list[AccessibilityNode]:
+        flat: list[AccessibilityNode] = []
+        for item in items:
+            flat.append(item)
+            if item.children:
+                flat.extend(_flatten(item.children))
+        return flat
+
+    for node in _flatten(nodes):
         role_lower = (node.role or "").strip().lower()
 
         # Rule 1: Valid role check

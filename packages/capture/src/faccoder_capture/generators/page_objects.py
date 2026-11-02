@@ -14,8 +14,10 @@ def _to_pascal_case(text: str, fallback: str = "CapturedPage") -> str:
     if not words:
         return fallback
     pascal = "".join(w.capitalize() for w in words)
-    if not pascal.endswith("Page"):
+    if not pascal.lower().endswith("page"):
         pascal += "Page"
+    elif pascal.endswith("page"):
+        pascal = pascal[:-4] + "Page"
     return pascal
 
 

@@ -70,7 +70,7 @@ def compare_screenshots(
                 },
             )
 
-        diff = ImageChops.difference(baseline_img, candidate_img)
+        diff = ImageChops.difference(baseline_img.convert("RGB"), candidate_img.convert("RGB"))
         bbox = diff.getbbox()
 
         total_pixels = baseline_img.width * baseline_img.height
@@ -88,8 +88,7 @@ def compare_screenshots(
         diff_data = diff.getdata()
         mismatched_pixels = 0
         for px in diff_data:
-            # px is RGBA tuple
-            if any(c > 0 for c in px[:3]):
+            if any(c > 0 for c in px):
                 mismatched_pixels += 1
 
         diff_score = mismatched_pixels / max(1, total_pixels)

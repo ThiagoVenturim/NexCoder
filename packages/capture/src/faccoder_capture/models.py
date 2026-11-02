@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from faccoder_capture.desktop.models import (
     DesktopBoundingBox,
@@ -55,6 +56,29 @@ class StableSelector(BaseModel):
     test_id: str | None = None
     confidence: float = 1.0
     strategy: str = "id"
+    attributes: dict[str, str] = Field(default_factory=dict)
+    text: str | None = None
+
+    @model_validator(mode="after")
+    def _fill_defaults(self) -> StableSelector:
+        if not self.attributes:
+            attrs: dict[str, str] = {}
+            if self.test_id:
+                attrs["data-testid"] = self.test_id
+            if self.name:
+                attrs["name"] = self.name
+            self.attributes = attrs
+        if self.text is None and self.name:
+            self.text = self.name
+        return self
+
+    @property
+    def primary_selector(self) -> str:
+        return self.primary
+
+    @property
+    def selector_type(self) -> str:
+        return self.strategy
 
 
 class NetworkEntry(BaseModel):
@@ -68,6 +92,10 @@ class NetworkEntry(BaseModel):
     mime_type: str = ""
     time_ms: float = 0.0
     size_bytes: int = 0
+
+    @property
+    def response_body_size(self) -> int:
+        return self.size_bytes
 
 
 class WebCaptureConfig(BaseModel):
@@ -100,6 +128,12 @@ class WebCaptureResult(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
     is_captcha_detected: bool = False
+    status_code: int = 200
+    captured_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    @property
+    def network_entries(self) -> list[NetworkEntry]:
+        return self.har_entries
 
 
 class CapturePolicyError(Exception):

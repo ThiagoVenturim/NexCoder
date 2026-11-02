@@ -147,6 +147,9 @@ class SelectorExtractor:
         name = el.accessible_name
         xpath = self._generate_xpath(el)
 
+        text_val = el.text_content.strip() or name
+        attrs_val = dict(el.attrs)
+
         # 1. Test ID strategy
         if test_id:
             for attr in TEST_ID_ATTRS:
@@ -162,6 +165,8 @@ class SelectorExtractor:
                         test_id=test_id,
                         confidence=1.0,
                         strategy="test_id",
+                        attributes=attrs_val,
+                        text=text_val,
                     )
 
         # 2. Unique ID strategy
@@ -176,6 +181,8 @@ class SelectorExtractor:
                 name=name,
                 confidence=0.95,
                 strategy="id",
+                attributes=attrs_val,
+                text=text_val,
             )
 
         # 3. Role + accessible name
@@ -195,6 +202,8 @@ class SelectorExtractor:
                 name=name,
                 confidence=0.90,
                 strategy="role_name",
+                attributes=attrs_val,
+                text=text_val,
             )
 
         # 4. Text content strategy (for buttons, links)
@@ -209,6 +218,8 @@ class SelectorExtractor:
                 name=name,
                 confidence=0.85,
                 strategy="text",
+                attributes=attrs_val,
+                text=text_val,
             )
 
         # 5. Structural CSS fallback
@@ -222,6 +233,8 @@ class SelectorExtractor:
             name=name,
             confidence=0.70,
             strategy="css_path",
+            attributes=attrs_val,
+            text=text_val,
         )
 
     def _is_valid_id(self, id_val: str) -> bool:
