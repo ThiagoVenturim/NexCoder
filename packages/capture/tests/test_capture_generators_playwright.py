@@ -40,6 +40,28 @@ def test_format_locator_strategies() -> None:
     )
     assert _format_locator(s_role) == 'page.get_by_role("button", name="Sign In")'
 
+    # Test ID strategy with alternate test attribute (data-cy)
+    s_cy = StableSelector(
+        primary="getByTestId('search-box')",
+        css="[data-cy='search-box']",
+        xpath="//*[@data-cy='search-box']",
+        tag="input",
+        test_id="search-box",
+        attributes={"data-cy": "search-box"},
+    )
+    assert _format_locator(s_cy) == 'page.get_by_test_id("search-box")'
+
+    # Text strategy with multiline whitespace
+    s_text = StableSelector(
+        primary="getByText('Help & Support')",
+        css="a:has-text('Help & Support')",
+        xpath="//a[contains(text(), 'Help')]",
+        tag="a",
+        strategy="text",
+        text="Help   \n   & Support",
+    )
+    assert _format_locator(s_text) == 'page.get_by_text("Help & Support")'
+
     # Fallback to locator
     s_fallback = StableSelector(
         primary="#custom-id",

@@ -43,6 +43,28 @@ def test_format_locator_expr() -> None:
     )
     assert _format_locator_expr(s_role) == 'self.page.get_by_role("button", name="Save")'
 
+    # Test ID strategy with alternate test attribute (data-qa)
+    s_qa = StableSelector(
+        primary="getByTestId('search-box')",
+        css="[data-qa='search-box']",
+        xpath="//*[@data-qa='search-box']",
+        tag="input",
+        test_id="search-box",
+        attributes={"data-qa": "search-box"},
+    )
+    assert _format_locator_expr(s_qa) == 'self.page.get_by_test_id("search-box")'
+
+    # Text strategy
+    s_text = StableSelector(
+        primary="getByText('Documentation')",
+        css="a:has-text('Documentation')",
+        xpath="//a[contains(text(), 'Documentation')]",
+        tag="a",
+        strategy="text",
+        text="Documentation",
+    )
+    assert _format_locator_expr(s_text) == 'self.page.get_by_text("Documentation")'
+
     s_css = StableSelector(
         primary=".navbar > a",
         css=".navbar > a",

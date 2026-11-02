@@ -32,13 +32,18 @@ def _to_snake_case(text: str, fallback: str = "element") -> str:
 
 def _format_locator_expr(selector: StableSelector) -> str:
     """Return locator expression string."""
-    if selector.attributes.get("data-testid"):
-        tid = selector.attributes["data-testid"]
-        return f'self.page.get_by_test_id("{tid}")'
+    test_id = selector.test_id or selector.attributes.get("data-testid")
+    if test_id:
+        clean_id = test_id.strip().replace('"', '\\"')
+        return f'self.page.get_by_test_id("{clean_id}")'
 
     if selector.role and selector.text:
-        clean_text = selector.text.strip().replace('"', '\\"')
+        clean_text = " ".join(selector.text.split()).replace('"', '\\"')
         return f'self.page.get_by_role("{selector.role}", name="{clean_text}")'
+
+    if selector.strategy == "text" or (selector.text and "getByText" in selector.primary):
+        clean_text = " ".join((selector.text or "").split()).replace('"', '\\"')
+        return f'self.page.get_by_text("{clean_text}")'
 
     primary = selector.primary_selector.replace('"', '\\"')
     return f'self.page.locator("{primary}")'
@@ -85,7 +90,8 @@ def generate_page_object(
 
         # Derive a human-readable property name
         prop_base = (
-            sel.attributes.get("data-testid")
+            sel.test_id
+            or sel.attributes.get("data-testid")
             or sel.attributes.get("name")
             or sel.attributes.get("id")
             or sel.text

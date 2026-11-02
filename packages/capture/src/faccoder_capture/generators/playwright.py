@@ -19,13 +19,18 @@ def _sanitize_name(text: str, fallback: str = "capture_page") -> str:
 
 def _format_locator(selector: StableSelector) -> str:
     """Format a stable selector into a Playwright locator call."""
-    if selector.attributes.get("data-testid"):
-        tid = selector.attributes["data-testid"]
-        return f'page.get_by_test_id("{tid}")'
+    test_id = selector.test_id or selector.attributes.get("data-testid")
+    if test_id:
+        clean_id = test_id.strip().replace('"', '\\"')
+        return f'page.get_by_test_id("{clean_id}")'
 
     if selector.role and selector.text:
-        clean_text = selector.text.strip().replace('"', '\\"')
+        clean_text = " ".join(selector.text.split()).replace('"', '\\"')
         return f'page.get_by_role("{selector.role}", name="{clean_text}")'
+
+    if selector.strategy == "text" or (selector.text and "getByText" in selector.primary):
+        clean_text = " ".join((selector.text or "").split()).replace('"', '\\"')
+        return f'page.get_by_text("{clean_text}")'
 
     primary = selector.primary_selector.replace('"', '\\"')
     return f'page.locator("{primary}")'
