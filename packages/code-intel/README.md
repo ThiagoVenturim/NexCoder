@@ -75,3 +75,16 @@ engine = BottomUpDocEngine()
 doc_tree = engine.generate_tree(symbols, communities=communities)
 print(doc_tree["system::architecture"].markdown)
 ```
+
+### 5. Filtered Search & Large Repository Considerations
+
+`CodeSearchIndex.search` supports SQL-level metadata pushdown filtering using the `where` parameter:
+
+```python
+results = index.search("calculate interest", where={"language": "delphi"}, top_k=5)
+```
+
+**Large Repository Notes:**
+- Filtered vector search (`_filtered_vector_search`) pre-filters matching candidates in SQLite via JSON pushdown and computes cosine similarity in-memory using vectorized NumPy.
+- For codebases up to tens of thousands of chunks, this provides fast filtering with exact cosine similarity over the filtered subset.
+- For extremely large multi-million chunk codebases, consider partitioning index files by subsystem or repository boundary.

@@ -14,15 +14,18 @@ Main entry points:
 from faccoder_core.config import FaccoderConfig, load_config
 from faccoder_core.llm.registry import get_chat_model
 from faccoder_core.retrieval.fusion import mmr_select, rrf_fuse
+from faccoder_core.sandbox import PathOutsideSandboxError, resolve_inside
 from faccoder_core.structured import OutOfContractError, call_structured
 
 __all__ = [
     "FaccoderConfig",
     "OutOfContractError",
+    "PathOutsideSandboxError",
     "call_structured",
     "get_chat_model",
     "load_config",
     "mmr_select",
+    "resolve_inside",
     "rrf_fuse",
 ]
 

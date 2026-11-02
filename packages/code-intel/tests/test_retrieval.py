@@ -194,3 +194,124 @@ def calc_beta():
 
         # embed_documents must NOT have been called during MMR since stored embeddings are reused
         assert mock_embedder.embed_documents.call_count == 0
+
+
+def test_index_directory_purges_deleted_files(tmp_path: Path) -> None:
+    """Ensure index_directory purges chunks of files deleted from disk under indexed root."""
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    file_a = src_dir / "mod_a.py"
+    file_b = src_dir / "mod_b.py"
+    file_a.write_text("def func_a(): return 'a'\n", encoding="utf-8")
+    file_b.write_text("def func_b(): return 'b'\n", encoding="utf-8")
+
+    # Outside file that should NOT be purged
+    outside_file = tmp_path / "outside.py"
+    outside_file.write_text("def func_outside(): return 'out'\n", encoding="utf-8")
+
+    db_path = tmp_path / "purge_test.db"
+    embedder = HashEmbedder(dimensions=64)
+
+    with CodeSearchIndex(db_path, embedder=embedder) as idx:
+        idx.index_file(outside_file)
+        indexed = idx.index_directory(src_dir)
+        assert indexed == 2
+
+        # 3 chunks total (outside + mod_a + mod_b)
+        assert idx.store.count() == 3
+
+        # Delete mod_b from disk
+        file_b.unlink()
+
+        # Re-index src_dir
+        indexed = idx.index_directory(src_dir)
+        assert indexed == 1
+
+        # mod_b chunks must have been purged, outside must remain
+        assert idx.store.count() == 2
+        hits_b = idx.search("func_b", top_k=5)
+        assert not any("mod_b.py" in str(h.get("metadata", {}).get("file_path", "")) for h in hits_b)
+
+        hits_a = idx.search("func_a", top_k=5)
+        assert any("mod_a.py" in str(h.get("metadata", {}).get("file_path", "")) for h in hits_a)
+
+        hits_out = idx.search("func_outside", top_k=5)
+        assert any("outside.py" in str(h.get("metadata", {}).get("file_path", "")) for h in hits_out)
+
+
+def test_index_directory_preserves_unfiltered_existing_files(tmp_path: Path) -> None:
+    """Ensure re-indexing with extension filter does NOT purge existing files with different extensions."""
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    py_file = src_dir / "service.py"
+    java_file = src_dir / "Service.java"
+    py_file.write_text("def service_call(): return 'py'\n", encoding="utf-8")
+    java_file.write_text("public class Service { public void run() {} }\n", encoding="utf-8")
+
+    db_path = tmp_path / "multi_ext.db"
+    embedder = HashEmbedder(dimensions=64)
+
+    with CodeSearchIndex(db_path, embedder=embedder) as idx:
+        # Index both .py and .java files
+        indexed = idx.index_directory(src_dir)
+        assert indexed == 2
+        assert idx.store.count() >= 2
+
+        # Re-index specifying only extensions=[".py"]
+        indexed_py = idx.index_directory(src_dir, extensions=[".py"])
+        assert indexed_py == 1
+
+        # .java chunks must remain in store because Service.java still exists on disk
+        java_hits = idx.search("Service", top_k=5)
+        assert any("Service.java" in str(h.get("metadata", {}).get("file_path", "")) for h in java_hits)
+
+
+def test_gitignore_anchored_and_directory_patterns(tmp_path: Path) -> None:
+    """Ensure root-anchored (/pattern) and directory (dir/) gitignore patterns are respected."""
+    src_dir = tmp_path / "repo"
+    src_dir.mkdir()
+    (src_dir / ".gitignore").write_text(
+        "/out\n/root_only.py\ntemp/\nsub/*.tmp\n# comment\n\n",
+        encoding="utf-8",
+    )
+
+    # /out at root: ignored
+    out_dir = src_dir / "out"
+    out_dir.mkdir()
+    (out_dir / "output.py").write_text("def out_dir_func(): pass", encoding="utf-8")
+
+    # nested out dir: should NOT match /out
+    nested_dir = src_dir / "nested"
+    nested_dir.mkdir()
+    nested_out = nested_dir / "out"
+    nested_out.mkdir()
+    (nested_out / "nested_out.py").write_text("def nested_out_func(): pass", encoding="utf-8")
+
+    # /root_only.py at root: ignored
+    (src_dir / "root_only.py").write_text("def root_ignored(): pass", encoding="utf-8")
+    # root_only.py in subdirectory: should NOT match /root_only.py
+    (nested_dir / "root_only.py").write_text("def nested_allowed(): pass", encoding="utf-8")
+
+    # temp/ anywhere: ignored
+    temp_dir = nested_dir / "temp"
+    temp_dir.mkdir()
+    (temp_dir / "scratch.py").write_text("def scratch(): pass", encoding="utf-8")
+
+    # valid file
+    (src_dir / "main.py").write_text("def main(): pass", encoding="utf-8")
+
+    db_path = tmp_path / "gi_anchored.db"
+    embedder = HashEmbedder(dimensions=64)
+
+    with CodeSearchIndex(db_path, embedder=embedder) as idx:
+        count = idx.index_directory(src_dir, extensions=[".py"])
+        # Should index: nested/out/nested_out.py, nested/root_only.py, main.py -> 3 files
+        assert count == 3
+
+        hits = idx.search("pass", top_k=10)
+        file_paths = [str(h.get("metadata", {}).get("file_path", "")) for h in hits]
+        assert not any("out" in fp and "nested" not in fp for fp in file_paths)
+        assert not any("scratch.py" in fp for fp in file_paths)
+        assert any("nested_out.py" in fp for fp in file_paths)
+        assert any("nested_allowed" in h["text"] for h in hits)
+        assert any("main.py" in fp for fp in file_paths)
