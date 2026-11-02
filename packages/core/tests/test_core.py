@@ -106,6 +106,65 @@ def test_hybrid_store_finds_identifier_parts(tmp_path):
     assert store.count() == 3
 
 
+def test_hybrid_store_where_filter_and_metadata_helpers(tmp_path):
+    embedder = HashEmbedder(64)
+    store = HybridStore(tmp_path / "where.sqlite", dimensions=64)
+    c1 = StoredChunk(
+        id="c1",
+        text="def calculate_vat(): return 0.2",
+        metadata={"lang": "python", "file_path": "tax/vat.py"},
+        embedding=embedder.embed_query("calculate vat"),
+    )
+    c2 = StoredChunk(
+        id="c2",
+        text="function CalculateVAT: Double; begin Result := 0.2; end;",
+        metadata={"lang": "delphi", "file_path": "tax/vat.pas"},
+        embedding=embedder.embed_query("calculate vat"),
+    )
+    c3 = StoredChunk(
+        id="c3",
+        text="def calculate_income_tax(): return 0.15",
+        metadata={"lang": "python", "file_path": "tax/income.py"},
+        embedding=embedder.embed_query("calculate income tax"),
+    )
+    store.upsert([c1, c2, c3])
+
+    # text_search with where filter
+    py_text_hits = store.text_search("calculate", where={"lang": "python"})
+    assert len(py_text_hits) == 2
+    assert all(h["metadata"]["lang"] == "python" for h in py_text_hits)
+
+    delphi_text_hits = store.text_search("calculate", where={"lang": "delphi"})
+    assert len(delphi_text_hits) == 1
+    assert delphi_text_hits[0]["id"] == "c2"
+
+    # vector_search with where filter
+    py_vec_hits = store.vector_search(embedder.embed_query("calculate vat"), k=10, where={"lang": "python"})
+    assert len(py_vec_hits) == 2
+    assert all(h["metadata"]["lang"] == "python" for h in py_vec_hits)
+
+    # hybrid_search with where filter
+    delphi_hybrid_hits = store.hybrid_search("calculate", embedder.embed_query("calculate"), where={"lang": "delphi"})
+    assert len(delphi_hybrid_hits) == 1
+    assert delphi_hybrid_hits[0]["id"] == "c2"
+
+    # get_embeddings
+    embs = store.get_embeddings(["c1", "c2", "nonexistent"])
+    assert "c1" in embs and "c2" in embs
+    assert "nonexistent" not in embs
+    assert len(embs["c1"]) == 64
+
+    # get_metadata_values
+    file_map = store.get_metadata_values("file_path")
+    assert file_map == {"c1": "tax/vat.py", "c2": "tax/vat.pas", "c3": "tax/income.py"}
+
+    # delete_by_metadata
+    deleted = store.delete_by_metadata("file_path", "tax/vat.pas")
+    assert deleted == 1
+    assert store.get("c2") is None
+    assert store.count() == 2
+
+
 def test_semantic_cache_skips_negative_answers(tmp_path):
     embedder = HashEmbedder(64)
     cache = SemanticCache(HybridStore(tmp_path / "c.sqlite", dimensions=64), embedder, threshold=0.9)
