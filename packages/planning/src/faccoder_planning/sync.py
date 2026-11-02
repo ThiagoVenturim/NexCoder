@@ -247,10 +247,13 @@ class BoardSynchronizer:
 
         # If project_id provided, fetch actual board items to read current column
         board_items_by_content_id: dict[str, Any] = {}
+        board_items_by_number: dict[int, Any] = {}
         if project_id and hasattr(self.adapter, "list_project_items"):
             board_items = self.adapter.list_project_items(project_id)
             for b_item in board_items:
                 board_items_by_content_id[b_item.content_id] = b_item
+                if getattr(b_item, "content_number", None) is not None:
+                    board_items_by_number[b_item.content_number] = b_item
 
         for task in plan.all_tasks():
             remote = issues_by_marker.get(task.faccoder_id)
@@ -259,9 +262,17 @@ class BoardSynchronizer:
 
             target_col, reason = self.resolve_target_column(remote, pr_state)
 
-            # Read actual column from board if available
+            # Read actual column from board if available (matching by node_id, id, or issue number)
             current_col = BoardColumn.BACKLOG.value
-            b_item = board_items_by_content_id.get(remote.id) if remote else None
+            b_item = None
+            if remote:
+                if getattr(remote, "node_id", None) and remote.node_id in board_items_by_content_id:
+                    b_item = board_items_by_content_id[remote.node_id]
+                elif remote.id in board_items_by_content_id:
+                    b_item = board_items_by_content_id[remote.id]
+                elif remote.number is not None and remote.number in board_items_by_number:
+                    b_item = board_items_by_number[remote.number]
+
             if b_item and b_item.status:
                 current_col = b_item.status
             elif remote:
@@ -285,6 +296,7 @@ class BoardSynchronizer:
                             item_id=b_item.id,
                             field_id=status_field_id,
                             single_select_option_id=opt_id,
+                            content_id=b_item.content_id,
                             dry_run=dry_run,
                         )
 

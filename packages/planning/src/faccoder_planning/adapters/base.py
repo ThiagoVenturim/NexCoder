@@ -37,6 +37,7 @@ class RemoteIssue(BaseModel):
 
     id: str
     number: int | None = None
+    node_id: str | None = None
     title: str
     body: str = ""
     faccoder_id: str | None = None
@@ -85,6 +86,7 @@ class ProjectV2Item(BaseModel):
 
     id: str
     content_id: str
+    content_number: int | None = None
     content_type: str = "Issue"
     title: str = ""
     status: str | None = None
@@ -95,8 +97,8 @@ class ProjectV2ItemResult(BaseModel):
 
     project_id: str
     item_id: str | None = None
-    content_id: str
-    action: str  # added, skipped, dry_run_add
+    content_id: str | None = None
+    action: str  # added, skipped, dry_run_add, updated, dry_run_update
     message: str = ""
     dry_run: bool = True
 
