@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "faccoder-continuous-improvement"
+version = "0.1.0"
+description = "Continuous improvement engine: scheduled research diffs, Langfuse observability monitors, security watchers, and automated issue creation."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "faccoder-core>=0.1.0",
+    "faccoder-ideation>=0.1.0",
+    "faccoder-planning>=0.1.0",
+    "faccoder-security>=0.1.0",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+cli = [
+    "typer>=0.12",
+]
+
+[project.scripts]
+faccoder-ci = "faccoder_continuous_improvement.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/faccoder_continuous_improvement"]

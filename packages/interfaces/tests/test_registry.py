@@ -22,7 +22,7 @@ def test_known_modules_configuration() -> None:
     assert "control" in KNOWN_MODULES
     assert KNOWN_MODULES["control"].available_in_develop is False
     assert "continuous-improvement" in KNOWN_MODULES
-    assert KNOWN_MODULES["continuous-improvement"].available_in_develop is False
+    assert KNOWN_MODULES["continuous-improvement"].available_in_develop is True
 
 
 def test_module_statuses() -> None:
@@ -34,6 +34,8 @@ def test_module_statuses() -> None:
     assert statuses["ideation"]["status"] == "available"
     assert statuses["capture"]["available"] is True
     assert statuses["capture"]["status"] == "available"
+    assert statuses["continuous-improvement"]["available"] is True
+    assert statuses["continuous-improvement"]["status"] == "available"
 
     # Modules not yet in develop should be marked unavailable with clear message
     assert statuses["serving"]["available"] is False

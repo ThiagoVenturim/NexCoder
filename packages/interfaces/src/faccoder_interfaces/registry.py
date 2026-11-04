@@ -76,7 +76,7 @@ KNOWN_MODULES: dict[str, ModuleInfo] = {
         name="continuous-improvement",
         package_name="faccoder_continuous_improvement",
         description="Scheduled research, continuous scans, and automatic issue creation.",
-        available_in_develop=False,
+        available_in_develop=True,
         tools=["schedule_job", "trigger_improvement"],
     ),
 }
