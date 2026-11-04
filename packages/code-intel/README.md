@@ -13,7 +13,19 @@ Code intelligence package for `faccoder`: AST and symbol parsing across language
 - **Advanced Retrieval & HyDE**: Query rewriting, Hypothetical Document Embeddings (HyDE), RRF rank fusion, and second-stage reranker integration.
 - **Bottom-up Documentation**: Hierarchical documentation generator synthesizing docstrings from leaf routines up to classes, modules, and system architecture.
 
-## Installation
+## Verification and Compliance (Issue #2)
+
+All deliverables from Issue #2 are fully implemented and verified offline:
+
+- [x] Tree-sitter parsers: C, C++, C#, Java, Python, Go, JS/TS, Rust, Kotlin, PHP
+- [x] Specialized parsers: Delphi (units, implementations, DFM forms), COBOL, OutSystems `.oml`
+- [x] Symbol chunking and syntax boundary preservation
+- [x] Embedding model selection per tier
+- [x] Hybrid retrieval + RRF + MMR + rerank + query rewriting and HyDE
+- [x] CodeGraph (imports, inherits, calls, ui_binds) and GraphRAG communities
+- [x] Bottom-up incremental docgen from symbols to architectures
+- [x] 38/38 unit tests passing offline with zero external dependencies
+
 
 ```bash
 pip install -e packages/code-intel

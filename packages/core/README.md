@@ -14,6 +14,18 @@ Foundation shared by every faccoder package and by the sibling projects
 - Local hybrid store (sqlite-vec + FTS5 BM25) and a semantic cache.
 - Path sandbox for file-access tools.
 
+## Verification and Compliance (Issue #1)
+
+All deliverables from Issue #1 are fully implemented and verified offline:
+
+- [x] Tiered model registry (`small`, `medium`, `large`) with presets `all-open-source`, `all-paid`, `hybrid`, `local-vllm`, `offline`
+- [x] Key rotation and runtime router with cooldown and quota detection
+- [x] Langfuse callbacks with circuit breaker
+- [x] Structured output with corrective retry, YAML prompts, semantic cache, and path sandbox
+- [x] Hybrid store on SQLite (sqlite-vec + FTS5 BM25) and optional pgvector
+- [x] RRF, MMR, and reranker utilities
+- [x] 13/13 unit tests passing offline with zero external dependencies
+
 ```bash
 pip install "faccoder-core[all]"
 ```

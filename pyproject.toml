@@ -30,5 +30,7 @@ pythonpath = [
     "packages/capture/src",
     "packages/control/src",
     "packages/interfaces/src",
+    "packages/serving/src",
+    "packages/continuous-improvement/src",
 ]
 addopts = "-q --import-mode=importlib"
