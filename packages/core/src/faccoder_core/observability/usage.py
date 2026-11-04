@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import contextvars
 import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -37,6 +38,7 @@ class UsageMeter:
     cost_usd: float = 0.0
     calls: int = 0
     by_model: dict[str, float] = field(default_factory=dict)
+    fallbacks: list[dict[str, Any]] = field(default_factory=list)
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def add(self, model: str, input_tokens: int, output_tokens: int) -> None:
@@ -47,6 +49,24 @@ class UsageMeter:
             self.cost_usd += cost
             self.calls += 1
             self.by_model[model] = self.by_model.get(model, 0.0) + cost
+
+    def record_fallback(
+        self,
+        source_model: str,
+        target_model: str,
+        reason: str,
+        wait_seconds: float = 0.0,
+    ) -> None:
+        with self._lock:
+            self.fallbacks.append(
+                {
+                    "source_model": source_model,
+                    "target_model": target_model,
+                    "reason": reason,
+                    "wait_seconds": wait_seconds,
+                    "timestamp": time.time(),
+                }
+            )
 
     @property
     def over_budget(self) -> bool:
@@ -65,8 +85,9 @@ def current_meter() -> UsageMeter | None:
 
 
 @contextmanager
-def usage_scope(owner: str = "anonymous", run_id: str | None = None,
-                budget_usd: float | None = None) -> Iterator[UsageMeter]:
+def usage_scope(
+    owner: str = "anonymous", run_id: str | None = None, budget_usd: float | None = None
+) -> Iterator[UsageMeter]:
     meter = UsageMeter(owner=owner, run_id=run_id, budget_usd=budget_usd)
     token = _current.set(meter)
     try:
@@ -100,8 +121,7 @@ class UsageCallback(BaseCallbackHandler):
         meter = current_meter()
         if meter is not None and meter.over_budget:
             raise BudgetExceededError(
-                f"Budget of {meter.budget_usd:.2f} USD reached for '{meter.owner}' "
-                f"(spent {meter.cost_usd:.4f} USD)."
+                f"Budget of {meter.budget_usd:.2f} USD reached for '{meter.owner}' (spent {meter.cost_usd:.4f} USD)."
             )
 
     def on_chat_model_start(self, serialized: dict[str, Any], messages: list, **kwargs: Any) -> None:

@@ -11,17 +11,29 @@ Main entry points:
 - ``HybridStore``: local vector + BM25 store on SQLite.
 """
 
+from faccoder_core.cache import SemanticCache
 from faccoder_core.config import FaccoderConfig, load_config
+from faccoder_core.llm.compression import compress_messages, compress_text
+from faccoder_core.llm.context import ContextBudget, count_tokens
+from faccoder_core.llm.memory import PinnedMemory
 from faccoder_core.llm.registry import get_chat_model
+from faccoder_core.llm.tool_loader import SelectiveToolLoader
 from faccoder_core.retrieval.fusion import mmr_select, rrf_fuse
 from faccoder_core.sandbox import PathOutsideSandboxError, resolve_inside
 from faccoder_core.structured import OutOfContractError, call_structured
 
 __all__ = [
+    "ContextBudget",
     "FaccoderConfig",
     "OutOfContractError",
     "PathOutsideSandboxError",
+    "PinnedMemory",
+    "SelectiveToolLoader",
+    "SemanticCache",
     "call_structured",
+    "compress_messages",
+    "compress_text",
+    "count_tokens",
     "get_chat_model",
     "load_config",
     "mmr_select",

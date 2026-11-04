@@ -43,8 +43,7 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 class ProviderNotInstalledError(ImportError):
     def __init__(self, provider: str, extra: str):
         super().__init__(
-            f"Provider '{provider}' needs an optional dependency. Install it with: "
-            f"pip install faccoder-core[{extra}]"
+            f"Provider '{provider}' needs an optional dependency. Install it with: pip install faccoder-core[{extra}]"
         )
 
 
@@ -61,6 +60,17 @@ def _keys(spec: ModelSpec) -> list[str]:
 
 def build_chat_model(spec: ModelSpec, callbacks: list | None = None) -> Any:
     """Instantiate a LangChain chat model from a ModelSpec."""
+    if spec.fallbacks:
+        primary_spec = spec.model_copy(update={"fallbacks": []})
+        primary_model = build_chat_model(primary_spec, callbacks=callbacks)
+        fallback_models = [build_chat_model(fb, callbacks=callbacks) for fb in spec.fallbacks]
+        model_names = [spec.model, *[fb.model for fb in spec.fallbacks]]
+        return RotatingChatModel(
+            [primary_model, *fallback_models],
+            model_names=model_names,
+            fallback_chain=True,
+        )
+
     provider = spec.provider.lower()
     common: dict[str, Any] = {"temperature": spec.temperature, **spec.extra}
     if spec.max_tokens:
@@ -93,8 +103,7 @@ def build_chat_model(spec: ModelSpec, callbacks: list | None = None) -> Any:
         api_key = keys[0] if keys else ("not-needed" if provider == "openai-compatible" else None)
         if len(keys) > 1:
             return RotatingChatModel(
-                [ChatOpenAI(model=spec.model, base_url=base_url, api_key=k, max_retries=0, **common)
-                 for k in keys]
+                [ChatOpenAI(model=spec.model, base_url=base_url, api_key=k, max_retries=0, **common) for k in keys]
             )
         return ChatOpenAI(model=spec.model, base_url=base_url, api_key=api_key, **common)
 
@@ -133,8 +142,7 @@ def build_chat_model(spec: ModelSpec, callbacks: list | None = None) -> Any:
         keys = _keys(spec) or [os.environ.get("GOOGLE_API_KEY", "")]
         if not keys[0]:
             raise ValueError("Set GOOGLE_API_KEYS (comma separated) or GOOGLE_API_KEY to use Gemini.")
-        models = [ChatGoogleGenerativeAI(model=spec.model, google_api_key=k, max_retries=0, **common)
-                  for k in keys]
+        models = [ChatGoogleGenerativeAI(model=spec.model, google_api_key=k, max_retries=0, **common) for k in keys]
         return models[0] if len(models) == 1 else RotatingChatModel(models)
 
     if provider == "bedrock":

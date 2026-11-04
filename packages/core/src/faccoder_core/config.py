@@ -42,6 +42,7 @@ class ModelSpec(BaseModel):
     temperature: float = 0.0
     max_tokens: int | None = None
     extra: dict = Field(default_factory=dict)
+    fallbacks: list[ModelSpec] = Field(default_factory=list)
 
 
 class EmbeddingSpec(BaseModel):
@@ -69,6 +70,8 @@ class BudgetSpec(BaseModel):
     max_usd_per_run: float = 5.0
     max_delegation_depth: int = 2
     max_tool_calls_per_agent: int = 40
+    context_budget_ratio: float = 0.60
+    default_context_window: int = 32768
 
 
 class StorageSpec(BaseModel):

@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 
 
 class Reranker(Protocol):
-    def rerank(self, query: str, docs: list[dict], *, text_field: str = "text",
-               top_k: int | None = None) -> list[dict]: ...
+    def rerank(
+        self, query: str, docs: list[dict], *, text_field: str = "text", top_k: int | None = None
+    ) -> list[dict]: ...
 
 
 class NoReranker:
-    def rerank(self, query: str, docs: list[dict], *, text_field: str = "text",
-               top_k: int | None = None) -> list[dict]:
+    def rerank(self, query: str, docs: list[dict], *, text_field: str = "text", top_k: int | None = None) -> list[dict]:
         return docs[:top_k] if top_k else docs
 
 
@@ -42,8 +42,7 @@ class CrossEncoderReranker:
             raise ImportError("pip install faccoder-core[local-embeddings]") from exc
         self._model = CrossEncoder(model)
 
-    def rerank(self, query: str, docs: list[dict], *, text_field: str = "text",
-               top_k: int | None = None) -> list[dict]:
+    def rerank(self, query: str, docs: list[dict], *, text_field: str = "text", top_k: int | None = None) -> list[dict]:
         if not docs:
             return []
         scores = self._model.predict([(query, d.get(text_field, "")[:4000]) for d in docs])
