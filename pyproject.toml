@@ -13,6 +13,8 @@ ignore = ["S101", "S105", "S106"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S", "B"]
+"**/web/**" = ["B008"]
+"**/interfaces/**" = ["B008"]
 "scripts/**" = ["S603", "S607"]
 
 [tool.pytest.ini_options]
@@ -25,5 +27,6 @@ pythonpath = [
     "packages/ideation/src",
     "packages/security/src",
     "packages/capture/src",
+    "packages/control/src",
 ]
 addopts = "-q --import-mode=importlib"
