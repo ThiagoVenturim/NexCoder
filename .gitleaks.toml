@@ -11,4 +11,5 @@ regexes = [
   '''AKIA1234567890ABCDEF''',
   '''abcdef1234567890abcdef123456''',
   '''fk_nonexistent_key_12345''',
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9''',
 ]
