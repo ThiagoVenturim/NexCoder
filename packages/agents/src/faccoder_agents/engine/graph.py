@@ -22,6 +22,10 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["END", "START", "PipelineBuilder", "PipelineGraph"]
 
+# Process-local ephemeral registry mapping active in-flight run_id to its latest ApprovalRequest.
+# This registry isolates raw operator tokens from LangGraph's persistent state dictionary.
+# Scope: In-memory per-process execution registry. For multi-worker, clustered, or distributed
+# deployments, this registry can be replaced or backed by an external distributed key-value store.
 _RUN_APPROVAL_REGISTRY: dict[str, ApprovalRequest] = {}
 
 
@@ -34,11 +38,13 @@ class PipelineGraph:
         compiled_graph: Any,
         blocks: dict[str, BaseBlock],
         limits: ExecutionLimits | None = None,
+        approval_registry: dict[str, ApprovalRequest] | None = None,
     ) -> None:
         self.name = name
         self.compiled_graph = compiled_graph
         self.blocks = blocks
         self.limits = limits
+        self._approval_registry = approval_registry if approval_registry is not None else _RUN_APPROVAL_REGISTRY
 
     def run(
         self,
@@ -53,9 +59,16 @@ class PipelineGraph:
         effective_limits = limits or self.limits
 
         run_id = uuid.uuid4().hex
+        # Strip operator tokens from data copy to ensure sensitive tokens never leak into pipeline outputs
+        clean_data = {k: v for k, v in inputs.items() if not k.startswith("approval_token_")}
+        # In initial state, carry over approval metadata dicts (approval_<block>), but never raw tokens
+        approval_state = {
+            k: v for k, v in inputs.items() if k.startswith("approval_") and not k.startswith("approval_token_")
+        }
+
         initial_state: dict[str, Any] = {
             "inputs": inputs,
-            "data": inputs.copy(),
+            "data": clean_data,
             "history": [],
             "errors": [],
             "status": "running",
@@ -66,7 +79,7 @@ class PipelineGraph:
                 **context.get("metadata", {}),
             },
             "_run_id": run_id,
-            **{k: v for k, v in inputs.items() if k.startswith("approval_")},
+            **approval_state,
         }
 
         if effective_limits is not None:
@@ -79,7 +92,7 @@ class PipelineGraph:
             if status == "running":
                 status = "completed"
 
-            approval_obj = _RUN_APPROVAL_REGISTRY.pop(run_id, None)
+            approval_obj = self._approval_registry.pop(run_id, None)
             if approval_obj is None:
                 for block_name in self.blocks:
                     block_dict = final_state.get(f"approval_{block_name}")
@@ -90,16 +103,20 @@ class PipelineGraph:
                         except Exception as exc:
                             logger.debug("Failed validating approval request from block %s: %s", block_name, exc)
 
+            clean_output_data = {
+                k: v for k, v in final_state.get("data", {}).items() if not k.startswith("approval_token_")
+            }
+
             return PipelineRunResult(
                 pipeline_name=self.name,
                 status=status,
-                data=final_state.get("data", {}),
+                data=clean_output_data,
                 history=final_state.get("history", []),
                 errors=final_state.get("errors", []),
                 approval=approval_obj,
             )
         finally:
-            _RUN_APPROVAL_REGISTRY.pop(run_id, None)
+            self._approval_registry.pop(run_id, None)
 
 
 class PipelineBuilder:
@@ -263,9 +280,9 @@ class PipelineBuilder:
                 "_last_route": result.next_step,
                 "_limits": state.get("_limits"),
             }
-            # Carry over per-block state updates (e.g. approval_{block_name})
+            # Carry over per-block state updates (e.g. approval_{block_name}) but never raw tokens
             for k, v in result.updates.items():
-                if k.startswith("approval_") or k.startswith("_"):
+                if (k.startswith("approval_") and not k.startswith("approval_token_")) or k.startswith("_"):
                     new_state[k] = v
 
             return new_state

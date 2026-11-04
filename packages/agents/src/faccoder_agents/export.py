@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -10,24 +9,11 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from faccoder_agents.catalog.models import AgentSpec
+from faccoder_agents.catalog.models import AgentSpec, validate_safe_slug
 from faccoder_agents.catalog.registry import AgentCatalog
 from faccoder_agents.catalog.skills import SkillCatalog, SkillSpec
 
 logger = logging.getLogger(__name__)
-
-_SAFE_SLUG_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
-
-
-def validate_safe_slug(slug: str, category: str = "item") -> str:
-    """Validate that a slug contains only safe characters and cannot cause directory traversal."""
-    cleaned = str(slug or "").strip()
-    if not cleaned or not _SAFE_SLUG_RE.match(cleaned) or ".." in cleaned:
-        raise ValueError(
-            f"Invalid {category} slug '{slug}': slugs must contain only alphanumeric characters, "
-            "hyphens, and underscores, without directory traversal."
-        )
-    return cleaned
 
 
 def resolve_safe_export_path(base_dir: Path, *parts: str) -> Path:
