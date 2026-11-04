@@ -18,7 +18,7 @@ from pydantic import PrivateAttr
 
 class FakeChatModel(BaseChatModel):
     model_name: str = "echo"
-    responses: list[str] = []
+    responses: list[Any] = []
 
     _calls: int = PrivateAttr(default=0)
 
@@ -36,10 +36,14 @@ class FakeChatModel(BaseChatModel):
     def _reply(self, messages) -> str:
         if self.responses:
             reply = self.responses[min(self._calls, len(self.responses) - 1)]
-        else:
-            last = str(messages[-1].content) if messages else ""
-            digest = hashlib.sha256(last.encode("utf-8")).hexdigest()[:12]
-            reply = f"[offline:{self.model_name}:{digest}] {last[:200]}"
+            self._calls += 1
+            if isinstance(reply, Exception):
+                raise reply
+            return str(reply)
+
+        last = str(messages[-1].content) if messages else ""
+        digest = hashlib.sha256(last.encode("utf-8")).hexdigest()[:12]
+        reply = f"[offline:{self.model_name}:{digest}] {last[:200]}"
         self._calls += 1
         return reply
 

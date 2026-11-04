@@ -65,11 +65,29 @@ PRESETS: dict[str, dict] = {
         },
     },
     "gemini": {
-        "description": "Google Gemini models. Supports key rotation through GOOGLE_API_KEYS.",
+        "description": "Google Gemini models with fallback chains and key rotation.",
         "tiers": {
-            "small": {"provider": "google", "model": "gemini-2.5-flash-lite", "api_keys_env": "GOOGLE_API_KEYS"},
-            "medium": {"provider": "google", "model": "gemini-2.5-flash", "api_keys_env": "GOOGLE_API_KEYS"},
-            "large": {"provider": "google", "model": "gemini-2.5-pro", "api_keys_env": "GOOGLE_API_KEYS"},
+            "small": {
+                "provider": "google",
+                "model": "gemini-2.5-flash-lite",
+                "api_keys_env": "GOOGLE_API_KEYS",
+                "fallbacks": [
+                    {"provider": "google", "model": "gemini-2.5-flash", "api_keys_env": "GOOGLE_API_KEYS"},
+                ],
+            },
+            "medium": {
+                "provider": "google",
+                "model": "gemini-2.5-flash",
+                "api_keys_env": "GOOGLE_API_KEYS",
+                "fallbacks": [
+                    {"provider": "google", "model": "gemini-2.5-pro", "api_keys_env": "GOOGLE_API_KEYS"},
+                ],
+            },
+            "large": {
+                "provider": "google",
+                "model": "gemini-2.5-pro",
+                "api_keys_env": "GOOGLE_API_KEYS",
+            },
         },
     },
     "openai": {

@@ -58,11 +58,7 @@ _breaker = CircuitBreaker()
 
 def langfuse_configured(cfg: FaccoderConfig) -> bool:
     spec = cfg.langfuse
-    return bool(
-        spec.enabled
-        and os.environ.get(spec.public_key_env)
-        and os.environ.get(spec.secret_key_env)
-    )
+    return bool(spec.enabled and os.environ.get(spec.public_key_env) and os.environ.get(spec.secret_key_env))
 
 
 def langfuse_callbacks(cfg: FaccoderConfig, **metadata) -> list:

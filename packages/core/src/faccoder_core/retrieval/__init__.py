@@ -11,4 +11,3 @@ __all__ = [
     "mmr_select",
     "rrf_fuse",
 ]
-

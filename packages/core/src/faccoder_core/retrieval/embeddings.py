@@ -112,8 +112,7 @@ class OllamaEmbedder:
         self.dimensions = 0
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        response = httpx.post(f"{self.base_url}/api/embed", json={"model": self.model, "input": texts},
-                              timeout=300)
+        response = httpx.post(f"{self.base_url}/api/embed", json={"model": self.model, "input": texts}, timeout=300)
         response.raise_for_status()
         vectors = response.json()["embeddings"]
         if vectors:
@@ -158,12 +157,12 @@ def build_embedder(spec: EmbeddingSpec) -> Embedder:
     if provider == "sentence-transformers":
         return SentenceTransformerEmbedder(spec.model)
     if provider == "ollama":
-        return OllamaEmbedder(spec.model, spec.base_url or os.environ.get("OLLAMA_BASE_URL",
-                                                                           "http://localhost:11434"))
+        return OllamaEmbedder(spec.model, spec.base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"))
     if provider in {"openai", "openai-compatible"}:
         base_url = spec.base_url or "https://api.openai.com/v1"
-        return OpenAICompatibleEmbedder(spec.model, base_url, api_key or os.environ.get("OPENAI_API_KEY"),
-                                        spec.dimensions)
+        return OpenAICompatibleEmbedder(
+            spec.model, base_url, api_key or os.environ.get("OPENAI_API_KEY"), spec.dimensions
+        )
     if provider == "voyage":
         key = api_key or os.environ.get("VOYAGE_API_KEY")
         if not key:
@@ -174,8 +173,9 @@ def build_embedder(spec: EmbeddingSpec) -> Embedder:
             from langchain_google_genai import GoogleGenerativeAIEmbeddings
         except ImportError as exc:
             raise ImportError("pip install faccoder-core[google]") from exc
-        model = GoogleGenerativeAIEmbeddings(model=spec.model, google_api_key=api_key
-                                             or os.environ.get("GOOGLE_API_KEY"))
+        model = GoogleGenerativeAIEmbeddings(
+            model=spec.model, google_api_key=api_key or os.environ.get("GOOGLE_API_KEY")
+        )
         model.dimensions = spec.dimensions or 768  # type: ignore[attr-defined]
         return model  # type: ignore[return-value]
     raise ValueError(f"Unknown embedding provider '{spec.provider}'")
