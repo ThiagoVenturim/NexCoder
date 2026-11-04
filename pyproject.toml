@@ -9,7 +9,8 @@ extend-exclude = ["examples"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S"]
 # S105/S106: names of environment variables that hold secrets are not secrets.
-ignore = ["S101", "S105", "S106"]
+# B008: Typer and FastAPI use function calls in argument defaults for parameters and DI.
+ignore = ["S101", "S105", "S106", "B008"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S", "B"]
@@ -28,5 +29,6 @@ pythonpath = [
     "packages/security/src",
     "packages/capture/src",
     "packages/control/src",
+    "packages/interfaces/src",
 ]
 addopts = "-q --import-mode=importlib"
