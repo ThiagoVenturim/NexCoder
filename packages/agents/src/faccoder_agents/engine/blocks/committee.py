@@ -101,8 +101,9 @@ class CommitteeBlock(BaseBlock):
                 logger.debug("Failed parsing LLM committee vote: %s", exc)
 
         # Deterministic heuristic fallback based on error indicators in data
-        has_critical_error = bool(data.get("critical_defect") or data.get("security_risk") == "high")
-        has_warnings = bool(data.get("warnings") or data.get("pending_items"))
+        payload_dict = data if isinstance(data, dict) else {"content": str(data)}
+        has_critical_error = bool(payload_dict.get("critical_defect") or payload_dict.get("security_risk") == "high")
+        has_warnings = bool(payload_dict.get("warnings") or payload_dict.get("pending_items"))
 
         if has_critical_error:
             vote = "no-go"

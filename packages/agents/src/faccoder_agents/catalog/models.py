@@ -8,6 +8,18 @@ from pydantic import BaseModel, Field, field_validator
 
 _SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 
+
+def validate_safe_slug(slug: str, category: str = "item") -> str:
+    """Validate that a slug contains only safe characters and cannot cause directory traversal."""
+    cleaned = str(slug or "").strip()
+    if not cleaned or not _SLUG_PATTERN.match(cleaned) or ".." in cleaned:
+        raise ValueError(
+            f"Invalid {category} slug '{slug}': slugs must contain only alphanumeric characters, "
+            "hyphens, and underscores, without directory traversal."
+        )
+    return cleaned
+
+
 AgentTier = Literal["small", "medium", "large"]
 
 
@@ -24,6 +36,7 @@ class AgentSector:
     MARKETING_GTM = "marketing-gtm"
     STACKS = "stacks"
     REGULATIONS = "regulations"
+    JURY = "jury"
 
     ALL = [
         DIRECTION,
@@ -38,6 +51,7 @@ class AgentSector:
         MARKETING_GTM,
         STACKS,
         REGULATIONS,
+        JURY,
     ]
 
 
@@ -57,13 +71,7 @@ class AgentSpec(BaseModel):
     @field_validator("slug")
     @classmethod
     def validate_slug(cls, v: str) -> str:
-        clean = str(v).strip()
-        if not clean or not _SLUG_PATTERN.match(clean) or ".." in clean:
-            raise ValueError(
-                f"Invalid agent slug '{v}': slugs must contain only alphanumeric characters, "
-                "hyphens, and underscores, without directory traversal."
-            )
-        return clean
+        return validate_safe_slug(v, category="agent")
 
     def render_prompt(self, **kwargs: Any) -> str:
         """Render prompt with kwargs interpolation."""

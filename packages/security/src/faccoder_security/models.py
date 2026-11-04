@@ -140,8 +140,8 @@ class ScanResult(BaseModel):
     findings: list[Finding] = Field(default_factory=list)
     metadata: ScanMetadata | None = None
     errors: list[str] = Field(default_factory=list)
-    fallback_scanners: list[str] = Field(default_factory=list)
     sbom: SBOMDocument | None = None
+    fallbacks: list[str] = Field(default_factory=list)
 
     def by_severity(self, severity: Severity) -> list[Finding]:
         return [f for f in self.findings if f.severity == severity and not f.is_suppressed]
@@ -153,6 +153,13 @@ class ScanResult(BaseModel):
         if self.errors:
             return True
         if self.metadata and not self.metadata.success:
+            return True
+        return False
+
+    def has_fallbacks(self) -> bool:
+        if self.fallbacks:
+            return True
+        if self.metadata and self.metadata.is_fallback:
             return True
         return False
 
