@@ -84,8 +84,8 @@ class PipelineRunRequest(BaseModel):
 class PipelineApproveRequest(BaseModel):
     action_name: str
     token: str
+    execution_id: str | None = None
     target_resource: str = "pipeline"
-    approver: str | None = None
 
 
 @router.get("/health")
@@ -252,30 +252,52 @@ def endpoint_pipelines_approve(
             detail="Forbidden: Pipeline actions require approval by a human approver, not an agent API key.",
         )
 
-    # 2. Human approval token verification via control plane
+    # 2. Approver is strictly taken from authenticated human principal, never request body
+    approver_name = getattr(request.state, "principal_name", "authenticated_human")
+    if hasattr(request.state, "principal") and getattr(request.state.principal, "name", None):
+        approver_name = request.state.principal.name
+
+    from faccoder_interfaces.tools.agents import GLOBAL_EXECUTION_REGISTRY
+
     token_manager = getattr(request.app.state, "approval_token_manager", None)
-    if token_manager is not None:
-        try:
-            record = token_manager.verify_and_consume(
-                raw_token=req.token,
-                action_name=req.action_name,
-                target_resource=req.target_resource,
-                dry_run=False,
-            )
-            approver_name = record.approver
-        except Exception as exc:
+    has_pending_execution = bool(
+        (req.execution_id and GLOBAL_EXECUTION_REGISTRY.get(req.execution_id))
+        or GLOBAL_EXECUTION_REGISTRY.find_by_action(req.action_name)
+    )
+
+    if has_pending_execution or token_manager is None:
+        res = TOOL_DEFINITIONS["approve_step"].handler(
+            action_name=req.action_name,
+            token=req.token,
+            execution_id=req.execution_id,
+            approver=approver_name,
+        )
+        if not res.get("approved"):
             raise HTTPException(
                 status_code=403,
-                detail=f"Forbidden: Invalid or expired human approval token: {exc}",
-            ) from exc
-    else:
-        approver_name = getattr(request.state, "principal_name", req.approver or "human")
+                detail=f"Forbidden: {res.get('reason', 'Approval rejected')}",
+            )
+        return res
 
-    return TOOL_DEFINITIONS["approve_step"].handler(
-        action_name=req.action_name,
-        token=req.token,
-        approver=approver_name,
-    )
+    # Otherwise verify control plane approval token
+    try:
+        record = token_manager.verify_and_consume(
+            raw_token=req.token,
+            action_name=req.action_name,
+            target_resource=req.target_resource,
+            dry_run=False,
+        )
+        return {
+            "status": "approved",
+            "action_name": req.action_name,
+            "approved": True,
+            "approver": record.approver or approver_name,
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: Invalid or expired human approval token: {exc}",
+        ) from exc
 
 
 @router.get("/v1/pipelines/stream")

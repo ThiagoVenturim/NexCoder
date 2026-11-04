@@ -139,3 +139,99 @@ def test_mcp_sse_session_lifecycle() -> None:
     import asyncio
 
     asyncio.run(_run())
+
+
+def test_mcp_approve_step_token_aleatorio_rejeita() -> None:
+    server = MCPServer()
+
+    # Step 1: Start pipeline that pauses on approval
+    call_pipe = JSONRPCRequest(
+        id=50,
+        method="tools/call",
+        params={
+            "name": "run_pipeline",
+            "arguments": {"pipeline_name": "mcp_gate_pipeline", "dry_run": False},
+        },
+    )
+    pipe_res = server.handle_request(call_pipe)
+    assert pipe_res is not None
+    payload = json.loads(pipe_res.result["content"][0]["text"])
+    action_name = payload["approval"]["action_name"]
+    exec_id = payload["execution_id"]
+
+    # Step 2: Call approve_step with random 8+ char token -> rejected
+    call_appr = JSONRPCRequest(
+        id=51,
+        method="tools/call",
+        params={
+            "name": "approve_step",
+            "arguments": {
+                "action_name": action_name,
+                "token": "random_fake_token_12345",
+                "execution_id": exec_id,
+            },
+        },
+    )
+    appr_res = server.handle_request(call_appr)
+    assert appr_res is not None
+    appr_payload = json.loads(appr_res.result["content"][0]["text"])
+    assert appr_payload["status"] == "rejected"
+    assert appr_payload["approved"] is False
+
+
+def test_mcp_approve_step_valid_and_single_use() -> None:
+    server = MCPServer()
+
+    # Step 1: Start pipeline that pauses on approval
+    call_pipe = JSONRPCRequest(
+        id=60,
+        method="tools/call",
+        params={
+            "name": "run_pipeline",
+            "arguments": {"pipeline_name": "mcp_gate_valid", "dry_run": False},
+        },
+    )
+    pipe_res = server.handle_request(call_pipe)
+    assert pipe_res is not None
+    payload = json.loads(pipe_res.result["content"][0]["text"])
+    action_name = payload["approval"]["action_name"]
+    exec_id = payload["execution_id"]
+    valid_token = payload["approval"]["token"]
+
+    # Step 2: First approval succeeds
+    call_appr1 = JSONRPCRequest(
+        id=61,
+        method="tools/call",
+        params={
+            "name": "approve_step",
+            "arguments": {
+                "action_name": action_name,
+                "token": valid_token,
+                "execution_id": exec_id,
+            },
+        },
+    )
+    appr_res1 = server.handle_request(call_appr1)
+    assert appr_res1 is not None
+    res1_payload = json.loads(appr_res1.result["content"][0]["text"])
+    assert res1_payload["status"] == "approved"
+    assert res1_payload["approved"] is True
+
+    # Step 3: Second approval with same token fails (single use)
+    call_appr2 = JSONRPCRequest(
+        id=62,
+        method="tools/call",
+        params={
+            "name": "approve_step",
+            "arguments": {
+                "action_name": action_name,
+                "token": valid_token,
+                "execution_id": exec_id,
+            },
+        },
+    )
+    appr_res2 = server.handle_request(call_appr2)
+    assert appr_res2 is not None
+    res2_payload = json.loads(appr_res2.result["content"][0]["text"])
+    assert res2_payload["status"] == "rejected"
+    assert res2_payload["approved"] is False

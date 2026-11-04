@@ -262,7 +262,47 @@ def test_approve_com_token_invalido_retorna_403() -> None:
         },
     )
     assert resp.status_code == 403
-    assert "invalid" in resp.json()["detail"].lower()
+
+
+def test_approve_pipeline_execucao_pausada_fluxo_completo_e_reuso_rejeita() -> None:
+    """Requirement: sem control instalado, approve busca execucao pausada, valida token, e rejeita reuso."""
+    # App running without control approval manager (simulating no-control environment)
+    app = create_app(insecure_local=True, approval_token_manager=None)
+    client = TestClient(app)
+
+    # 1. Run pipeline that halts waiting for approval
+    pipe_resp = client.post(
+        "/v1/pipelines/run",
+        json={"pipeline_name": "release_gate_test", "inputs": {"task": "deploy prod"}, "dry_run": False},
+    )
+    assert pipe_resp.status_code == 200
+    pipe_data = pipe_resp.json()
+    assert pipe_data["run_status"] == "waiting_approval"
+    action_name = pipe_data["approval"]["action_name"]
+    exec_id = pipe_data["execution_id"]
+    valid_token = pipe_data["approval"]["token"]
+
+    # 2. Random 8+ char token is rejected with 403
+    bad_resp = client.post(
+        "/v1/pipelines/approve",
+        json={"action_name": action_name, "token": "random_fake_token_123", "execution_id": exec_id},
+    )
+    assert bad_resp.status_code == 403
+
+    # 3. Valid token approves and completes execution
+    good_resp = client.post(
+        "/v1/pipelines/approve",
+        json={"action_name": action_name, "token": valid_token, "execution_id": exec_id},
+    )
+    assert good_resp.status_code == 200
+    assert good_resp.json()["approved"] is True
+
+    # 4. Reusing the same token fails with 403 (single use / execution already finished)
+    reuse_resp = client.post(
+        "/v1/pipelines/approve",
+        json={"action_name": action_name, "token": valid_token, "execution_id": exec_id},
+    )
+    assert reuse_resp.status_code == 403
 
 
 def test_insecure_local_recusa_host_externo() -> None:

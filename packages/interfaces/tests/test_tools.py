@@ -129,11 +129,60 @@ def test_run_pipeline_offline() -> None:
     assert res["run_status"] in ("completed", "waiting_approval")
 
 
-def test_approve_step_offline() -> None:
-    res = approve_step(action_name="deploy", token="valid_test_token_12345", approver="qa-lead")
-    assert res["status"] == "approved"
-    assert res["approved"] is True
-    assert res["approver"] == "qa-lead"
+def test_approve_step_sem_solicitacao_pendente_rejeita() -> None:
+    res = approve_step(action_name="nonexistent_action_xyz", token="valid_looking_token_123")
+    assert res["status"] == "rejected"
+    assert res["approved"] is False
+    assert "No pending approval request found" in res["reason"]
+
+
+def test_approve_step_token_aleatorio_8_caracteres_rejeita() -> None:
+    pipe_res = run_pipeline(pipeline_name="approval_deploy", inputs={"task": "deploy"}, dry_run=False)
+    assert pipe_res["run_status"] == "waiting_approval"
+    action_name = pipe_res["approval"]["action_name"]
+    exec_id = pipe_res["execution_id"]
+
+    # Random token with 8+ characters must be rejected
+    res = approve_step(action_name=action_name, token="random_8_chars_token", execution_id=exec_id)
+    assert res["status"] == "rejected"
+    assert res["approved"] is False
+    assert "secret token mismatch" in res["reason"]
+
+
+def test_approve_step_token_certo_de_outra_execucao_rejeita() -> None:
+    p1 = run_pipeline(pipeline_name="approval_gate_1", inputs={"task": "task 1"}, dry_run=False)
+    p2 = run_pipeline(pipeline_name="approval_gate_2", inputs={"task": "task 2"}, dry_run=False)
+
+    token_2 = p2["approval"]["token"]
+
+    # Trying to approve execution 1 with token from execution 2 must be rejected
+    res = approve_step(
+        action_name=p1["approval"]["action_name"],
+        token=token_2,
+        execution_id=p1["execution_id"],
+    )
+    assert res["status"] == "rejected"
+    assert res["approved"] is False
+
+
+def test_approve_step_token_certo_aprova_uma_vez_e_segunda_falha() -> None:
+    p = run_pipeline(pipeline_name="approval_release", inputs={"task": "release v1"}, dry_run=False)
+    assert p["run_status"] == "waiting_approval"
+    action_name = p["approval"]["action_name"]
+    exec_id = p["execution_id"]
+    valid_token = p["approval"]["token"]
+
+    # First attempt with valid token succeeds and resumes pipeline
+    res1 = approve_step(action_name=action_name, token=valid_token, execution_id=exec_id, approver="alice")
+    assert res1["status"] == "approved"
+    assert res1["approved"] is True
+    assert res1["approver"] == "alice"
+    assert res1["pipeline_status"] == "completed"
+
+    # Second attempt with same token fails (single-use token already consumed)
+    res2 = approve_step(action_name=action_name, token=valid_token, execution_id=exec_id, approver="alice")
+    assert res2["status"] == "rejected"
+    assert res2["approved"] is False
 
 
 def test_unavailable_tools() -> None:

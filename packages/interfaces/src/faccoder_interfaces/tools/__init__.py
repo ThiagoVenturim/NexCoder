@@ -191,6 +191,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
             "properties": {
                 "action_name": {"type": "string", "description": "Action name corresponding to the gate."},
                 "token": {"type": "string", "description": "Single-use approval secret token."},
+                "execution_id": {"type": "string", "description": "Identifier of the paused execution."},
                 "approver": {"type": "string", "default": "human", "description": "Identity of approver."},
             },
             "required": ["action_name", "token"],
