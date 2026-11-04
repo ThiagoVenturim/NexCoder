@@ -122,7 +122,7 @@ def test_gitleaks_redact_flag_and_parsing(monkeypatch, tmp_path: Path):
     finding = res.findings[0]
     assert "supersecretpassword123" not in finding.location.snippet
     assert "Secret" not in finding.raw_data
-    assert "Match" not in finding.raw_data
+    assert "supersecretpassword123" not in str(finding.raw_data)
     # Assert secret appears nowhere in serialized ScanResult
     serialized_res = res.model_dump_json()
     assert "supersecretpassword123" not in serialized_res
@@ -209,3 +209,26 @@ subprocess.call("ls", shell=True)
     assert res.metadata.scanner == "multi-scanner-engine"
     assert len(res.findings) > 0
     assert res.has_high_or_critical() is True
+
+
+def test_scanner_swallowed_exception_logged_at_warning(monkeypatch, tmp_path: Path, caplog):
+    import logging
+
+    scanner = SemgrepScanner()
+    monkeypatch.setattr(scanner, "is_available", lambda: True)
+
+    def mock_failing_subprocess(*args, **kwargs):
+        raise OSError("Simulated binary failure in semgrep CLI")
+
+    import subprocess
+
+    monkeypatch.setattr(subprocess, "run", mock_failing_subprocess)
+
+    with caplog.at_level(logging.WARNING):
+        res = scanner.scan(tmp_path, force_offline_fallback=False)
+
+    # Heuristic fallback was performed
+    assert res.has_fallbacks() is True
+    # Swallowed exception was logged at warning level
+    assert any(rec.levelno == logging.WARNING for rec in caplog.records)
+    assert any("falling back to heuristic engine" in rec.message for rec in caplog.records)

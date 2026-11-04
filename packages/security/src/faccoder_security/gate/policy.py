@@ -15,7 +15,22 @@ class GatePolicy(BaseModel):
     block_on_secrets: bool = True
     require_sbom: bool = False
     allow_fallbacks: bool = True
-    disallow_fallback_scanners: list[str] = Field(default_factory=list)
+
+    @classmethod
+    def production(cls, require_sbom: bool = True) -> GatePolicy:
+        """Production security gate policy preset.
+
+        Strictly forbids fallback/heuristic scans, enforces zero critical/high findings,
+        blocks on secrets, and requires a valid SBOM.
+        """
+        return cls(
+            name="production",
+            max_critical=0,
+            max_high=0,
+            block_on_secrets=True,
+            require_sbom=require_sbom,
+            allow_fallbacks=False,
+        )
 
 
 class GateVerdict(BaseModel):

@@ -55,7 +55,7 @@ KNOWN_MODULES: dict[str, ModuleInfo] = {
         name="capture",
         package_name="faccoder_capture",
         description="Web page and screen capture with automated test generation.",
-        available_in_develop=False,
+        available_in_develop=True,
         tools=["capture_page", "generate_tests"],
     ),
     "serving": ModuleInfo(

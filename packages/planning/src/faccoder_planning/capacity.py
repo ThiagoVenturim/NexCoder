@@ -71,6 +71,7 @@ class SprintForecast(BaseModel):
     confidence_range_sprints: tuple[int, int]
     recommended_capacity_per_sprint: float
     forecast_model: str = "rolling_average"
+    based_on_history: bool = True
 
 
 class VelocityTracker:
@@ -166,20 +167,30 @@ class VelocityTracker:
         self,
         remaining_backlog_hours: float,
         window: int = 5,
+        default_velocity: float = 80.0,
     ) -> SprintForecast:
         """Forecast future sprints needed to complete remaining workload."""
         metrics = self.calculate_metrics(window=window)
-        effective_vel = (
-            metrics.rolling_velocity_hours if metrics.rolling_velocity_hours > 0 else metrics.average_velocity_hours
-        )
+        has_history = metrics.total_sprints > 0
 
-        if effective_vel <= 0:
-            effective_vel = 80.0
+        if has_history:
+            effective_vel = (
+                metrics.rolling_velocity_hours if metrics.rolling_velocity_hours > 0 else metrics.average_velocity_hours
+            )
+            if effective_vel <= 0:
+                effective_vel = default_velocity if default_velocity > 0 else 80.0
+            forecast_model = "rolling_average"
+            based_on_history = True
+            std = metrics.velocity_std_dev
+        else:
+            effective_vel = default_velocity if default_velocity > 0 else 80.0
+            forecast_model = "default_estimate"
+            based_on_history = False
+            std = 0.0
 
         sprints_needed = remaining_backlog_hours / effective_vel
 
         # Confidence bounds using std_dev
-        std = metrics.velocity_std_dev
         optimistic_vel = max(1.0, effective_vel + std)
         pessimistic_vel = max(1.0, effective_vel - std)
 
@@ -191,7 +202,8 @@ class VelocityTracker:
             estimated_sprints_needed=round(sprints_needed, 2),
             confidence_range_sprints=(min_sprints, max_sprints),
             recommended_capacity_per_sprint=round(effective_vel, 2),
-            forecast_model="rolling_average",
+            forecast_model=forecast_model,
+            based_on_history=based_on_history,
         )
 
     def evaluate_carryover(
