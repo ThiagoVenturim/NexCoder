@@ -17,7 +17,6 @@ ignore = ["S101", "S105", "S106", "B008"]
 "**/web/**" = ["B008"]
 "**/interfaces/**" = ["B008"]
 "scripts/**" = ["S603", "S607"]
-"**/interfaces/**" = ["B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["packages"]
