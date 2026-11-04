@@ -11,9 +11,6 @@ license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
     "faccoder-core>=0.1.0",
-    "faccoder-ideation>=0.1.0",
-    "faccoder-planning>=0.1.0",
-    "faccoder-security>=0.1.0",
     "pydantic>=2.7",
     "pyyaml>=6.0",
 ]
