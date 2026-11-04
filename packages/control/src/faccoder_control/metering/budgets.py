@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import threading
+import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
@@ -35,7 +36,7 @@ class BudgetExceededError(Exception):
 class BudgetPolicy(BaseModel):
     """Configuration for spending limits and alerting thresholds."""
 
-    policy_id: str
+    policy_id: str = Field(default_factory=lambda: f"pol_{uuid.uuid4().hex[:12]}")
     dimension: DimensionType
     entity_id: str  # e.g. "app_billing", "alice@example.com", "code-intel-agent"
     limit_usd: float
@@ -74,6 +75,10 @@ class BudgetManager:
         """Register or update a budget policy."""
         with self._lock:
             self._policies[policy.policy_id] = policy.model_copy()
+
+    def set_policy(self, policy: BudgetPolicy) -> None:
+        """Alias for add_policy."""
+        self.add_policy(policy)
 
     def get_policy(self, policy_id: str) -> BudgetPolicy | None:
         with self._lock:

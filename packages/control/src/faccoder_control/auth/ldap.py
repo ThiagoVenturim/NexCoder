@@ -57,7 +57,11 @@ class _DirectoryRecord:
 
 
 class InMemoryDirectoryProvider(BaseDirectoryProvider):
-    """Offline test directory providing deterministic LDAP/Active Directory behavior."""
+    """Offline in-memory mock directory storing local password hashes for testing and local environments.
+
+    This provider provides deterministic LDAP/Active Directory behavior without network dependencies
+    or live LDAP binds.
+    """
 
     def __init__(self) -> None:
         self._records: dict[str, _DirectoryRecord] = {}
@@ -183,6 +187,7 @@ class LDAPAuthProvider(BaseAuthProvider):
             scopes=sorted(scopes),
             auth_type="ldap",
             is_active=user.is_enabled,
+            is_human=True,
             metadata={
                 "dn": user.distinguished_name,
                 "groups": groups,

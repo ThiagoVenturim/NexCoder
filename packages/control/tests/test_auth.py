@@ -95,6 +95,33 @@ class TestOIDCAuth:
         with pytest.raises(InvalidTokenError):
             oidc_auth.authenticate(token)
 
+    def test_algorithm_confusion_attack_rejected(self, mock_oidc: tuple[MockOIDCProvider, OIDCAuthProvider]) -> None:
+        import base64
+        import hashlib
+        import hmac
+        import json
+        from datetime import UTC, datetime
+
+        mock_idp, oidc_auth = mock_oidc
+
+        def b64url(data: bytes) -> str:
+            return base64.urlsafe_b64encode(data).decode("utf-8").rstrip("=")
+
+        header = {"alg": "HS256", "typ": "JWT", "kid": mock_idp.key_id}
+        payload = {
+            "iss": mock_idp.issuer,
+            "aud": mock_idp.audience,
+            "sub": "attacker",
+            "exp": int(datetime.now(UTC).timestamp()) + 3600,
+            "iat": int(datetime.now(UTC).timestamp()),
+        }
+        signing_input = f"{b64url(json.dumps(header).encode('utf-8'))}.{b64url(json.dumps(payload).encode('utf-8'))}"
+        sig = hmac.new(mock_idp._public_pem.encode("utf-8"), signing_input.encode("utf-8"), hashlib.sha256).digest()
+        confusion_token = f"{signing_input}.{b64url(sig)}"
+
+        with pytest.raises(InvalidTokenError, match="algorithm 'HS256'"):
+            oidc_auth.authenticate(confusion_token)
+
 
 class TestLDAPAuth:
     def test_ldap_authenticate_success(self, ldap_auth: LDAPAuthProvider) -> None:

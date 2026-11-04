@@ -110,6 +110,7 @@ class LocalAuthProvider(BaseAuthProvider):
             scopes=list(user.scopes),
             auth_type="local_password",
             is_active=user.is_active,
+            is_human=True,
             metadata=dict(user.metadata),
         )
 
@@ -175,6 +176,7 @@ class LocalAuthProvider(BaseAuthProvider):
             scopes=list(match.scopes),
             auth_type="local_bearer",
             is_active=user.is_active if user else True,
+            is_human=True,
             metadata={"token_created_at": match.created_at.isoformat()},
         )
 

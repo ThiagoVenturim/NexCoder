@@ -57,7 +57,7 @@ class OIDCConfig:
     issuer: str
     audience: str
     jwks_uri: str | None = None
-    algorithms: list[str] = field(default_factory=lambda: ["RS256", "HS256"])
+    algorithms: list[str] = field(default_factory=lambda: ["RS256"])
     jwks_cache_ttl_seconds: int = 3600
     clock_skew_seconds: int = 30
 
@@ -117,9 +117,11 @@ class OIDCAuthProvider(BaseAuthProvider):
             raise InvalidTokenError(f"Malformed JWT header: {exc}") from exc
 
         kid = unverified_header.get("kid")
-        alg = unverified_header.get("alg", "RS256")
-        if alg not in self.config.algorithms:
-            raise InvalidTokenError(f"Unsupported algorithm '{alg}', allowed: {self.config.algorithms}")
+        alg = unverified_header.get("alg")
+        if not alg or alg not in self.config.algorithms:
+            raise InvalidTokenError(f"Unsupported or missing algorithm '{alg}', allowed: {self.config.algorithms}")
+        if alg.startswith("HS"):
+            raise InvalidTokenError("Algorithm confusion detected: symmetric HMAC algorithms not permitted")
 
         key = self._get_key(kid, alg)
 
@@ -165,6 +167,7 @@ class OIDCAuthProvider(BaseAuthProvider):
             scopes=scopes,
             auth_type="oidc",
             is_active=True,
+            is_human=True,
             metadata={
                 "iss": payload.get("iss"),
                 "aud": payload.get("aud"),

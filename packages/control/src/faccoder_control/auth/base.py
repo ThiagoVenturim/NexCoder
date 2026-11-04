@@ -50,6 +50,7 @@ class AuthPrincipal(BaseModel):
     scopes: list[str] = Field(default_factory=list)
     auth_type: str = "unknown"
     is_active: bool = True
+    is_human: bool = False
     metadata: dict[str, Any] = Field(default_factory=dict)
 
     def has_scope(self, required_scope: str) -> bool:
