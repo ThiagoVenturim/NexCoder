@@ -62,7 +62,7 @@ KNOWN_MODULES: dict[str, ModuleInfo] = {
         name="serving",
         package_name="faccoder_serving",
         description="vLLM, Ollama serving, RAG evaluation, and RAFT fine-tuning.",
-        available_in_develop=False,
+        available_in_develop=True,
         tools=["serve_model", "evaluate_rag"],
     ),
     "control": ModuleInfo(
