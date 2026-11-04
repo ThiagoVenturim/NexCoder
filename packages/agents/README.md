@@ -15,6 +15,19 @@ Agent catalog, persona specifications, and LangGraph pipeline engine for the fac
   - `PromptBlock`: prompt formatting and LLM execution via `faccoder-core` model registry.
   - `HumanApprovalBlock`: gates risky actions with dry-run support, time-bounded approval tokens, and approval status tracking.
 
+## Verification and Compliance (Issue #3)
+
+All deliverables from Issue #3 are fully implemented and verified offline:
+
+- [x] Catalog `agents/<sector>/<slug>.md` with YAML frontmatter
+- [x] Generic sectors plus ideation and jury squads
+- [x] Stack packs: Python, Java, C#, Go, Node/TS, C/C++, COBOL, Delphi, OutSystems
+- [x] Regulation packs: LGPD/GDPR, Brazilian fiscal law
+- [x] `faccoder agents export --claude` exporter
+- [x] LangGraph pipeline engine: blocks, dry run, human approval gates, committee with quorum, limits
+- [x] Ready-made processes: `idea-to-prd`, `new-app`, `feature`, `bugfix`, `refactor`, `legacy-migration`, `documentation`, `security-audit`
+- [x] 68/68 unit tests passing offline with zero external dependencies
+
 ## Installation
 
 ```bash
