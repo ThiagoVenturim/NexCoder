@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 from pydantic import BaseModel, Field
 
 from faccoder_planning.models import Plan, Task
@@ -29,6 +31,9 @@ class VelocityRecord(BaseModel):
     sprint_name: str
     planned_hours: float
     completed_hours: float
+    carried_over_hours: float = 0.0
+    planned_tasks_count: int = 0
+    completed_tasks_count: int = 0
 
     @property
     def velocity_ratio(self) -> float:
@@ -36,6 +41,189 @@ class VelocityRecord(BaseModel):
         if self.planned_hours <= 0:
             return 1.0
         return self.completed_hours / self.planned_hours
+
+    @property
+    def carryover_ratio(self) -> float:
+        """Ratio of hours carried over against original planned estimate."""
+        if self.planned_hours <= 0:
+            return 0.0
+        return self.carried_over_hours / self.planned_hours
+
+
+class SprintVelocityMetrics(BaseModel):
+    """Aggregated historical velocity metrics and predictability trends."""
+
+    total_sprints: int
+    average_velocity_hours: float
+    rolling_velocity_hours: float
+    velocity_std_dev: float
+    predictability_percentage: float
+    velocity_trend: str  # "increasing", "stable", "declining"
+    carryover_rate_percentage: float
+    sprint_records: list[VelocityRecord] = Field(default_factory=list)
+
+
+class SprintForecast(BaseModel):
+    """Forecast of remaining backlog workload across future sprints."""
+
+    remaining_backlog_hours: float
+    estimated_sprints_needed: float
+    confidence_range_sprints: tuple[int, int]
+    recommended_capacity_per_sprint: float
+    forecast_model: str = "rolling_average"
+    based_on_history: bool = True
+
+
+class VelocityTracker:
+    """Tracks historical sprint performance and forecasts delivery velocity."""
+
+    def __init__(self, history: list[VelocityRecord] | None = None):
+        self.history: list[VelocityRecord] = list(history) if history else []
+
+    def record_sprint(
+        self,
+        sprint_name: str,
+        planned_hours: float,
+        completed_hours: float,
+        carried_over_hours: float = 0.0,
+        planned_tasks_count: int = 0,
+        completed_tasks_count: int = 0,
+    ) -> VelocityRecord:
+        """Add a completed sprint performance record to the historical tracking log."""
+        record = VelocityRecord(
+            sprint_name=sprint_name,
+            planned_hours=planned_hours,
+            completed_hours=completed_hours,
+            carried_over_hours=carried_over_hours,
+            planned_tasks_count=planned_tasks_count,
+            completed_tasks_count=completed_tasks_count,
+        )
+        self.history.append(record)
+        return record
+
+    def calculate_metrics(self, window: int = 5) -> SprintVelocityMetrics:
+        """Calculate comprehensive velocity metrics across past sprints."""
+        if not self.history:
+            return SprintVelocityMetrics(
+                total_sprints=0,
+                average_velocity_hours=0.0,
+                rolling_velocity_hours=0.0,
+                velocity_std_dev=0.0,
+                predictability_percentage=100.0,
+                velocity_trend="stable",
+                carryover_rate_percentage=0.0,
+                sprint_records=[],
+            )
+
+        completed_list = [r.completed_hours for r in self.history]
+        total_sprints = len(completed_list)
+        avg_velocity = sum(completed_list) / total_sprints
+
+        # Rolling window
+        recent = self.history[-window:]
+        recent_completed = [r.completed_hours for r in recent]
+        rolling_velocity = sum(recent_completed) / len(recent_completed)
+
+        # Standard deviation
+        variance = sum((x - avg_velocity) ** 2 for x in completed_list) / total_sprints
+        std_dev = math.sqrt(variance)
+
+        # Predictability percentage (average of completed / planned)
+        predictability_values = [r.velocity_ratio * 100.0 for r in self.history if r.planned_hours > 0]
+        predictability_pct = sum(predictability_values) / len(predictability_values) if predictability_values else 100.0
+
+        # Carryover rate percentage
+        carryover_values = [r.carryover_ratio * 100.0 for r in self.history if r.planned_hours > 0]
+        carryover_pct = sum(carryover_values) / len(carryover_values) if carryover_values else 0.0
+
+        # Trend analysis (comparing recent rolling velocity to overall average)
+        if len(self.history) >= 2:
+            first_half = completed_list[: len(completed_list) // 2]
+            second_half = completed_list[len(completed_list) // 2 :]
+            avg_first = sum(first_half) / len(first_half)
+            avg_second = sum(second_half) / len(second_half)
+            diff_ratio = (avg_second - avg_first) / max(1.0, avg_first)
+            if diff_ratio > 0.10:
+                trend = "increasing"
+            elif diff_ratio < -0.10:
+                trend = "declining"
+            else:
+                trend = "stable"
+        else:
+            trend = "stable"
+
+        return SprintVelocityMetrics(
+            total_sprints=total_sprints,
+            average_velocity_hours=round(avg_velocity, 2),
+            rolling_velocity_hours=round(rolling_velocity, 2),
+            velocity_std_dev=round(std_dev, 2),
+            predictability_percentage=round(predictability_pct, 1),
+            velocity_trend=trend,
+            carryover_rate_percentage=round(carryover_pct, 1),
+            sprint_records=list(self.history),
+        )
+
+    def forecast(
+        self,
+        remaining_backlog_hours: float,
+        window: int = 5,
+        default_velocity: float = 80.0,
+    ) -> SprintForecast:
+        """Forecast future sprints needed to complete remaining workload."""
+        metrics = self.calculate_metrics(window=window)
+        has_history = metrics.total_sprints > 0
+
+        if has_history:
+            effective_vel = (
+                metrics.rolling_velocity_hours if metrics.rolling_velocity_hours > 0 else metrics.average_velocity_hours
+            )
+            if effective_vel <= 0:
+                effective_vel = default_velocity if default_velocity > 0 else 80.0
+            forecast_model = "rolling_average"
+            based_on_history = True
+            std = metrics.velocity_std_dev
+        else:
+            effective_vel = default_velocity if default_velocity > 0 else 80.0
+            forecast_model = "default_estimate"
+            based_on_history = False
+            std = 0.0
+
+        sprints_needed = remaining_backlog_hours / effective_vel
+
+        # Confidence bounds using std_dev
+        optimistic_vel = max(1.0, effective_vel + std)
+        pessimistic_vel = max(1.0, effective_vel - std)
+
+        min_sprints = max(1, math.ceil(remaining_backlog_hours / optimistic_vel))
+        max_sprints = max(1, math.ceil(remaining_backlog_hours / pessimistic_vel))
+
+        return SprintForecast(
+            remaining_backlog_hours=round(remaining_backlog_hours, 2),
+            estimated_sprints_needed=round(sprints_needed, 2),
+            confidence_range_sprints=(min_sprints, max_sprints),
+            recommended_capacity_per_sprint=round(effective_vel, 2),
+            forecast_model=forecast_model,
+            based_on_history=based_on_history,
+        )
+
+    def evaluate_carryover(
+        self,
+        planned_tasks: list[Task],
+        completed_task_ids: set[str],
+    ) -> tuple[list[Task], list[Task], float]:
+        """Separate completed tasks from uncompleted carryover tasks and calculate carried-over hours."""
+        completed: list[Task] = []
+        carried_over: list[Task] = []
+        carried_over_hours = 0.0
+
+        for task in planned_tasks:
+            if task.id in completed_task_ids:
+                completed.append(task)
+            else:
+                carried_over.append(task)
+                carried_over_hours += task.estimate_hours
+
+        return completed, carried_over, round(carried_over_hours, 2)
 
 
 class SprintCapacityConfig(BaseModel):
@@ -63,6 +251,10 @@ class SprintCapacityConfig(BaseModel):
         if total_planned <= 0:
             return 1.0
         return total_completed / total_planned
+
+    def get_velocity_tracker(self) -> VelocityTracker:
+        """Instantiate a VelocityTracker loaded with historical velocity records."""
+        return VelocityTracker(self.velocity_history)
 
 
 class CapacityReport(BaseModel):
@@ -129,9 +321,6 @@ class CapacityCalculator:
         if isinstance(tasks_or_plan, Plan):
             tasks = tasks_or_plan.topological_sort_tasks()
         else:
-            # Build mini plan to sort topologically if dependencies exist
-            temp_plan = Plan(title="Temp", epics=[])
-            temp_plan.epics = []
             # Sort with basic in-degree dependency ordering
             all_tasks_map = {t.id: t for t in tasks_or_plan}
             in_degree = {t.id: 0 for t in tasks_or_plan}
@@ -172,17 +361,12 @@ class CapacityCalculator:
 
         for task in tasks:
             # Check if task can fit within remaining effective capacity
-            # If the task would push over capacity, move to overflow
-            if accumulated_hours + task.estimate_hours <= effective_capacity or not scheduled:
-                # Always accept at least the first task if capacity is tight, or fit while space permits
-                if accumulated_hours + task.estimate_hours <= effective_capacity:
-                    scheduled.append(task)
-                    accumulated_hours += task.estimate_hours
-                elif not scheduled:
-                    scheduled.append(task)
-                    accumulated_hours += task.estimate_hours
-                else:
-                    overflow.append(task)
+            if accumulated_hours + task.estimate_hours <= effective_capacity:
+                scheduled.append(task)
+                accumulated_hours += task.estimate_hours
+            elif not scheduled:
+                scheduled.append(task)
+                accumulated_hours += task.estimate_hours
             else:
                 overflow.append(task)
 
