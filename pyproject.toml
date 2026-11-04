@@ -14,6 +14,8 @@ ignore = ["S101", "S105", "S106", "B008"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S", "B"]
+"**/web/**" = ["B008"]
+"**/interfaces/**" = ["B008"]
 "scripts/**" = ["S603", "S607"]
 "**/interfaces/**" = ["B008"]
 
@@ -27,6 +29,7 @@ pythonpath = [
     "packages/ideation/src",
     "packages/security/src",
     "packages/capture/src",
+    "packages/control/src",
     "packages/interfaces/src",
 ]
 addopts = "-q --import-mode=importlib"
