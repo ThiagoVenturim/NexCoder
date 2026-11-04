@@ -18,7 +18,7 @@ def test_known_modules_configuration() -> None:
     assert "capture" in KNOWN_MODULES
     assert KNOWN_MODULES["capture"].available_in_develop is True
     assert "serving" in KNOWN_MODULES
-    assert KNOWN_MODULES["serving"].available_in_develop is False
+    assert KNOWN_MODULES["serving"].available_in_develop is True
     assert "control" in KNOWN_MODULES
     assert KNOWN_MODULES["control"].available_in_develop is False
     assert "continuous-improvement" in KNOWN_MODULES
@@ -34,11 +34,13 @@ def test_module_statuses() -> None:
     assert statuses["ideation"]["status"] == "available"
     assert statuses["capture"]["available"] is True
     assert statuses["capture"]["status"] == "available"
+    assert statuses["serving"]["available"] is True
+    assert statuses["serving"]["status"] == "available"
 
     # Modules not yet in develop should be marked unavailable with clear message
-    assert statuses["serving"]["available"] is False
-    assert statuses["serving"]["status"] == "unavailable"
-    assert "not yet available in this release" in statuses["serving"]["message"]
+    assert statuses["continuous-improvement"]["available"] is False
+    assert statuses["continuous-improvement"]["status"] == "unavailable"
+    assert "not yet available in this release" in statuses["continuous-improvement"]["message"]
 
 
 def test_is_module_installed_nonexistent() -> None:

@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: faccoder-serving-vllm
+    profiles:
+      - vllm
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN:-}
+      - MODEL_NAME=${VLLM_MODEL:-Qwen/Qwen2.5-Coder-7B-Instruct}
+      - MAX_MODEL_LEN=${VLLM_MAX_MODEL_LEN:-8192}
+      - GPU_MEMORY_UTILIZATION=${VLLM_GPU_MEMORY_UTILIZATION:-0.90}
+    command: >
+      --model ${VLLM_MODEL:-Qwen/Qwen2.5-Coder-7B-Instruct}
+      --port 8000
+      --max-model-len ${VLLM_MAX_MODEL_LEN:-8192}
+      --gpu-memory-utilization ${VLLM_GPU_MEMORY_UTILIZATION:-0.90}
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: faccoder-serving-ollama
+    profiles:
+      - ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_HOST=0.0.0.0:11434
+    volumes:
+      - ollama_models:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+volumes:
+  ollama_models:
+    name: faccoder_serving_ollama_models
