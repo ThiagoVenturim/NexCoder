@@ -175,17 +175,35 @@ def cmd_serve(
     host: str = typer.Option("127.0.0.1", "--host", help="Server host when running SSE or REST API."),
     port: int = typer.Option(8000, "--port", help="Server port when running SSE or REST API."),
     api: bool = typer.Option(False, "--api", help="Serve full REST API in addition to MCP SSE."),
+    insecure_local: bool = typer.Option(
+        False, "--insecure-local", help="Allow unauthenticated requests on 127.0.0.1 only."
+    ),
+    cors_origins: str | None = typer.Option(
+        None, "--cors-origins", help="Comma-separated allowed CORS origins (never * with credentials)."
+    ),
+    api_key: str | None = typer.Option(None, "--api-key", help="API key required for authenticating requests."),
 ) -> None:
     """Start MCP server (stdio or SSE) or REST API."""
     if transport == "stdio":
         server = MCPServer()
         server.process_stdio_sync(sys.stdin, sys.stdout)
     else:
+        if insecure_local and host not in ("127.0.0.1", "localhost", "::1"):
+            typer.echo("Error: --insecure-local is only permitted on 127.0.0.1 / localhost", err=True)
+            raise typer.Exit(code=1)
+
+        origins = [o.strip() for o in cors_origins.split(",") if o.strip()] if cors_origins else None
+
         import uvicorn
 
         from faccoder_interfaces.api.app import create_app
 
-        fastapi_app = create_app()
+        fastapi_app = create_app(
+            api_key=api_key,
+            insecure_local=insecure_local,
+            host=host,
+            cors_origins=origins,
+        )
         uvicorn.run(fastapi_app, host=host, port=port)
 
 

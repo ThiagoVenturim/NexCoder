@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
+import pytest
+from faccoder_control.approval import ApprovalTokenManager
+from faccoder_control.auth.local import LocalAuthProvider
+from faccoder_control.keys import APIKeyCreate, APIKeyService
 from faccoder_interfaces.api.app import create_app
 from starlette.testclient import TestClient
 
 
 def test_api_health_endpoint() -> None:
-    app = create_app(enforce_auth=False)
+    app = create_app(insecure_local=True)
     client = TestClient(app)
 
     response = client.get("/v1/health")
@@ -19,7 +24,7 @@ def test_api_health_endpoint() -> None:
 
 
 def test_api_capabilities_endpoint() -> None:
-    app = create_app(enforce_auth=False)
+    app = create_app(insecure_local=True)
     client = TestClient(app)
 
     response = client.get("/v1/capabilities")
@@ -31,7 +36,7 @@ def test_api_capabilities_endpoint() -> None:
 
 
 def test_api_invoke_tool_success() -> None:
-    app = create_app(enforce_auth=False)
+    app = create_app(insecure_local=True)
     client = TestClient(app)
 
     response = client.post(
@@ -44,7 +49,7 @@ def test_api_invoke_tool_success() -> None:
 
 
 def test_api_invoke_tool_not_found() -> None:
-    app = create_app(enforce_auth=False)
+    app = create_app(insecure_local=True)
     client = TestClient(app)
 
     response = client.post(
@@ -55,7 +60,7 @@ def test_api_invoke_tool_not_found() -> None:
 
 
 def test_api_specialized_endpoints(tmp_path: Path) -> None:
-    app = create_app(enforce_auth=False)
+    app = create_app(insecure_local=True)
     client = TestClient(app)
 
     # Ideation judge
@@ -81,14 +86,19 @@ def test_api_specialized_endpoints(tmp_path: Path) -> None:
     assert resp_agent.status_code == 200
     assert resp_agent.json()["status"] == "success"
 
-    # Pipeline approve
-    resp_appr = client.post("/v1/pipelines/approve", json={"action_name": "release", "token": "test-token-xyz"})
+    # Pipeline approve with human approval token from control plane
+    atm: ApprovalTokenManager = app.state.approval_token_manager
+    _rec, raw_tok = atm.issue_token(action_name="release", target_resource="pipeline", approver="human-tester")
+    resp_appr = client.post(
+        "/v1/pipelines/approve",
+        json={"action_name": "release", "token": raw_tok, "target_resource": "pipeline"},
+    )
     assert resp_appr.status_code == 200
     assert resp_appr.json()["approved"] is True
 
 
 def test_api_sse_pipeline_stream() -> None:
-    app = create_app(enforce_auth=False)
+    app = create_app(insecure_local=True)
     client = TestClient(app)
 
     response = client.get("/v1/pipelines/stream?pipeline_name=test_pipeline")
@@ -99,27 +109,166 @@ def test_api_sse_pipeline_stream() -> None:
     assert "data: " in content
 
 
-def test_api_authentication_middleware() -> None:
-    valid_key = "secret-test-key-12345"
-    app = create_app(api_key=valid_key, enforce_auth=True)
+# =====================================================================
+# Security & Auth Requirements Tests (Refs #10, Review Requirements)
+# =====================================================================
+
+
+def test_sem_credencial_retorna_401_todas_as_rotas_exceto_health() -> None:
+    """Requirement: sem credencial -> 401 em todas as rotas exceto health."""
+    app = create_app()  # Default HTTP server requires auth
     client = TestClient(app)
 
-    # Public endpoint (/health) should not require key
-    resp_health = client.get("/health")
-    assert resp_health.status_code == 200
+    # Health endpoints are open
+    assert client.get("/health").status_code == 200
+    assert client.get("/v1/health").status_code == 200
 
-    # Protected endpoint without key -> 401
-    resp_unauth = client.get("/v1/capabilities")
-    assert resp_unauth.status_code == 401
+    # Protected routes must return 401 when no credentials are provided
+    endpoints = [
+        ("GET", "/v1/capabilities"),
+        ("POST", "/v1/tools/research_idea"),
+        ("POST", "/v1/ideation/research"),
+        ("POST", "/v1/ideation/judge"),
+        ("POST", "/v1/planning/sprints"),
+        ("POST", "/v1/security/scan"),
+        ("POST", "/v1/agents/run"),
+        ("POST", "/v1/pipelines/run"),
+        ("POST", "/v1/pipelines/approve"),
+        ("GET", "/v1/pipelines/stream"),
+        ("GET", "/sse"),
+        ("POST", "/messages"),
+    ]
 
-    # Protected endpoint with wrong key -> 401
-    resp_wrong = client.get("/v1/capabilities", headers={"X-API-Key": "wrong-key"})
-    assert resp_wrong.status_code == 401
+    for method, url in endpoints:
+        if method == "GET":
+            resp = client.get(url)
+        else:
+            resp = client.post(url, json={})
+        assert resp.status_code == 401, f"Expected 401 for {method} {url}, got {resp.status_code}"
 
-    # Protected endpoint with valid X-API-Key -> 200
-    resp_valid = client.get("/v1/capabilities", headers={"X-API-Key": valid_key})
-    assert resp_valid.status_code == 200
 
-    # Protected endpoint with Bearer token -> 200
-    resp_bearer = client.get("/v1/capabilities", headers={"Authorization": f"Bearer {valid_key}"})
-    assert resp_bearer.status_code == 200
+def test_erro_no_verificador_nao_libera() -> None:
+    """Requirement: erro no verificador -> nao libera (retorna 503/401, nunca 200)."""
+
+    class BrokenKeyService:
+        def verify_key(self, raw_key: str) -> Any:
+            raise RuntimeError("Database connection or cryptographic subsystem failure")
+
+    app = create_app(api_key_service=BrokenKeyService())
+    client = TestClient(app)
+
+    resp = client.get("/v1/capabilities", headers={"X-API-Key": "some-key"})
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "Service unavailable: Authentication system error."
+
+
+def test_origem_externa_sem_cors_configurado_nao_recebe_allow_origin() -> None:
+    """Requirement: origem externa sem CORS configurado nao recebe Access-Control-Allow-Origin."""
+    app = create_app(insecure_local=True)  # No cors_origins provided
+    client = TestClient(app)
+
+    resp = client.get("/health", headers={"Origin": "https://malicious-attacker.example.com"})
+    assert resp.status_code == 200
+    assert "access-control-allow-origin" not in resp.headers
+
+
+def test_cors_configurado_com_wildcard_nao_permite_credentials() -> None:
+    """Requirement: nunca '*' junto com credenciais."""
+    app = create_app(insecure_local=True, cors_origins=["*"])
+    client = TestClient(app)
+
+    resp = client.get("/health", headers={"Origin": "https://example.com"})
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "*"
+    assert resp.headers.get("access-control-allow-credentials") != "true"
+
+
+def test_approve_com_chave_de_agente_retorna_403() -> None:
+    """Requirement: approve com chave de agente -> 403."""
+    key_service = APIKeyService()
+    created = key_service.create_key(APIKeyCreate(name="agent-worker", owner="worker-agent-1"))
+
+    app = create_app(api_key_service=key_service)
+    client = TestClient(app)
+
+    # Agent calls /v1/pipelines/approve with its machine API key
+    resp = client.post(
+        "/v1/pipelines/approve",
+        headers={"X-API-Key": created.raw_key},
+        json={"action_name": "deploy", "token": "any-token", "target_resource": "pipeline"},
+    )
+    assert resp.status_code == 403
+    assert "human approver" in resp.json()["detail"].lower()
+
+
+def test_approve_com_principal_humano_e_token_valido_retorna_200() -> None:
+    """Requirement: human approver with valid control token can approve pipeline step."""
+    auth_provider = LocalAuthProvider()
+    auth_provider.register_user(
+        username="carol",
+        password="HumanPassword123!",
+        roles=["approver", "admin"],
+    )
+    human_bearer_token = auth_provider.issue_bearer_token("carol")
+
+    atm = ApprovalTokenManager()
+    _rec, valid_approval_token = atm.issue_token(
+        action_name="release_gate",
+        target_resource="pipeline",
+        approver="carol",
+    )
+
+    app = create_app(auth_provider=auth_provider, approval_token_manager=atm)
+    client = TestClient(app)
+
+    # Human user calls with Bearer token in header and human approval token in body
+    resp = client.post(
+        "/v1/pipelines/approve",
+        headers={"Authorization": f"Bearer {human_bearer_token}"},
+        json={
+            "action_name": "release_gate",
+            "token": valid_approval_token,
+            "target_resource": "pipeline",
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["approved"] is True
+    assert data["approver"] == "carol"
+
+
+def test_approve_com_token_invalido_retorna_403() -> None:
+    """Requirement: human approver with invalid or expired approval token gets 403."""
+    auth_provider = LocalAuthProvider()
+    auth_provider.register_user(
+        username="dave",
+        password="HumanPassword123!",
+        roles=["approver"],
+    )
+    human_bearer_token = auth_provider.issue_bearer_token("dave")
+
+    atm = ApprovalTokenManager()
+
+    app = create_app(auth_provider=auth_provider, approval_token_manager=atm)
+    client = TestClient(app)
+
+    resp = client.post(
+        "/v1/pipelines/approve",
+        headers={"Authorization": f"Bearer {human_bearer_token}"},
+        json={
+            "action_name": "release_gate",
+            "token": "invalid_or_fake_token",
+            "target_resource": "pipeline",
+        },
+    )
+    assert resp.status_code == 403
+    assert "invalid" in resp.json()["detail"].lower()
+
+
+def test_insecure_local_recusa_host_externo() -> None:
+    """Requirement: --insecure-local recusa host diferente de 127.0.0.1 / localhost."""
+    with pytest.raises(ValueError, match="--insecure-local mode is only permitted"):
+        create_app(insecure_local=True, host="0.0.0.0")
+
+    with pytest.raises(ValueError, match="--insecure-local mode is only permitted"):
+        create_app(insecure_local=True, host="192.168.1.100")

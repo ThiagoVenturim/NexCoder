@@ -84,7 +84,8 @@ class PipelineRunRequest(BaseModel):
 class PipelineApproveRequest(BaseModel):
     action_name: str
     token: str
-    approver: str = "human"
+    target_resource: str = "pipeline"
+    approver: str | None = None
 
 
 @router.get("/health")
@@ -239,11 +240,41 @@ def endpoint_pipelines_run(req: PipelineRunRequest) -> dict[str, Any]:
 
 
 @router.post("/v1/pipelines/approve")
-def endpoint_pipelines_approve(req: PipelineApproveRequest) -> dict[str, Any]:
+def endpoint_pipelines_approve(
+    req: PipelineApproveRequest,
+    request: Request,
+) -> dict[str, Any]:
+    # 1. An agent/machine API key cannot approve pipeline gates
+    is_human = getattr(request.state, "is_human", False)
+    if not is_human:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Pipeline actions require approval by a human approver, not an agent API key.",
+        )
+
+    # 2. Human approval token verification via control plane
+    token_manager = getattr(request.app.state, "approval_token_manager", None)
+    if token_manager is not None:
+        try:
+            record = token_manager.verify_and_consume(
+                raw_token=req.token,
+                action_name=req.action_name,
+                target_resource=req.target_resource,
+                dry_run=False,
+            )
+            approver_name = record.approver
+        except Exception as exc:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Forbidden: Invalid or expired human approval token: {exc}",
+            ) from exc
+    else:
+        approver_name = getattr(request.state, "principal_name", req.approver or "human")
+
     return TOOL_DEFINITIONS["approve_step"].handler(
         action_name=req.action_name,
         token=req.token,
-        approver=req.approver,
+        approver=approver_name,
     )
 
 
