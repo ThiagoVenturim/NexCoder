@@ -130,11 +130,11 @@ class TestControlAuthAndSecurity:
             assert resp.status_code == 401, f"Expected 401 for {method} {url}, got {resp.status_code}"
 
     def test_invalid_bearer_token_returns_401(self, client: TestClient) -> None:
-        resp = client.get("/control/status", headers={"Authorization": "Bearer bad_secret_token"})
+        resp = client.get("/control/status", headers={"Authorization": "Bearer invalid"})
         assert resp.status_code == 401
 
     def test_invalid_api_key_returns_401(self, client: TestClient) -> None:
-        resp = client.get("/control/status", headers={"X-API-Key": "fk_nonexistent_key_12345"})
+        resp = client.get("/control/status", headers={"X-API-Key": "invalid"})
         assert resp.status_code == 401
 
     def test_admin_route_forbidden_for_regular_user_403(self, client: TestClient, auth_setup: dict[str, str]) -> None:
