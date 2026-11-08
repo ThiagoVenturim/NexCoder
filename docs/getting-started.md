@@ -63,6 +63,28 @@ pip install -e packages/continuous-improvement
 pip install pytest ruff
 ```
 
+---
+
+## Try it in 2 minutes (Quickstart)
+
+Experience faccoder's end-to-end automated lifecycle immediately without needing any API keys or network connection:
+
+```bash
+python examples/quickstart/run_quickstart.py
+```
+
+This single command runs all six pipeline stages offline against an included sample project:
+1. **Ideation & Architectural Jury**: Evaluates an idea hypothesis and returns a quorum consensus verdict.
+2. **PRD Generation**: Creates a structured Product Requirements Document.
+3. **Sprint & Backlog Planning**: Breaks down tasks and initializes a local Git repository.
+4. **Code Intelligence**: Indexes AST symbols and queries code via GraphRAG.
+5. **Multi-Agent Pipeline**: Dispatches the catalog `bugfix-delivery` workflow.
+6. **Security Gate**: Executes SAST vulnerability checks and verifies release readiness.
+
+For detailed breakdown, artifact descriptions, and instructions on connecting real models, see the [Quickstart Example Guide](../examples/quickstart/README.md).
+
+---
+
 To install optional provider dependencies (e.g. Anthropic, OpenAI, Google Gemini, Ollama, Langfuse):
 
 ```bash
