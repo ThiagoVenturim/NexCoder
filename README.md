@@ -14,13 +14,13 @@ An open-source, modular platform for automated software development from idea to
 | `faccoder-code-intel` | Available | PR [#33](https://github.com/ThiagoVenturim/faccoder/pull/33) |
 | `faccoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/faccoder/issues/3) / [#31](https://github.com/ThiagoVenturim/faccoder/issues/31) |
 | `faccoder-planning` | Available | Issue [#4](https://github.com/ThiagoVenturim/faccoder/issues/4) |
-| `faccoder-ideation` | In progress | Issue [#5](https://github.com/ThiagoVenturim/faccoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/faccoder/pull/29) |
-| `faccoder-security` | In progress | Issue [#7](https://github.com/ThiagoVenturim/faccoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/faccoder/pull/30) |
-| `faccoder-capture` | In progress | Issue [#6](https://github.com/ThiagoVenturim/faccoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/faccoder/pull/38) |
-| `faccoder-control` | Planned | Issue [#9](https://github.com/ThiagoVenturim/faccoder/issues/9) |
-| `faccoder-interfaces` | Planned | Issue [#10](https://github.com/ThiagoVenturim/faccoder/issues/10) |
-| `faccoder-serving` | Planned | Issue [#11](https://github.com/ThiagoVenturim/faccoder/issues/11) |
-| `faccoder-continuous-improvement` | Planned | Issue [#8](https://github.com/ThiagoVenturim/faccoder/issues/8) |
+| `faccoder-ideation` | Available | Issue [#5](https://github.com/ThiagoVenturim/faccoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/faccoder/pull/29) |
+| `faccoder-security` | Available | Issue [#7](https://github.com/ThiagoVenturim/faccoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/faccoder/pull/30) |
+| `faccoder-capture` | Available | Issue [#6](https://github.com/ThiagoVenturim/faccoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/faccoder/pull/38) |
+| `faccoder-control` | Available | Issue [#9](https://github.com/ThiagoVenturim/faccoder/issues/9) |
+| `faccoder-interfaces` | Available | Issue [#10](https://github.com/ThiagoVenturim/faccoder/issues/10) |
+| `faccoder-serving` | Available | Issue [#11](https://github.com/ThiagoVenturim/faccoder/issues/11) |
+| `faccoder-continuous-improvement` | Available | Issue [#8](https://github.com/ThiagoVenturim/faccoder/issues/8) |
 
 ---
 
@@ -33,7 +33,7 @@ faccoder/
 ├── packages/
 │   ├── core/           # LLM registry, Langfuse tracing, hybrid retrieval, sqlite-vec
 │   ├── code-intel/     # AST parsers (tree-sitter, Delphi), CodeGraph, GraphRAG, HyDE
-│   ├── agents/         # Persona catalog (100+ agents), LangGraph pipeline engine
+│   ├── agents/         # Persona catalog (40 agent personas, 9 skills and 6 ready pipelines), LangGraph pipeline engine
 │   └── planning/       # PRD decomposition, capacity planning, idempotent tracker sync
 ├── docs/               # In-depth architectural guides and reference documentation
 └── scripts/            # Linting and quality assurance utilities
@@ -189,7 +189,7 @@ Every contribution to `faccoder` adheres to strict automated repository standard
 
 `faccoder` originated from field-tested enterprise artificial intelligence systems developed by Thiago Venturim across large-scale production environments:
 
-- **Enterprise Autonomous Agents Platform**: Proven in production across 100+ autonomous agents, specialized skills catalog, and legacy multi-million line codebases.
+- **Enterprise Autonomous Agents Platform**: Proven in production across autonomous agent teams, specialized skills catalog, and legacy multi-million line codebases.
 - **Engineering Delivery Framework**: Covering 70+ specialized engineering personas, capacity models, and automated development synchronization.
 
 The techniques, retrieval mechanisms, and governance patterns forged in these systems have been synthesized into `faccoder` as a vendor-neutral, generic, open-source software delivery framework.

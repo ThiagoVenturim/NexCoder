@@ -24,7 +24,7 @@ def test_mock_search_predefined_results() -> None:
         "pricing": [
             {
                 "title": "SaaS Pricing Index 2026",
-                "url": "https://pricing-benchmark.org/report",
+                "url": "https://pricing.example.org/report",
                 "snippet": "Average B2B dev tool seats cost $29/month.",
             }
         ]
@@ -34,7 +34,7 @@ def test_mock_search_predefined_results() -> None:
 
     assert len(results) == 1
     assert results[0].title == "SaaS Pricing Index 2026"
-    assert results[0].url == "https://pricing-benchmark.org/report"
+    assert results[0].url == "https://pricing.example.org/report"
 
 
 def test_duckduckgo_fallback_to_mock() -> None:
