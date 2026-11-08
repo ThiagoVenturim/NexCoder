@@ -12,7 +12,8 @@ runner = CliRunner()
 
 
 def test_ci_cli_help() -> None:
-    result = runner.invoke(app, ["--help"])
+    # Force a wide terminal so Rich does not wrap option names across columns.
+    result = runner.invoke(app, ["--help"], env={"COLUMNS": "200"})
     assert result.exit_code == 0
     assert "Run all due continuous improvement jobs." in result.output
     assert "--dry-run" in result.output

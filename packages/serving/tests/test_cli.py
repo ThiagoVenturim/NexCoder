@@ -13,7 +13,8 @@ runner = CliRunner()
 
 
 def test_serving_cli_help() -> None:
-    result = runner.invoke(app, ["--help"])
+    # Force a wide terminal so Rich does not wrap option names across columns.
+    result = runner.invoke(app, ["--help"], env={"COLUMNS": "200"})
     assert result.exit_code == 0
     assert "Generate a docker-compose.yml file for local model serving." in result.output
     assert "--profile" in result.output
