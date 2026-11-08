@@ -96,6 +96,16 @@ pip install -e packages/agents
 pip install -e packages/planning
 ```
 
+### Try it in 2 minutes (End-to-End Offline Quickstart)
+
+Run the full six-stage delivery lifecycle (ideation jury, PRD, sprint planning with local git repository, AST code search, agent pipeline, security gate) offline with zero API keys:
+
+```bash
+python examples/quickstart/run_quickstart.py
+```
+
+See [examples/quickstart/README.md](examples/quickstart/README.md) for full details, expected output, and artifact descriptions.
+
 ### Basic Model Invocation
 
 ```python

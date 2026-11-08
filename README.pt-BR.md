@@ -96,6 +96,16 @@ pip install -e packages/agents
 pip install -e packages/planning
 ```
 
+### Experimente em 2 minutos (Quickstart Offline Ponta a Ponta)
+
+Execute a esteira de desenvolvimento completa (juri de ideacao, PRD, planejamento de sprints com repositorio Git local, busca de codigo AST, pipeline de agentes e gate de seguranca) offline e sem nenhuma chave de API:
+
+```bash
+python examples/quickstart/run_quickstart.py
+```
+
+Consulte [examples/quickstart/README.pt-BR.md](examples/quickstart/README.pt-BR.md) para detalhes completos, saidas esperadas e descricao dos artefatos gerados.
+
 ### Invocacao Basica de Modelos
 
 ```python
