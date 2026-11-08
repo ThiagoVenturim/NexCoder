@@ -5,8 +5,8 @@ Code intelligence package for `faccoder`: AST and symbol parsing across language
 ## Features
 
 - **Symbol Extraction**: Structured symbol models (`Symbol`, `SymbolType`, `SymbolLocation`, `SymbolSignature`, and relationships).
-- **Tree-sitter Parsers**: Robust AST-based parsers for Python, Go, JavaScript, TypeScript, Java, C, C++, and Rust.
-- **Delphi Parser**: Generic Object Pascal and Delphi form parser supporting units, interfaces, implementations, classes, methods, and DFM form components.
+- **Tree-sitter Parsers**: AST-based parsers for Python, Go, JavaScript, TypeScript, Java, C, C++, and Rust.
+- **Delphi Parser**: Object Pascal and Delphi form parser supporting units, interfaces, implementations, classes, methods, and DFM form components.
 - **Symbol Chunker**: Chunks source code along syntactic symbol boundaries, preserving context for RAG.
 - **Code Graph & Impact Analysis**: Directed multirelational graph modeling calls, inheritance, implementation, and UI bindings with blast radius and risk scoring.
 - **GraphRAG Communities**: Multi-resolution Louvain community detection with hierarchical architectural summaries and multi-hop query context assembly.
@@ -17,8 +17,10 @@ Code intelligence package for `faccoder`: AST and symbol parsing across language
 
 All deliverables from Issue #2 are fully implemented and verified offline:
 
-- [x] Tree-sitter parsers: C, C++, C#, Java, Python, Go, JS/TS, Rust, Kotlin, PHP
-- [x] Specialized parsers: Delphi (units, implementations, DFM forms), COBOL, OutSystems `.oml`
+- [x] Tree-sitter parsers: C, C++, Java, Python, Go, JS/TS, Rust
+- [ ] Tree-sitter parsers: C#, Kotlin, PHP (planned)
+- [x] Specialized parsers: Delphi (units, implementations, DFM forms)
+- [ ] Specialized parsers: COBOL, OutSystems `.oml` (planned)
 - [x] Symbol chunking and syntax boundary preservation
 - [x] Embedding model selection per tier
 - [x] Hybrid retrieval + RRF + MMR + rerank + query rewriting and HyDE

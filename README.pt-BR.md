@@ -14,13 +14,13 @@ O `faccoder` orquestra o ciclo completo de entrega de software: intake de ideias
 | `faccoder-code-intel` | Disponivel | PR [#33](https://github.com/ThiagoVenturim/faccoder/pull/33) |
 | `faccoder-agents` | Disponivel | Issue [#3](https://github.com/ThiagoVenturim/faccoder/issues/3) / [#31](https://github.com/ThiagoVenturim/faccoder/issues/31) |
 | `faccoder-planning` | Disponivel | Issue [#4](https://github.com/ThiagoVenturim/faccoder/issues/4) |
-| `faccoder-ideation` | Em andamento | Issue [#5](https://github.com/ThiagoVenturim/faccoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/faccoder/pull/29) |
-| `faccoder-security` | Em andamento | Issue [#7](https://github.com/ThiagoVenturim/faccoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/faccoder/pull/30) |
-| `faccoder-capture` | Em andamento | Issue [#6](https://github.com/ThiagoVenturim/faccoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/faccoder/pull/38) |
-| `faccoder-control` | Planejado | Issue [#9](https://github.com/ThiagoVenturim/faccoder/issues/9) |
-| `faccoder-interfaces` | Planejado | Issue [#10](https://github.com/ThiagoVenturim/faccoder/issues/10) |
-| `faccoder-serving` | Planejado | Issue [#11](https://github.com/ThiagoVenturim/faccoder/issues/11) |
-| `faccoder-continuous-improvement` | Planejado | Issue [#8](https://github.com/ThiagoVenturim/faccoder/issues/8) |
+| `faccoder-ideation` | Disponivel | Issue [#5](https://github.com/ThiagoVenturim/faccoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/faccoder/pull/29) |
+| `faccoder-security` | Disponivel | Issue [#7](https://github.com/ThiagoVenturim/faccoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/faccoder/pull/30) |
+| `faccoder-capture` | Disponivel | Issue [#6](https://github.com/ThiagoVenturim/faccoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/faccoder/pull/38) |
+| `faccoder-control` | Disponivel | Issue [#9](https://github.com/ThiagoVenturim/faccoder/issues/9) |
+| `faccoder-interfaces` | Disponivel | Issue [#10](https://github.com/ThiagoVenturim/faccoder/issues/10) |
+| `faccoder-serving` | Disponivel | Issue [#11](https://github.com/ThiagoVenturim/faccoder/issues/11) |
+| `faccoder-continuous-improvement` | Disponivel | Issue [#8](https://github.com/ThiagoVenturim/faccoder/issues/8) |
 
 ---
 
@@ -33,7 +33,7 @@ faccoder/
 ├── packages/
 │   ├── core/           # Registro de LLMs, telemetria Langfuse, busca hibrida, sqlite-vec
 │   ├── code-intel/     # Analisadores AST (tree-sitter, Delphi), CodeGraph, GraphRAG, HyDE
-│   ├── agents/         # Catalogo de personas (100+ agentes), motor de pipelines LangGraph
+│   ├── agents/         # Catalogo de personas (40 personas de agentes, 9 skills e 6 pipelines prontos), motor de pipelines LangGraph
 │   └── planning/       # Decomposicao de PRD, planejamento de capacidade, sync idempotente
 ├── docs/               # Guias aprofundados de arquitetura e documentacao de referencia
 └── scripts/            # Utilitarios de auditoria de qualidade e formatacao
@@ -189,7 +189,7 @@ Qualquer contribuicao para o `faccoder` deve cumprir os seguintes padroes automa
 
 O `faccoder` originou-se de sistemas corporativos de inteligencia artificial testados em producao desenvolvidos por Thiago Venturim em ambientes de larga escala:
 
-- **Plataforma de Agentes Autonomos Corporativos**: Validada em producao com mais de 100 agentes autonomos, catalogo de habilidades especializadas e sistemas legados com milhoes de linhas de codigo.
+- **Plataforma de Agentes Autonomos Corporativos**: Validada em producao com equipes de agentes autonomos, catalogo de habilidades especializadas e sistemas legados com milhoes de linhas de codigo.
 - **Framework de Entrega de Engenharia**: Cobrindo mais de 70 personas tecnicas especializadas, modelos de capacidade e sincronizacao automatizada de desenvolvimento.
 
 Os aprendizados, mecanismos de busca semantica e padroes de governanca desses projetos foram consolidados no `faccoder` como uma plataforma aberta, generica e independente de fornecedor.

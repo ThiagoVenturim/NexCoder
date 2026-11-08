@@ -18,6 +18,12 @@ Real-world enterprise systems are rarely written in a single language. They comb
 | **Rust** | Tree-sitter | Modules, structs, traits, impl blocks, functions, macros | Trait implementations, visibility qualifiers |
 | **Object Pascal / Delphi** | Custom Lexer & AST | Units, interfaces, implementations, classes, methods, DFM forms | DFM component bindings, Win1252 strings, memory leak audit |
 
+### Planned Languages
+
+- **C#**: Tree-sitter parser for `.cs` files (planned).
+- **COBOL**: Parser for copybooks and legacy routines (planned).
+- **OutSystems**: Parser for `.oml` metadata (planned).
+
 ---
 
 ## The Abstract Symbol Model
