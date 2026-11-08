@@ -107,4 +107,4 @@ faccoder-security init-app-security . --name "MyService" --email "security@examp
 
 ## Origin
 
-Ported and generalized from internal security and vulnerability scanning automation developed within the ApoIA platform and lochome, standardizing security pipelines across multi-tenant cloud ecosystems.
+Security and vulnerability scanning automation with standardized pipelines.

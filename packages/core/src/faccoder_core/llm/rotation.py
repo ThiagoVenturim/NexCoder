@@ -8,7 +8,7 @@ error propagates, because retrying it would only waste money.
 The whole operation has a time budget, so a request never keeps hammering
 exhausted quotas for minutes.
 
-Ported and generalised from the Gemini key rotation used in production at ApoIA.
+Provider API key rotation hardened for production use.
 """
 
 from __future__ import annotations

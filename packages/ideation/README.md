@@ -61,4 +61,4 @@ print(f"Generated PRD: {files['prd']}")
 
 ## Origin
 
-Derived from research and multi-agent pipeline techniques developed in ApoIA and lochome, formalized into a modular, public open-source architecture.
+A modular, open-source architecture for research and multi-agent pipelines.
