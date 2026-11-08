@@ -33,12 +33,6 @@ Security scanners, specialist agents, and release gate for the faccoder platform
 pip install faccoder-security
 ```
 
-Or install with CLI support:
-
-```bash
-pip install "faccoder-security[cli]"
-```
-
 ## Quick Start
 
 ### Multi-Scanner Engine
