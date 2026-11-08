@@ -144,7 +144,7 @@ class CompetitorScout(BaseResearcher):
             direct_competitors=[
                 CompetitorProfile(
                     name="AlphaFlow Suite",
-                    website="https://alphaflow-preview.net",
+                    website="https://alphaflow.example.net",
                     strengths=["Broad brand recognition", "Extensive third-party plugin catalog"],
                     weaknesses=["High configuration overhead", "Lack of offline/airgapped support"],
                     pricing_model="Per-seat enterprise annual contract",
@@ -152,7 +152,7 @@ class CompetitorScout(BaseResearcher):
                 ),
                 CompetitorProfile(
                     name="DevPulse Engine",
-                    website="https://devpulse-insights.dev",
+                    website="https://devpulse.example.com",
                     strengths=["Simple onboarding", "Built-in dashboarding"],
                     weaknesses=["Closed proprietary ecosystem", "No multi-agent committee gates"],
                     pricing_model="Tiered monthly subscription",
@@ -162,7 +162,7 @@ class CompetitorScout(BaseResearcher):
             indirect_competitors=[
                 CompetitorProfile(
                     name="Generic LLM Chatbots & Scripts",
-                    website="https://generic-tools.io",
+                    website="https://generic-tools.example.org",
                     strengths=["Ubiquitous availability", "Zero initial integration cost"],
                     weaknesses=["Hallucinations without citations", "No formal PRD/architecture output"],
                     pricing_model="Pay-per-token",

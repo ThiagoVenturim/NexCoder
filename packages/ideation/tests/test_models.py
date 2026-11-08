@@ -55,7 +55,7 @@ def test_structured_idea_creation() -> None:
 def test_research_source_creation() -> None:
     src = ResearchSource(
         title="2026 Developer Tooling Report",
-        url="https://reports.analyst-insights.org/dev-tools",
+        url="https://reports.example.org/dev-tools",
         snippet="Dev teams report 45% productivity gains with automated assistants.",
         provider="mock",
     )

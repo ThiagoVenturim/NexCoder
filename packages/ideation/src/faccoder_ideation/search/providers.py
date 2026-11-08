@@ -34,11 +34,11 @@ class MockSearchProvider(SearchProvider):
         synthetic_sources: list[ResearchSource] = []
 
         topics = [
-            ("Industry Overview & Trends", f"https://reports.analyst-insights.org/research/{clean_slug}"),
-            ("Competitive Benchmark Report", f"https://benchmarks.open-market.org/analysis/{clean_slug}"),
-            ("Customer Reviews and Pain Points", f"https://feedback.community-pulse.net/discussions/{clean_slug}"),
-            ("Technical Feasibility & Architecture", f"https://specs.engineering-review.dev/whitepapers/{clean_slug}"),
-            ("Regulatory & Compliance Brief", f"https://compliance.standards-bulletin.org/briefs/{clean_slug}"),
+            ("Industry Overview & Trends", f"https://reports.example.org/research/{clean_slug}"),
+            ("Competitive Benchmark Report", f"https://benchmarks.example.org/analysis/{clean_slug}"),
+            ("Customer Reviews and Pain Points", f"https://feedback.example.net/discussions/{clean_slug}"),
+            ("Technical Feasibility & Architecture", f"https://specs.example.com/whitepapers/{clean_slug}"),
+            ("Regulatory & Compliance Brief", f"https://compliance.example.org/briefs/{clean_slug}"),
         ]
 
         for i, (title_suffix, url) in enumerate(topics[:max_results]):
