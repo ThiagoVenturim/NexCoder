@@ -91,4 +91,4 @@ print(result.status)
 
 ## Origin
 
-Ported and generalized from the internal platforms ApoIA and lochome, distilling over 115 automation agents and 70 personas into generic, vendor-agnostic architecture.
+A catalog of automation agents and personas distilled into a generic, vendor-agnostic architecture.

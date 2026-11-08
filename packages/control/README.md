@@ -120,4 +120,4 @@ print(f"Audit log status: {message}")
 
 ## Origin
 
-The control plane concepts, rate limiting, and governance patterns in this package originated in ApoIA and lochome, where access keys, USD limits, and tool-level metering protected enterprise LLM applications across production workloads.
+The control plane provides access keys, USD budget limits, and tool-level metering to govern LLM applications in production.

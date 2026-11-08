@@ -13,7 +13,7 @@ Usage::
 
     verdict = await call_structured(prompt, schema=Verdict, context="jury")
 
-Ported from ApoIA (``structured_llm``).
+Structured LLM output helpers with corrective retry.
 """
 
 from __future__ import annotations
