@@ -51,6 +51,16 @@ pip install -e packages/core
 pip install -e packages/code-intel
 pip install -e packages/agents
 pip install -e packages/planning
+pip install -e packages/ideation
+pip install -e packages/security
+pip install -e packages/capture
+pip install -e packages/control
+pip install -e packages/interfaces
+pip install -e packages/serving
+pip install -e packages/continuous-improvement
+
+# Tooling and quality verification
+pip install pytest ruff
 ```
 
 To install optional provider dependencies (e.g. Anthropic, OpenAI, Google Gemini, Ollama, Langfuse):
@@ -121,7 +131,10 @@ config.preset = "offline"
 ```python
 from faccoder_core import get_chat_model, load_config
 
+# Load default config and set offline preset for hermetic execution
 config = load_config()
+config.preset = "offline"
+
 model = get_chat_model("medium", config=config)
 
 response = model.invoke("Draft a unit test plan for an authentication service.")
@@ -165,14 +178,21 @@ from faccoder_agents.catalog import AgentCatalog
 from faccoder_agents.engine import PipelineBuilder
 from faccoder_agents.engine.blocks import PromptBlock, ValidatorBlock
 
-catalog = AgentCatalog.from_directory("agents")
+# Load catalog from packages/agents/agents
+catalog = AgentCatalog.from_directory("packages/agents/agents")
 architect = catalog.get("lead-architect")
 
-builder = PipelineBuilder("architecture-review")
-builder.add_block(ValidatorBlock(name="input-validator", required_keys=["prd_content"]))
-builder.add_block(PromptBlock(name="generate-architecture", prompt_template=architect.template))
+# Construct pipeline blocks
+validator = ValidatorBlock(name="input-validator", required_keys=["prd_content"])
+prompt_block = PromptBlock(
+    name="generate-architecture",
+    user_prompt_template=architect.prompt if architect else "{prd_content}",
+)
 
-pipeline = builder.build()
+builder = PipelineBuilder("architecture-review")
+builder.add_sequence([validator, prompt_block])
+
+pipeline = builder.compile()
 ```
 
 ---
