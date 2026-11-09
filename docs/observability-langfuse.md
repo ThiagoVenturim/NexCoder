@@ -2,7 +2,7 @@
 
 Complex multi-agent pipelines require deep observability: tracking latency across reasoning loops, monitoring token consumption, auditing tool inputs/outputs, and enforcing cost controls.
 
-`faccoder` integrates natively with **Langfuse** (self-hosted or cloud) while incorporating an automatic **circuit breaker** to ensure telemetry failures never disrupt production tasks.
+`nexcoder` integrates natively with **Langfuse** (self-hosted or cloud) while incorporating an automatic **circuit breaker** to ensure telemetry failures never disrupt production tasks.
 
 ---
 
@@ -19,7 +19,7 @@ Complex multi-agent pipelines require deep observability: tracking latency acros
 
 In distributed agent workflows, an external telemetry service can become a single point of failure if network timeouts occur.
 
-`faccoder-core` wraps the Langfuse handler in `SafeLangfuseCallbackHandler` with an integrated circuit breaker:
+`nexcoder-core` wraps the Langfuse handler in `SafeLangfuseCallbackHandler` with an integrated circuit breaker:
 
 ```
 [Agent Invocation]
@@ -60,12 +60,12 @@ export LANGFUSE_SECRET_KEY="sk-lf-..."
 export LANGFUSE_HOST="https://cloud.langfuse.com" # or "http://localhost:3000"
 
 # Optional Circuit Breaker Tuning
-export FACCODER_LANGFUSE_TIMEOUT_MS="2000"
-export FACCODER_LANGFUSE_MAX_FAILURES="3"
-export FACCODER_LANGFUSE_COOLDOWN_SEC="60"
+export NEXCODER_LANGFUSE_TIMEOUT_MS="2000"
+export NEXCODER_LANGFUSE_MAX_FAILURES="3"
+export NEXCODER_LANGFUSE_COOLDOWN_SEC="60"
 ```
 
-If `LANGFUSE_PUBLIC_KEY` is omitted, `faccoder` automatically disables telemetry without throwing errors.
+If `LANGFUSE_PUBLIC_KEY` is omitted, `nexcoder` automatically disables telemetry without throwing errors.
 
 ---
 
@@ -73,10 +73,10 @@ If `LANGFUSE_PUBLIC_KEY` is omitted, `faccoder` automatically disables telemetry
 
 ### Automatic Pipeline Tracing
 
-When invoking models or executing pipelines via `faccoder`, tracing is attached automatically through `default_callbacks`:
+When invoking models or executing pipelines via `nexcoder`, tracing is attached automatically through `default_callbacks`:
 
 ```python
-from faccoder_core import get_chat_model, load_config
+from nexcoder_core import get_chat_model, load_config
 
 config = load_config()
 
@@ -92,8 +92,8 @@ response = model.invoke("Draft a unit test plan for the authentication module.")
 For explicit callback injection into custom LangGraph pipelines:
 
 ```python
-from faccoder_core import load_config
-from faccoder_core.observability.callbacks import default_callbacks
+from nexcoder_core import load_config
+from nexcoder_core.observability.callbacks import default_callbacks
 
 config = load_config()
 callbacks = default_callbacks(config, tier="medium", model="claude-3-5-sonnet")
@@ -145,4 +145,4 @@ Launch the stack:
 docker compose -f docker-compose.langfuse.yml up -d
 ```
 
-Navigate to `http://localhost:3000`, create your project, and generate API keys for `faccoder`.
+Navigate to `http://localhost:3000`, create your project, and generate API keys for `nexcoder`.

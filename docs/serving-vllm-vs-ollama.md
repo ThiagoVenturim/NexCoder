@@ -1,6 +1,6 @@
 # Serving: vLLM vs Ollama
 
-> **Status**: This module is currently Planned ([Issue #11](https://github.com/ThiagoVenturim/faccoder/issues/11)). Code examples illustrate the upcoming release API.
+> **Status**: This module is currently Planned ([Issue #11](https://github.com/ThiagoVenturim/nexcoder/issues/11)). Code examples illustrate the upcoming release API.
 
 When running open-source models locally or on private cloud infrastructure, selecting the proper inference engine is critical for latency, throughput, and GPU utilization.
 
@@ -30,7 +30,7 @@ This guide provides a comparative evaluation between **vLLM** and **Ollama**, in
 - You need efficient mixed CPU/GPU RAM offloading for models that slightly exceed your VRAM.
 
 ### Choose vLLM If:
-- You are deploying `faccoder` in a shared team environment or running multiple concurrent autonomous agents.
+- You are deploying `nexcoder` in a shared team environment or running multiple concurrent autonomous agents.
 - You have dedicated GPU infrastructure (NVIDIA A10G, A100, H100, or multi-RTX 4090).
 - You require continuous batching so that slow reasoning prompts do not block fast small-tier extraction requests.
 
@@ -72,7 +72,7 @@ services:
       --gpu-memory-utilization 0.90
 ```
 
-Connect `faccoder` to vLLM:
+Connect `nexcoder` to vLLM:
 
 ```bash
 export VLLM_BASE_URL="http://localhost:8000/v1"
@@ -114,7 +114,7 @@ docker exec -it ollama ollama pull qwen2.5-coder:14b     # medium tier
 docker exec -it ollama ollama pull qwen2.5-coder:32b     # medium/large tier
 ```
 
-Connect `faccoder` to Ollama:
+Connect `nexcoder` to Ollama:
 
 ```bash
 export OLLAMA_BASE_URL="http://localhost:11434"

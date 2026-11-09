@@ -2,13 +2,13 @@
 
 Complex software automation requires workflows that go beyond single-turn prompt interactions. It demands structured state machines, branching logic, validation loops, and human-in-the-loop authorization gates.
 
-`faccoder-agents` features a modular pipeline execution engine built on top of **LangGraph**, providing reusable execution blocks, dry-run simulations, and error boundaries.
+`nexcoder-agents` features a modular pipeline execution engine built on top of **LangGraph**, providing reusable execution blocks, dry-run simulations, and error boundaries.
 
 ---
 
 ## Pipeline Architecture
 
-A `faccoder` pipeline is a directed graph where state flows through typed execution blocks:
+A `nexcoder` pipeline is a directed graph where state flows through typed execution blocks:
 
 ```
 [Initial State]
@@ -41,13 +41,13 @@ A `faccoder` pipeline is a directed graph where state flows through typed execut
 
 ## Reusable Building Blocks
 
-`faccoder-agents` ships with four standardized blocks:
+`nexcoder-agents` ships with four standardized blocks:
 
 ### 1. `ValidatorBlock`
 Verifies that required keys are present and conform to type constraints before proceeding to costly model calls:
 
 ```python
-from faccoder_agents.engine.blocks import ValidatorBlock
+from nexcoder_agents.engine.blocks import ValidatorBlock
 
 validator = ValidatorBlock(
     name="validate-input",
@@ -59,7 +59,7 @@ validator = ValidatorBlock(
 Interpolates state variables into prompt templates and invokes the model registry:
 
 ```python
-from faccoder_agents.engine.blocks import PromptBlock
+from nexcoder_agents.engine.blocks import PromptBlock
 
 prompt_block = PromptBlock(
     name="generate-unit-tests",
@@ -73,7 +73,7 @@ prompt_block = PromptBlock(
 Enables dynamic routing based on Boolean conditions or predicate functions:
 
 ```python
-from faccoder_agents.engine.blocks import ConditionBlock
+from nexcoder_agents.engine.blocks import ConditionBlock
 
 
 def tests_passed(state: dict) -> bool:
@@ -92,7 +92,7 @@ router = ConditionBlock(
 Suspends execution when an action requires human sign-off (e.g. database schema migrations or Git pushes):
 
 ```python
-from faccoder_agents.engine.blocks import HumanApprovalBlock
+from nexcoder_agents.engine.blocks import HumanApprovalBlock
 
 approval = HumanApprovalBlock(
     name="approve-git-push",
@@ -109,8 +109,8 @@ approval = HumanApprovalBlock(
 Constructing a complete pipeline with `PipelineBuilder`:
 
 ```python
-from faccoder_agents.engine import PipelineBuilder
-from faccoder_agents.engine.blocks import (
+from nexcoder_agents.engine import PipelineBuilder
+from nexcoder_agents.engine.blocks import (
     ConditionBlock,
     HumanApprovalBlock,
     PromptBlock,
@@ -154,7 +154,7 @@ print("Pipeline Result:", final_state["status"])
 
 ## Dry-Run and Execution Safeguards
 
-To prevent cascading errors or runaway costs in autonomous pipelines, `faccoder` enforces strict guardrails:
+To prevent cascading errors or runaway costs in autonomous pipelines, `nexcoder` enforces strict guardrails:
 
 1. **Max Recursion Depth**: Pipelines terminate automatically if state cycles exceed configurable depth limits (default: 10 steps).
 2. **Tool Execution Caps**: Limits the total number of tool invocations allowed within a single pipeline run.

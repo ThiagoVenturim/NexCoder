@@ -1,6 +1,6 @@
-# Getting Started with faccoder
+# Getting Started with nexcoder
 
-This guide walks through setting up `faccoder`, configuring execution presets, and running your first agentic pipelines and code intelligence tasks.
+This guide walks through setting up `nexcoder`, configuring execution presets, and running your first agentic pipelines and code intelligence tasks.
 
 ---
 
@@ -19,8 +19,8 @@ This guide walks through setting up `faccoder`, configuring execution presets, a
 ### 1. Clone Repository and Create Virtual Environment
 
 ```bash
-git clone https://github.com/ThiagoVenturim/faccoder.git
-cd faccoder
+git clone https://github.com/ThiagoVenturim/nexcoder.git
+cd nexcoder
 
 python -m venv .venv
 
@@ -67,7 +67,7 @@ pip install pytest ruff
 
 ## Try it in 2 minutes (Quickstart)
 
-Experience faccoder's end-to-end automated lifecycle immediately without needing any API keys or network connection:
+Experience nexcoder's end-to-end automated lifecycle immediately without needing any API keys or network connection:
 
 ```bash
 python examples/quickstart/run_quickstart.py
@@ -95,7 +95,7 @@ pip install -e "packages/core[all]"
 
 ## Configuration and Presets
 
-`faccoder` manages provider configurations through environment variables and the `FaccoderConfig` model.
+`nexcoder` manages provider configurations through environment variables and the `NexcoderConfig` model.
 
 ### Environment Setup
 
@@ -119,7 +119,7 @@ export LANGFUSE_HOST="http://localhost:3000"
 
 ### Runtime Presets
 
-`faccoder` provides five execution presets out of the box:
+`nexcoder` provides five execution presets out of the box:
 
 | Preset | Description | Network Needed |
 |---|---|---|
@@ -132,7 +132,7 @@ export LANGFUSE_HOST="http://localhost:3000"
 Specify the preset programmatically or via environment:
 
 ```python
-from faccoder_core import FaccoderConfig, load_config
+from nexcoder_core import NexcoderConfig, load_config
 
 # Load default config and override preset
 config = load_config()
@@ -145,13 +145,13 @@ config.preset = "offline"
 
 ### 1. Tiered Model Invocation
 
-`faccoder` avoids vendor lock-in by routing model requests to three capability tiers:
+`nexcoder` avoids vendor lock-in by routing model requests to three capability tiers:
 - `small`: High-throughput extraction, classification, query rewriting, and chunk tagging.
 - `medium`: Code generation, unit testing, structural analysis, and documentation.
 - `large`: Architectural evaluation, multi-persona jury debate, and PRD generation.
 
 ```python
-from faccoder_core import get_chat_model, load_config
+from nexcoder_core import get_chat_model, load_config
 
 # Load default config and set offline preset for hermetic execution
 config = load_config()
@@ -168,8 +168,8 @@ print(response.content)
 Index source code and query semantic relationships:
 
 ```python
-from faccoder_code_intel import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 embedder = HashEmbedder(dimensions=256)
 index = CodeSearchIndex("code_index.db", embedder=embedder)
@@ -196,9 +196,9 @@ for r in results:
 Load an agent persona from the catalog and construct an execution pipeline:
 
 ```python
-from faccoder_agents.catalog import AgentCatalog
-from faccoder_agents.engine import PipelineBuilder
-from faccoder_agents.engine.blocks import PromptBlock, ValidatorBlock
+from nexcoder_agents.catalog import AgentCatalog
+from nexcoder_agents.engine import PipelineBuilder
+from nexcoder_agents.engine.blocks import PromptBlock, ValidatorBlock
 
 # Load catalog from packages/agents/agents
 catalog = AgentCatalog.from_directory("packages/agents/agents")

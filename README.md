@@ -1,8 +1,10 @@
-# faccoder
+# nexcoder
 
 An open-source, modular platform for automated software development from idea to deployment.
 
-`faccoder` orchestrates the complete software delivery lifecycle: intake and market research, architectural jury review, Product Requirement Document (PRD) generation, sprint capacity planning, task creation in issue trackers, AST-based code intelligence, multi-hop GraphRAG, agentic pipeline execution, automated test generation, and continuous improvement.
+*(Formerly known as faccoder during early development.)*
+
+`nexcoder` orchestrates the complete software delivery lifecycle: intake and market research, architectural jury review, Product Requirement Document (PRD) generation, sprint capacity planning, task creation in issue trackers, AST-based code intelligence, multi-hop GraphRAG, agentic pipeline execution, automated test generation, and continuous improvement.
 
 ---
 
@@ -10,26 +12,26 @@ An open-source, modular platform for automated software development from idea to
 
 | Package / Module | Status | Tracking Issue |
 | :--- | :--- | :--- |
-| `faccoder-core` | Available | Merged in `develop` |
-| `faccoder-code-intel` | Available | PR [#33](https://github.com/ThiagoVenturim/faccoder/pull/33) |
-| `faccoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/faccoder/issues/3) / [#31](https://github.com/ThiagoVenturim/faccoder/issues/31) |
-| `faccoder-planning` | Available | Issue [#4](https://github.com/ThiagoVenturim/faccoder/issues/4) |
-| `faccoder-ideation` | Available | Issue [#5](https://github.com/ThiagoVenturim/faccoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/faccoder/pull/29) |
-| `faccoder-security` | Available | Issue [#7](https://github.com/ThiagoVenturim/faccoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/faccoder/pull/30) |
-| `faccoder-capture` | Available | Issue [#6](https://github.com/ThiagoVenturim/faccoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/faccoder/pull/38) |
-| `faccoder-control` | Available | Issue [#9](https://github.com/ThiagoVenturim/faccoder/issues/9) |
-| `faccoder-interfaces` | Available | Issue [#10](https://github.com/ThiagoVenturim/faccoder/issues/10) |
-| `faccoder-serving` | Available | Issue [#11](https://github.com/ThiagoVenturim/faccoder/issues/11) |
-| `faccoder-continuous-improvement` | Available | Issue [#8](https://github.com/ThiagoVenturim/faccoder/issues/8) |
+| `nexcoder-core` | Available | Merged in `develop` |
+| `nexcoder-code-intel` | Available | PR [#33](https://github.com/ThiagoVenturim/nexcoder/pull/33) |
+| `nexcoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) |
+| `nexcoder-planning` | Available | Issue [#4](https://github.com/ThiagoVenturim/nexcoder/issues/4) |
+| `nexcoder-ideation` | Available | Issue [#5](https://github.com/ThiagoVenturim/nexcoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/nexcoder/pull/29) |
+| `nexcoder-security` | Available | Issue [#7](https://github.com/ThiagoVenturim/nexcoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/nexcoder/pull/30) |
+| `nexcoder-capture` | Available | Issue [#6](https://github.com/ThiagoVenturim/nexcoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/nexcoder/pull/38) |
+| `nexcoder-control` | Available | Issue [#9](https://github.com/ThiagoVenturim/nexcoder/issues/9) |
+| `nexcoder-interfaces` | Available | Issue [#10](https://github.com/ThiagoVenturim/nexcoder/issues/10) |
+| `nexcoder-serving` | Available | Issue [#11](https://github.com/ThiagoVenturim/nexcoder/issues/11) |
+| `nexcoder-continuous-improvement` | Available | Issue [#8](https://github.com/ThiagoVenturim/nexcoder/issues/8) |
 
 ---
 
 ## Architecture Overview
 
-`faccoder` is organized as a modular Python monorepo with installable packages in `packages/`:
+`nexcoder` is organized as a modular Python monorepo with installable packages in `packages/`:
 
 ```
-faccoder/
+nexcoder/
 ├── packages/
 │   ├── core/           # LLM registry, Langfuse tracing, hybrid retrieval, sqlite-vec
 │   ├── code-intel/     # AST parsers (tree-sitter, Delphi), CodeGraph, GraphRAG, HyDE
@@ -41,7 +43,7 @@ faccoder/
 
 ### Core Packages (Merged in Develop)
 
-1. **`faccoder-core`**: The shared foundation across all packages.
+1. **`nexcoder-core`**: The shared foundation across all packages.
    - Tiered model registry (`small`, `medium`, `large`) abstracting paid APIs (Anthropic, OpenAI, Google Gemini, Azure, Bedrock) and open-source models (Ollama, vLLM, LM Studio, llama.cpp).
    - Resilient Langfuse tracing with an automatic circuit breaker that degrades safely to a no-op if the telemetry backend is unreachable.
    - Usage and cost metering per agent, pipeline, and run, with configurable budget caps.
@@ -49,24 +51,24 @@ faccoder/
    - Local hybrid search store combining SQLite FTS5 (BM25 lexical search) with `sqlite-vec` (dense vector embeddings), reciprocal rank fusion (RRF), and cross-encoder reranking.
    - Path sandboxing to prevent directory traversal across agent tools.
 
-2. **`faccoder-code-intel`**: Code intelligence and semantic comprehension for any codebase.
+2. **`nexcoder-code-intel`**: Code intelligence and semantic comprehension for any codebase.
    - Multi-language AST parsing via Tree-sitter (Python, Go, JavaScript, TypeScript, Java, C, C++, Rust) and dedicated Object Pascal/Delphi parsers.
    - Syntactic symbol-level chunking preserving lexical enclosing context.
    - `CodeGraph` modeling relationships: calls, inheritance, implementations, and UI form bindings.
    - GraphRAG community detection via Louvain modularity clustering for hierarchical architectural summaries.
    - HyDE (Hypothetical Document Embeddings) query transformation and bottom-up recursive documentation generation.
 
-3. **`faccoder-agents`**: Agent persona catalog and execution engine.
+3. **`nexcoder-agents`**: Agent persona catalog and execution engine.
    - Frontmatter-driven agent specification catalog (`agents/<sector>/<slug>.md`) covering 10 organizational sectors (direction, requirements, product, engineering, UI/UX, QA, security, data-AI, support, marketing).
    - Reusable LangGraph pipeline building blocks: `ValidatorBlock`, `ConditionBlock`, `PromptBlock`, and `HumanApprovalBlock`.
    - Safe execution guarantees: dry-run simulations, time-bounded approval tokens, tool execution caps, and committee quorum votes.
    - Export adapters for Claude Code subagents and tool manifests.
 
-4. **`faccoder-planning`**: Agentic sprint planning and task synchronization.
+4. **`nexcoder-planning`**: Agentic sprint planning and task synchronization.
    - Hierarchical PRD decomposition into Epics, User Stories, and Tasks with Given/When/Then acceptance criteria.
    - Sprint capacity calculator factoring in team work schedules, reserve buffers, and historical velocity.
    - Automated Kanban synchronization loop detecting workload slippage and recommending task deferrals.
-   - Idempotent platform adapters for GitHub (Issues, Milestones, Projects v2 GraphQL), GitLab, and Azure DevOps using invisible tracking markers (`<!-- faccoder-id: <uuid> -->`).
+   - Idempotent platform adapters for GitHub (Issues, Milestones, Projects v2 GraphQL), GitLab, and Azure DevOps using invisible tracking markers (`<!-- nexcoder-id: <uuid> -->`).
    - Automated Git helpers for branch creation, conventional commit formatting, and pull request assembly.
 
 ---
@@ -79,8 +81,8 @@ Install the core workspace packages in editable mode:
 
 ```bash
 # Clone the repository
-git clone https://github.com/ThiagoVenturim/faccoder.git
-cd faccoder
+git clone https://github.com/ThiagoVenturim/nexcoder.git
+cd nexcoder
 
 # Create and activate a virtual environment
 python -m venv .venv
@@ -109,7 +111,7 @@ See [examples/quickstart/README.md](examples/quickstart/README.md) for full deta
 ### Basic Model Invocation
 
 ```python
-from faccoder_core import get_chat_model, load_config
+from nexcoder_core import get_chat_model, load_config
 
 # Load configuration from environment or config file
 config = load_config()
@@ -124,8 +126,8 @@ print(response.content)
 ### Code Indexing and Hybrid Search
 
 ```python
-from faccoder_code_intel import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 # Initialize index with dense embeddings and SQLite FTS5 lexical index
 embedder = HashEmbedder(dimensions=256)
@@ -144,7 +146,7 @@ for hit in hits:
 
 ## Presets and Serving Modes
 
-`faccoder` configures model providers via runtime presets in `FaccoderConfig`:
+`nexcoder` configures model providers via runtime presets in `NexcoderConfig`:
 
 - `offline`: Uses `FakeChatModel` and deterministic hash embeddings for hermetic testing without network access.
 - `all-open-source`: Routes all tiers to local Ollama or vLLM instances without external API calls.
@@ -185,7 +187,7 @@ Documentation guides are available in the [docs/](docs/) directory:
 
 ## Repository Standards
 
-Every contribution to `faccoder` adheres to strict automated repository standards:
+Every contribution to `nexcoder` adheres to strict automated repository standards:
 
 1. **Zero Emojis**: Emojis are strictly disallowed across all code, docstrings, commit messages, Markdown documents, and UI strings. Enforced via `scripts/check_no_emoji.py` and pre-commit hooks.
 2. **Zero AI Attribution Trailers**: Commit messages must not include AI co-author trailers (`Co-Authored-By:`). Enforced via `.githooks/commit-msg`.
@@ -197,12 +199,12 @@ Every contribution to `faccoder` adheres to strict automated repository standard
 
 ## Origin
 
-`faccoder` originated from field-tested enterprise artificial intelligence systems developed by Thiago Venturim across large-scale production environments:
+`nexcoder` originated from field-tested enterprise artificial intelligence systems developed by Thiago Venturim across large-scale production environments:
 
 - **Enterprise Autonomous Agents Platform**: Proven in production across autonomous agent teams, specialized skills catalog, and legacy multi-million line codebases.
 - **Engineering Delivery Framework**: Covering 70+ specialized engineering personas, capacity models, and automated development synchronization.
 
-The techniques, retrieval mechanisms, and governance patterns forged in these systems have been synthesized into `faccoder` as a vendor-neutral, generic, open-source software delivery framework.
+The techniques, retrieval mechanisms, and governance patterns forged in these systems have been synthesized into `nexcoder` as a vendor-neutral, generic, open-source software delivery framework.
 
 ---
 

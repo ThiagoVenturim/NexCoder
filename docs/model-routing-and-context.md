@@ -1,12 +1,12 @@
 # Model Routing and Context Window Optimization
 
-This guide covers model fallback chains, quota-based routing, context window budgeting, selective tool loading, pinned memory, and prompt compression in `faccoder-core`.
+This guide covers model fallback chains, quota-based routing, context window budgeting, selective tool loading, pinned memory, and prompt compression in `nexcoder-core`.
 
 ---
 
 ## 1. Quota-Based Model Routing and Fallback Chains
 
-Long-running pipelines and autonomous agents frequently encounter provider rate limits (HTTP 429), quota exhaustion, or context overflow on individual models. The `RotatingChatModel` in `faccoder-core` resolves this by executing a prioritized fallback chain across providers.
+Long-running pipelines and autonomous agents frequently encounter provider rate limits (HTTP 429), quota exhaustion, or context overflow on individual models. The `RotatingChatModel` in `nexcoder-core` resolves this by executing a prioritized fallback chain across providers.
 
 ### How it works:
 1. **Error Classification**: Error messages are inspected for quota triggers (`429`, `resource_exhausted`, `rate limit`), context overflow (`context_length_exceeded`, `maximum context length`), model errors (`404`), and transient network blips (`500`, `503`, `timeout`).
@@ -14,7 +14,7 @@ Long-running pipelines and autonomous agents frequently encounter provider rate 
 3. **Immediate Failover**: Calls automatically fail over to the next candidate in the fallback chain without failing the pipeline. Subsequent calls skip cooled-down models until their reset time arrives.
 4. **Audit and Metering**: Every fallback event records `source_model`, `target_model`, `reason`, and `wait_seconds` in the active `UsageMeter` and emits a warning log trace.
 
-### Configuration in `faccoder.yaml`:
+### Configuration in `nexcoder.yaml`:
 ```yaml
 preset: gemini
 tiers:
@@ -43,7 +43,7 @@ To keep token costs manageable and prevent prompt overflow, `ContextBudget` moni
 - **Tool Outputs**: Verbose tool outputs (e.g. large file reads or command traces) in middle turns are discarded once covered by the summary.
 
 ```python
-from faccoder_core.llm.context import ContextBudget
+from nexcoder_core.llm.context import ContextBudget
 from langchain_core.messages import SystemMessage, HumanMessage
 
 budgeter = ContextBudget(model_name="gemini-2.5-flash", budget_ratio=0.60)
@@ -59,19 +59,19 @@ if report.was_pruned:
 When context is compacted or summarized, critical architectural decisions, identifiers, and file paths must not be lost. `PinnedMemory` provides a thread-safe registry for essential facts that are injected directly into preserved system context.
 
 ```python
-from faccoder_core.llm.memory import PinnedMemory
+from nexcoder_core.llm.memory import PinnedMemory
 
 memory = PinnedMemory()
 memory.pin("architecture", "Clean Architecture with tiered fallback", category="decision")
 memory.pin("active_pr", "#50", category="id")
-memory.pin("target_file", "packages/core/src/faccoder_core/llm/context.py", category="path")
+memory.pin("target_file", "packages/core/src/nexcoder_core/llm/context.py", category="path")
 
 # The rendered block survives any context summarization
 print(memory.render_block())
 # [PINNED MEMORY]
 # - [decision] architecture: Clean Architecture with tiered fallback
 # - [id] active_pr: #50
-# - [path] target_file: packages/core/src/faccoder_core/llm/context.py
+# - [path] target_file: packages/core/src/nexcoder_core/llm/context.py
 ```
 
 ---
@@ -85,7 +85,7 @@ Registering dozens of tool schemas and MCP servers inflates system prompts and c
 - **On-Demand Manifest**: Unused tools are stripped of their verbose schemas and summarized into a lightweight name catalog. When an agent needs an on-demand tool, it invokes `request_tool(name)` to activate it.
 
 ```python
-from faccoder_core.llm.tool_loader import SelectiveToolLoader, ToolUsageTracker
+from nexcoder_core.llm.tool_loader import SelectiveToolLoader, ToolUsageTracker
 
 tracker = ToolUsageTracker()
 loader = SelectiveToolLoader(always_include={"read_file", "request_tool"}, tracker=tracker)
@@ -124,7 +124,7 @@ Before large tool outputs or external documents enter prompts, `PromptCompressor
 - Quantifies exact tokens saved and reduction ratio.
 
 ```python
-from faccoder_core.llm.compression import compress_text
+from nexcoder_core.llm.compression import compress_text
 
 res = compress_text(long_log_output, preserve_code=True)
 print(

@@ -1,12 +1,12 @@
-"""End-to-end offline quickstart pipeline for faccoder.
+"""End-to-end offline quickstart pipeline for nexcoder.
 
 Demonstrates the software delivery lifecycle from raw idea to security gate:
-1. Idea intake and architectural jury committee (faccoder-ideation)
+1. Idea intake and architectural jury committee (nexcoder-ideation)
 2. Product Requirement Document (PRD) generation
-3. Sprint planning and task decomposition in a local Git repository (faccoder-planning)
-4. Code intelligence indexing and code RAG over sample_project (faccoder-code-intel)
-5. Multi-agent delivery pipeline execution (faccoder-agents)
-6. Security gate evaluation and vulnerability scan (faccoder-security)
+3. Sprint planning and task decomposition in a local Git repository (nexcoder-planning)
+4. Code intelligence indexing and code RAG over sample_project (nexcoder-code-intel)
+5. Multi-agent delivery pipeline execution (nexcoder-agents)
+6. Security gate evaluation and vulnerability scan (nexcoder-security)
 """
 
 from __future__ import annotations
@@ -17,26 +17,26 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from faccoder_agents.engine.pipelines import build_pipeline
-from faccoder_code_intel.retrieval import CodeSearchIndex
-from faccoder_core.llm.fake import FakeChatModel
-from faccoder_ideation.output.prd import PRDGenerator
-from faccoder_ideation.pipeline import IdeationPipeline
-from faccoder_ideation.search.providers import MockSearchProvider
-from faccoder_planning.capacity import (
+from nexcoder_agents.engine.pipelines import build_pipeline
+from nexcoder_code_intel.retrieval import CodeSearchIndex
+from nexcoder_core.llm.fake import FakeChatModel
+from nexcoder_ideation.output.prd import PRDGenerator
+from nexcoder_ideation.pipeline import IdeationPipeline
+from nexcoder_ideation.search.providers import MockSearchProvider
+from nexcoder_planning.capacity import (
     CapacityCalculator,
     SprintCapacityConfig,
     TeamMember,
 )
-from faccoder_planning.models import (
+from nexcoder_planning.models import (
     AcceptanceCriterion,
     Epic,
     Plan,
     Story,
     Task,
 )
-from faccoder_security.gate import SecurityGateEvaluator
-from faccoder_security.scanners import MultiScannerEngine
+from nexcoder_security.gate import SecurityGateEvaluator
+from nexcoder_security.scanners import MultiScannerEngine
 
 
 def run_quickstart(output_dir: Path | str | None = None) -> dict[str, Any]:
@@ -53,7 +53,7 @@ def run_quickstart(output_dir: Path | str | None = None) -> dict[str, Any]:
     artifacts: dict[str, Path] = {}
 
     print("======================================================================")
-    print("faccoder Offline Quickstart: End-to-End Delivery Pipeline")
+    print("nexcoder Offline Quickstart: End-to-End Delivery Pipeline")
     print("======================================================================\n")
 
     # -------------------------------------------------------------------------
@@ -196,9 +196,9 @@ def run_quickstart(output_dir: Path | str | None = None) -> dict[str, Any]:
         [
             git_bin,
             "-c",
-            "user.name=faccoder",
+            "user.name=nexcoder",
             "-c",
-            "user.email=faccoder@local",
+            "user.email=nexcoder@local",
             "commit",
             "-m",
             "chore: initialize sprint backlog",
@@ -317,7 +317,7 @@ def run_quickstart(output_dir: Path | str | None = None) -> dict[str, Any]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run faccoder offline end-to-end quickstart.")
+    parser = argparse.ArgumentParser(description="Run nexcoder offline end-to-end quickstart.")
     parser.add_argument(
         "--output-dir",
         type=str,

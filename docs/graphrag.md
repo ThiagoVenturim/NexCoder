@@ -5,7 +5,7 @@ Standard RAG answers local, pinpoint questions well (e.g. *"Where is the calcula
 - *"What is the blast radius if I change the PaymentGateway interface?"*
 - *"Are there circular dependencies between the order and inventory modules?"*
 
-To answer these questions, `faccoder-code-intel` implements **GraphRAG**: constructing a multi-relational code knowledge graph and applying hierarchical community detection.
+To answer these questions, `nexcoder-code-intel` implements **GraphRAG**: constructing a multi-relational code knowledge graph and applying hierarchical community detection.
 
 ---
 
@@ -41,7 +41,7 @@ The `CodeGraph` models source code as a directed multigraph where nodes represen
 Before proposing a refactoring or modifying a public signature, agents query the code graph for transitive impact:
 
 ```python
-from faccoder_code_intel import CodeGraph
+from nexcoder_code_intel import CodeGraph
 
 graph = CodeGraph()
 # ... symbols added ...
@@ -65,7 +65,7 @@ The report identifies:
 
 Answering high-level architectural questions requires abstracting thousands of individual functions into cohesive functional domains.
 
-`faccoder-code-intel` runs the **Louvain Modularity Algorithm** over the code graph:
+`nexcoder-code-intel` runs the **Louvain Modularity Algorithm** over the code graph:
 
 ```
 +-------------------------------------------------------------+
