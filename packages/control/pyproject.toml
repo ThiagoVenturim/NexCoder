@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "faccoder-control"
+name = "nexcoder-control"
 version = "0.1.0"
-description = "Control plane for faccoder: authentication, API keys, rate limits, metering, budgets, audit, approval tokens, and web panel."
+description = "Control plane for nexcoder: authentication, API keys, rate limits, metering, budgets, audit, approval tokens, and web panel."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
-    "faccoder-core>=0.1.0",
+    "nexcoder-core>=0.1.0",
     "pydantic>=2.7",
     "pyyaml>=6.0",
     "pyjwt>=2.8",
@@ -27,7 +27,7 @@ cli = [
 ]
 
 [project.scripts]
-faccoder-control = "faccoder_control.cli:main"
+nexcoder-control = "nexcoder_control.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/faccoder_control"]
+packages = ["src/nexcoder_control"]

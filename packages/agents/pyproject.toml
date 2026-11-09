@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "faccoder-agents"
+name = "nexcoder-agents"
 version = "0.1.0"
-description = "Agent and skills catalog, personas, and LangGraph pipeline engine for faccoder."
+description = "Agent and skills catalog, personas, and LangGraph pipeline engine for nexcoder."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
-  "faccoder-core",
+  "nexcoder-core",
   "pydantic>=2.7",
   "pyyaml>=6.0",
   "langchain-core>=0.3",
@@ -18,12 +18,12 @@ dependencies = [
 ]
 
 [project.scripts]
-faccoder-agents = "faccoder_agents.cli:main"
+nexcoder-agents = "nexcoder_agents.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/ThiagoVenturim/faccoder"
-Repository = "https://github.com/ThiagoVenturim/faccoder"
-Documentation = "https://github.com/ThiagoVenturim/faccoder/tree/main/docs"
+Homepage = "https://github.com/ThiagoVenturim/nexcoder"
+Repository = "https://github.com/ThiagoVenturim/nexcoder"
+Documentation = "https://github.com/ThiagoVenturim/nexcoder/tree/main/docs"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/faccoder_agents"]
+packages = ["src/nexcoder_agents"]

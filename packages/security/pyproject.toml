@@ -3,20 +3,20 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "faccoder-security"
+name = "nexcoder-security"
 version = "0.1.0"
-description = "Security scanners, specialist agents, and release gate for faccoder."
+description = "Security scanners, specialist agents, and release gate for nexcoder."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
-    "faccoder-core>=0.1.0",
+    "nexcoder-core>=0.1.0",
     "pydantic>=2.7",
     "pyyaml>=6.0",
 ]
 
 [project.scripts]
-faccoder-security = "faccoder_security.cli:main"
+nexcoder-security = "nexcoder_security.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/faccoder_security"]
+packages = ["src/nexcoder_security"]
