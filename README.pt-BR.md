@@ -1,8 +1,8 @@
-# faccoder
+# nexcoder
 
 Uma plataforma modular de codigo aberto para automacao do desenvolvimento de software, da concepcao a producao.
 
-O `faccoder` orquestra o ciclo completo de entrega de software: intake de ideias e pesquisa de mercado, avaliacao arquitetural por comite julgador, geracao de Documento de Requisitos de Produto (PRD), planejamento de capacidade de sprints, abertura e sincronizacao de tarefas em rastreadores de pendencias, inteligencia de codigo baseada em AST, GraphRAG multicamadas, execucao de pipelines agilicos, geracao automatica de testes e melhoria continua.
+O `nexcoder` orquestra o ciclo completo de entrega de software: intake de ideias e pesquisa de mercado, avaliacao arquitetural por comite julgador, geracao de Documento de Requisitos de Produto (PRD), planejamento de capacidade de sprints, abertura e sincronizacao de tarefas em rastreadores de pendencias, inteligencia de codigo baseada em AST, GraphRAG multicamadas, execucao de pipelines agilicos, geracao automatica de testes e melhoria continua.
 
 ---
 
@@ -10,26 +10,26 @@ O `faccoder` orquestra o ciclo completo de entrega de software: intake de ideias
 
 | Pacote / Modulo | Status | Rastreamento |
 | :--- | :--- | :--- |
-| `faccoder-core` | Disponivel | Incorporado em `develop` |
-| `faccoder-code-intel` | Disponivel | PR [#33](https://github.com/ThiagoVenturim/faccoder/pull/33) |
-| `faccoder-agents` | Disponivel | Issue [#3](https://github.com/ThiagoVenturim/faccoder/issues/3) / [#31](https://github.com/ThiagoVenturim/faccoder/issues/31) |
-| `faccoder-planning` | Disponivel | Issue [#4](https://github.com/ThiagoVenturim/faccoder/issues/4) |
-| `faccoder-ideation` | Disponivel | Issue [#5](https://github.com/ThiagoVenturim/faccoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/faccoder/pull/29) |
-| `faccoder-security` | Disponivel | Issue [#7](https://github.com/ThiagoVenturim/faccoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/faccoder/pull/30) |
-| `faccoder-capture` | Disponivel | Issue [#6](https://github.com/ThiagoVenturim/faccoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/faccoder/pull/38) |
-| `faccoder-control` | Disponivel | Issue [#9](https://github.com/ThiagoVenturim/faccoder/issues/9) |
-| `faccoder-interfaces` | Disponivel | Issue [#10](https://github.com/ThiagoVenturim/faccoder/issues/10) |
-| `faccoder-serving` | Disponivel | Issue [#11](https://github.com/ThiagoVenturim/faccoder/issues/11) |
-| `faccoder-continuous-improvement` | Disponivel | Issue [#8](https://github.com/ThiagoVenturim/faccoder/issues/8) |
+| `nexcoder-core` | Disponivel | Incorporado em `develop` |
+| `nexcoder-code-intel` | Disponivel | PR [#33](https://github.com/ThiagoVenturim/nexcoder/pull/33) |
+| `nexcoder-agents` | Disponivel | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) |
+| `nexcoder-planning` | Disponivel | Issue [#4](https://github.com/ThiagoVenturim/nexcoder/issues/4) |
+| `nexcoder-ideation` | Disponivel | Issue [#5](https://github.com/ThiagoVenturim/nexcoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/nexcoder/pull/29) |
+| `nexcoder-security` | Disponivel | Issue [#7](https://github.com/ThiagoVenturim/nexcoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/nexcoder/pull/30) |
+| `nexcoder-capture` | Disponivel | Issue [#6](https://github.com/ThiagoVenturim/nexcoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/nexcoder/pull/38) |
+| `nexcoder-control` | Disponivel | Issue [#9](https://github.com/ThiagoVenturim/nexcoder/issues/9) |
+| `nexcoder-interfaces` | Disponivel | Issue [#10](https://github.com/ThiagoVenturim/nexcoder/issues/10) |
+| `nexcoder-serving` | Disponivel | Issue [#11](https://github.com/ThiagoVenturim/nexcoder/issues/11) |
+| `nexcoder-continuous-improvement` | Disponivel | Issue [#8](https://github.com/ThiagoVenturim/nexcoder/issues/8) |
 
 ---
 
 ## Visao Geral da Arquitetura
 
-O `faccoder` e estruturado como um monorepositorio Python modular, contendo pacotes instalaveis no diretorio `packages/`:
+O `nexcoder` e estruturado como um monorepositorio Python modular, contendo pacotes instalaveis no diretorio `packages/`:
 
 ```
-faccoder/
+nexcoder/
 ├── packages/
 │   ├── core/           # Registro de LLMs, telemetria Langfuse, busca hibrida, sqlite-vec
 │   ├── code-intel/     # Analisadores AST (tree-sitter, Delphi), CodeGraph, GraphRAG, HyDE
@@ -41,7 +41,7 @@ faccoder/
 
 ### Pacotes Principais (Disponiveis na Branch Develop)
 
-1. **`faccoder-core`**: A base compartilhada por todos os componentes da plataforma.
+1. **`nexcoder-core`**: A base compartilhada por todos os componentes da plataforma.
    - Registro de modelos por camadas (`small`, `medium`, `large`), abstraindo provedores pagos (Anthropic, OpenAI, Google Gemini, Azure, Bedrock) e de codigo aberto (Ollama, vLLM, LM Studio, llama.cpp).
    - Rastreamento resiliente via Langfuse com disjuntor automatico (circuit breaker), degradando para operacao neutra (no-op) se o servidor de telemetria estiver inacessivel.
    - Medicao de consumo e custo por agente, pipeline e execucao, com limites orcamentarios estritos.
@@ -49,24 +49,24 @@ faccoder/
    - Repositorio local de busca hibrida integrando SQLite FTS5 (busca lexica BM25) com `sqlite-vec` (vetores densos), fusao por postos reciprocos (RRF) e reordenacao por cross-encoder.
    - Sandbox de caminhos de arquivos para prevencao de navegacao indevida no sistema de arquivos.
 
-2. **`faccoder-code-intel`**: Inteligencia de codigo e compreensao semantica de repositorios.
+2. **`nexcoder-code-intel`**: Inteligencia de codigo e compreensao semantica de repositorios.
    - Analisadores sintaticos AST baseados em Tree-sitter (Python, Go, JavaScript, TypeScript, Java, C, C++, Rust) e analisador dedicado para Object Pascal / Delphi.
    - Divisao de codigo (chunking) baseada em simbolos sintaticos, preservando o contexto de escopo.
    - `CodeGraph` com modelagem de relacoes: chamadas, heranca, implementacao de interfaces e associacoes de telas visuais (DFM).
    - Deteccao de comunidades arquiteturais via modularidade Louvain (GraphRAG), permitindo sinteses hierarquicas do sistema.
    - Transformacao de consultas com HyDE (Hypothetical Document Embeddings) e geracao recursiva de documentacao de baixo para cima.
 
-3. **`faccoder-agents`**: Catalogo de personas e motor de execucao de agentes.
+3. **`nexcoder-agents`**: Catalogo de personas e motor de execucao de agentes.
    - Catalogo formal com metadados em frontmatter YAML (`agents/<sector>/<slug>.md`), cobrindo 10 setores organizacionais (diretoria, requisitos, produto, engenharia, UI/UX, qualidade/QA, seguranca, dados/IA, suporte e marketing).
    - Blocos modulares reutilizaveis para LangGraph: `ValidatorBlock`, `ConditionBlock`, `PromptBlock` e `HumanApprovalBlock`.
    - Garantias operacionais de seguranca: execucao simulada (dry-run), fichas de aprovacao com tempo limite, tetos de execucao de ferramentas e votacao por quorum em comite.
    - Exportadores para criacao de pacotes de subagentes e ferramentas compativeis com Claude Code.
 
-4. **`faccoder-planning`**: Planejamento agil de sprints e sincronizacao de tarefas.
+4. **`nexcoder-planning`**: Planejamento agil de sprints e sincronizacao de tarefas.
    - Decomposicao de PRDs em Epicos, Historias de Usuario e Tarefas tecnicas com criterios de aceitacao no formato Dado/Quando/Entao.
    - Calculadora de capacidade de sprints considerando disponibilidade real, margem de reserva e velocidade historica da equipe.
    - Laco de sincronizacao de quadros Kanban, identificando riscos de atraso e sugerindo adiamentos estrategicos.
-   - Adaptadores idempotentes para plataformas (GitHub Issues, Milestones, Projects v2 GraphQL, GitLab e Azure DevOps) com marcadores ocultos de rastreamento (`<!-- faccoder-id: <uuid> -->`).
+   - Adaptadores idempotentes para plataformas (GitHub Issues, Milestones, Projects v2 GraphQL, GitLab e Azure DevOps) com marcadores ocultos de rastreamento (`<!-- nexcoder-id: <uuid> -->`).
    - Automatizacao de operacoes Git: criacao de branches, formatacao de commits convencionais e abertura de pull requests com verificacao integrada.
 
 ---
@@ -79,8 +79,8 @@ Instale os pacotes principais do workspace em modo editavel:
 
 ```bash
 # Clone o repositorio
-git clone https://github.com/ThiagoVenturim/faccoder.git
-cd faccoder
+git clone https://github.com/ThiagoVenturim/nexcoder.git
+cd nexcoder
 
 # Crie e ative o ambiente virtual
 python -m venv .venv
@@ -109,7 +109,7 @@ Consulte [examples/quickstart/README.pt-BR.md](examples/quickstart/README.pt-BR.
 ### Invocacao Basica de Modelos
 
 ```python
-from faccoder_core import get_chat_model, load_config
+from nexcoder_core import get_chat_model, load_config
 
 # Carrega as configuracoes a partir de variaveis de ambiente ou arquivo
 config = load_config()
@@ -124,8 +124,8 @@ print(resposta.content)
 ### Indexacao de Codigo e Busca Hibrida
 
 ```python
-from faccoder_code_intel import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 # Inicializa o indice com representacoes vetoriais e busca lexica SQLite FTS5
 embedder = HashEmbedder(dimensions=256)
@@ -144,7 +144,7 @@ for item in resultados:
 
 ## Predefinicoes de Execucao (Presets)
 
-O `faccoder` permite selecionar o modo de execucao dos modelos por meio do parametro `preset` em `FaccoderConfig`:
+O `nexcoder` permite selecionar o modo de execucao dos modelos por meio do parametro `preset` em `NexcoderConfig`:
 
 - `offline`: Utiliza `FakeChatModel` e calculo de embeddings deterministico, permitindo execucao completa de testes sem rede ou custos.
 - `all-open-source`: Direciona todas as camadas para instancias locais do Ollama ou vLLM.
@@ -185,7 +185,7 @@ Guias detalhados estao disponiveis no diretorio [docs/](docs/):
 
 ## Padroes de Desenvolvimento do Repositorio
 
-Qualquer contribuicao para o `faccoder` deve cumprir os seguintes padroes automatizados:
+Qualquer contribuicao para o `nexcoder` deve cumprir os seguintes padroes automatizados:
 
 1. **Zero Emojis**: E terminantemente proibido o uso de emojis em codigo, comentarios, mensagens de commit, documentacao Markdown ou textos de interface. Validado por `scripts/check_no_emoji.py` e githooks.
 2. **Zero Linhas de Co-Autoria por IA**: Commits nao devem conter linhas de atribuicao automatica (`Co-Authored-By:`). O hook `.githooks/commit-msg` remove tais linhas automaticamente.
@@ -197,12 +197,12 @@ Qualquer contribuicao para o `faccoder` deve cumprir os seguintes padroes automa
 
 ## Origem
 
-O `faccoder` originou-se de sistemas corporativos de inteligencia artificial testados em producao desenvolvidos por Thiago Venturim em ambientes de larga escala:
+O `nexcoder` originou-se de sistemas corporativos de inteligencia artificial testados em producao desenvolvidos por Thiago Venturim em ambientes de larga escala:
 
 - **Plataforma de Agentes Autonomos Corporativos**: Validada em producao com equipes de agentes autonomos, catalogo de habilidades especializadas e sistemas legados com milhoes de linhas de codigo.
 - **Framework de Entrega de Engenharia**: Cobrindo mais de 70 personas tecnicas especializadas, modelos de capacidade e sincronizacao automatizada de desenvolvimento.
 
-Os aprendizados, mecanismos de busca semantica e padroes de governanca desses projetos foram consolidados no `faccoder` como uma plataforma aberta, generica e independente de fornecedor.
+Os aprendizados, mecanismos de busca semantica e padroes de governanca desses projetos foram consolidados no `nexcoder` como uma plataforma aberta, generica e independente de fornecedor.
 
 ---
 

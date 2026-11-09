@@ -1,4 +1,4 @@
-"""Unit tests for faccoder_capture.web.capture."""
+"""Unit tests for nexcoder_capture.web.capture."""
 
 from __future__ import annotations
 
@@ -7,12 +7,12 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from faccoder_capture.models import (
+from nexcoder_capture.models import (
     CaptchaDetectedError,
     DomainNotAllowedError,
     WebCaptureConfig,
 )
-from faccoder_capture.web.capture import WebCaptureEngine
+from nexcoder_capture.web.capture import WebCaptureEngine
 
 SAMPLE_HTML = """
 <!DOCTYPE html>

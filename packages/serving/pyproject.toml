@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "faccoder-serving"
+name = "nexcoder-serving"
 version = "0.1.0"
 description = "Serving profiles (vLLM, Ollama), RAG evaluation, LLM judge, and RAFT dataset builder."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
-    "faccoder-core>=0.1.0",
+    "nexcoder-core>=0.1.0",
     "pydantic>=2.7",
     "pyyaml>=6.0",
 ]
@@ -21,7 +21,7 @@ cli = [
 ]
 
 [project.scripts]
-faccoder-serving = "faccoder_serving.cli:main"
+nexcoder-serving = "nexcoder_serving.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/faccoder_serving"]
+packages = ["src/nexcoder_serving"]

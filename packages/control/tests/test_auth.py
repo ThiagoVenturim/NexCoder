@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_control.auth.base import (
+from nexcoder_control.auth.base import (
     AuthenticationError,
     ForbiddenError,
     InvalidTokenError,
     TokenExpiredError,
 )
-from faccoder_control.auth.ldap import LDAPAuthProvider
-from faccoder_control.auth.local import LocalAuthProvider
-from faccoder_control.auth.oidc import MockOIDCProvider, OIDCAuthProvider
+from nexcoder_control.auth.ldap import LDAPAuthProvider
+from nexcoder_control.auth.local import LocalAuthProvider
+from nexcoder_control.auth.oidc import MockOIDCProvider, OIDCAuthProvider
 
 
 class TestLocalAuth:

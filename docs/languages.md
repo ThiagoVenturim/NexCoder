@@ -2,7 +2,7 @@
 
 Real-world enterprise systems are rarely written in a single language. They combine modern microservices (Python, Go, TypeScript), legacy core monoliths (Delphi, Object Pascal, Java, C++), and enterprise business systems.
 
-`faccoder-code-intel` features a modular AST parser architecture capable of extracting symbols, signatures, call graphs, and UI bindings across multiple languages.
+`nexcoder-code-intel` features a modular AST parser architecture capable of extracting symbols, signatures, call graphs, and UI bindings across multiple languages.
 
 ---
 
@@ -28,7 +28,7 @@ Real-world enterprise systems are rarely written in a single language. They comb
 
 ## The Abstract Symbol Model
 
-Regardless of source language, `faccoder-code-intel` maps parsed entities into a unified `Symbol` model:
+Regardless of source language, `nexcoder-code-intel` maps parsed entities into a unified `Symbol` model:
 
 ```python
 class Symbol(BaseModel):
@@ -55,10 +55,10 @@ Legacy systems written in Delphi (e.g. Delphi 7, Delphi 2007, modern RAD Studio)
 - **DFM Form Bindings**: Event handlers (e.g. `Button1Click`) are declared in code but wired to buttons, grids, and queries inside binary or text `.dfm` form definition files.
 - **Case-Insensitive Syntax**: Object Pascal is case-insensitive, requiring normalized symbol IDs.
 
-`faccoder-code-intel` includes a specialized parser:
+`nexcoder-code-intel` includes a specialized parser:
 
 ```python
-from faccoder_code_intel.parsers import DelphiParser
+from nexcoder_code_intel.parsers import DelphiParser
 
 parser = DelphiParser()
 symbols = parser.parse_file("uBillingService.pas", dfm_content=dfm_text)
@@ -74,7 +74,7 @@ for sym in symbols:
 ## Adding a New Language Grammar
 
 To add support for a new language:
-1. Implement the `BaseParser` interface in `faccoder_code_intel.parsers`.
+1. Implement the `BaseParser` interface in `nexcoder_code_intel.parsers`.
 2. Map the language's Tree-sitter grammar node types to `SymbolType`.
 3. Extract enclosing context and typed signatures.
 4. Register the parser in `ParserRegistry`.

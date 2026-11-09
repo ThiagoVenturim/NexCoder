@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "faccoder-core"
+name = "nexcoder-core"
 version = "0.1.0"
-description = "Foundation for faccoder: model registry (open source or paid), Langfuse tracing, structured LLM calls, hybrid retrieval and local vector store."
+description = "Foundation for nexcoder: model registry (open source or paid), Langfuse tracing, structured LLM calls, hybrid retrieval and local vector store."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
@@ -29,13 +29,13 @@ local-embeddings = ["sentence-transformers>=3.0"]
 vector = ["sqlite-vec>=0.1.6"]
 postgres = ["psycopg[binary]>=3.2", "pgvector>=0.3"]
 all = [
-  "faccoder-core[openai,anthropic,google,ollama,langfuse,vector]",
+  "nexcoder-core[openai,anthropic,google,ollama,langfuse,vector]",
 ]
 
 [project.urls]
-Homepage = "https://github.com/ThiagoVenturim/faccoder"
-Repository = "https://github.com/ThiagoVenturim/faccoder"
-Documentation = "https://github.com/ThiagoVenturim/faccoder/tree/main/docs"
+Homepage = "https://github.com/ThiagoVenturim/nexcoder"
+Repository = "https://github.com/ThiagoVenturim/nexcoder"
+Documentation = "https://github.com/ThiagoVenturim/nexcoder/tree/main/docs"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/faccoder_core"]
+packages = ["src/nexcoder_core"]

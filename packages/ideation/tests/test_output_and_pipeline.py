@@ -4,13 +4,13 @@ import tempfile
 import time
 from pathlib import Path
 
-from faccoder_ideation.models import GateStatus, StructuredIdea, ValueHypothesis
-from faccoder_ideation.output.architecture import ArchitectureDesigner
-from faccoder_ideation.output.gate import HumanGateManager
-from faccoder_ideation.output.prd import PRDGenerator
-from faccoder_ideation.pipeline import IdeationPipeline
-from faccoder_ideation.research.squad import ResearchSquad
-from faccoder_ideation.search.providers import MockSearchProvider
+from nexcoder_ideation.models import GateStatus, StructuredIdea, ValueHypothesis
+from nexcoder_ideation.output.architecture import ArchitectureDesigner
+from nexcoder_ideation.output.gate import HumanGateManager
+from nexcoder_ideation.output.prd import PRDGenerator
+from nexcoder_ideation.pipeline import IdeationPipeline
+from nexcoder_ideation.research.squad import ResearchSquad
+from nexcoder_ideation.search.providers import MockSearchProvider
 
 
 def _sample_idea() -> StructuredIdea:
@@ -115,7 +115,7 @@ def test_prd_and_report_no_token_leak() -> None:
     assert "# PRD: " in prd
     assert "## 1. Executive Summary" in prd
     assert "## 5. Functional Requirements" in prd
-    assert "<!-- faccoder-id: prd-" in prd
+    assert "<!-- nexcoder-id: prd-" in prd
 
 
 def test_pipeline_end_to_end_and_saving() -> None:

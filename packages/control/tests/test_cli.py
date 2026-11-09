@@ -1,10 +1,10 @@
-"""Tests for faccoder-control CLI interface."""
+"""Tests for nexcoder-control CLI interface."""
 
 from __future__ import annotations
 
 from unittest.mock import patch
 
-from faccoder_control.cli import _audit_log, _machine_mgr, app, main
+from nexcoder_control.cli import _audit_log, _machine_mgr, app, main
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -13,7 +13,7 @@ runner = CliRunner()
 def test_cli_help() -> None:
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "Control plane management CLI for faccoder." in result.output
+    assert "Control plane management CLI for nexcoder." in result.output
     assert "status" in result.output
     assert "keys" in result.output
     assert "machines" in result.output
@@ -30,7 +30,7 @@ def test_cli_subcommand_helps() -> None:
 def test_cli_status() -> None:
     result = runner.invoke(app, ["status"])
     assert result.exit_code == 0
-    assert "faccoder Control Plane Status" in result.output
+    assert "nexcoder Control Plane Status" in result.output
     assert "Total Spend (USD)" in result.output
     assert "Active API Keys" in result.output
 
@@ -114,6 +114,6 @@ def test_cli_audit_verify_tampered() -> None:
 
 
 def test_cli_main_entrypoint() -> None:
-    with patch("faccoder_control.cli.app") as mock_app:
+    with patch("nexcoder_control.cli.app") as mock_app:
         main()
         mock_app.assert_called_once()

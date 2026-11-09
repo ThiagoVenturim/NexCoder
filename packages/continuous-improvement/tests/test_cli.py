@@ -1,11 +1,11 @@
-"""Tests for faccoder continuous improvement CLI interface."""
+"""Tests for nexcoder continuous improvement CLI interface."""
 
 from __future__ import annotations
 
 from unittest.mock import patch
 
-from faccoder_continuous_improvement.cli import app, main
-from faccoder_continuous_improvement.scheduler.cron import CronJob
+from nexcoder_continuous_improvement.cli import app, main
+from nexcoder_continuous_improvement.scheduler.cron import CronJob
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -36,11 +36,11 @@ def test_ci_cli_run_due_with_jobs_executed() -> None:
     fake_job = CronJob(name="mock_job", schedule="@daily", task_type="research")
     with (
         patch(
-            "faccoder_continuous_improvement.scheduler.cron.CronScheduler.get_due_jobs",
+            "nexcoder_continuous_improvement.scheduler.cron.CronScheduler.get_due_jobs",
             return_value=[fake_job],
         ),
         patch(
-            "faccoder_continuous_improvement.scheduler.cron.CronScheduler.run_due_jobs",
+            "nexcoder_continuous_improvement.scheduler.cron.CronScheduler.run_due_jobs",
             return_value=[{"job_name": "mock_job", "status": "success"}],
         ) as mock_run,
     ):
@@ -55,11 +55,11 @@ def test_ci_cli_run_due_with_jobs_dry_run() -> None:
     fake_job = CronJob(name="mock_job", schedule="@daily", task_type="research")
     with (
         patch(
-            "faccoder_continuous_improvement.scheduler.cron.CronScheduler.get_due_jobs",
+            "nexcoder_continuous_improvement.scheduler.cron.CronScheduler.get_due_jobs",
             return_value=[fake_job],
         ),
         patch(
-            "faccoder_continuous_improvement.scheduler.cron.CronScheduler.run_due_jobs",
+            "nexcoder_continuous_improvement.scheduler.cron.CronScheduler.run_due_jobs",
         ) as mock_run,
     ):
         result = runner.invoke(app, ["--dry-run"])
@@ -75,6 +75,6 @@ def test_ci_cli_invalid_option() -> None:
 
 
 def test_ci_cli_main_entrypoint() -> None:
-    with patch("faccoder_continuous_improvement.cli.app") as mock_app:
+    with patch("nexcoder_continuous_improvement.cli.app") as mock_app:
         main()
         mock_app.assert_called_once()

@@ -1,12 +1,12 @@
-"""Unit tests for faccoder_capture.web.session."""
+"""Unit tests for nexcoder_capture.web.session."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
-from faccoder_capture.models import CaptchaDetectedError, ReadOnlyViolationError, WebCaptureConfig
-from faccoder_capture.web.session import SessionManager
+from nexcoder_capture.models import CaptchaDetectedError, ReadOnlyViolationError, WebCaptureConfig
+from nexcoder_capture.web.session import SessionManager
 
 
 def test_storage_state_save_and_load(tmp_path: Path) -> None:

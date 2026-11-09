@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from faccoder_ideation.search.providers import (
+from nexcoder_ideation.search.providers import (
     DuckDuckGoSearchProvider,
     MockSearchProvider,
     get_search_provider,

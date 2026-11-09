@@ -1,6 +1,6 @@
-# faccoder-agents
+# nexcoder-agents
 
-Agent catalog, persona specifications, and LangGraph pipeline engine for the faccoder platform.
+Agent catalog, persona specifications, and LangGraph pipeline engine for the nexcoder platform.
 
 ## Features
 
@@ -12,7 +12,7 @@ Agent catalog, persona specifications, and LangGraph pipeline engine for the fac
 - Modular LangGraph pipeline engine with reusable blocks:
   - `ValidatorBlock`: schema and constraint verification before execution.
   - `ConditionBlock`: deterministic and predicate-based dynamic routing.
-  - `PromptBlock`: prompt formatting and LLM execution via `faccoder-core` model registry.
+  - `PromptBlock`: prompt formatting and LLM execution via `nexcoder-core` model registry.
   - `HumanApprovalBlock`: gates risky actions with dry-run support, time-bounded approval tokens, and approval status tracking.
 
 ## Verification and Compliance (Issue #3)
@@ -23,7 +23,7 @@ All deliverables from Issue #3 are fully implemented and verified offline:
 - [x] Generic sectors plus ideation and jury squads
 - [x] Stack packs: Python, Java, C#, Go, Node/TS, C/C++, COBOL, Delphi, OutSystems
 - [x] Regulation packs: LGPD/GDPR, Brazilian fiscal law
-- [x] `faccoder agents export --claude` exporter
+- [x] `nexcoder agents export --claude` exporter
 - [x] LangGraph pipeline engine: blocks, dry run, human approval gates, committee with quorum, limits
 - [x] Ready-made processes: `idea-to-prd`, `new-app`, `feature`, `bugfix`, `refactor`, `legacy-migration`, `documentation`, `security-audit`
 - [x] 68/68 unit tests passing offline with zero external dependencies
@@ -39,7 +39,7 @@ pip install -e packages/agents
 ### Loading and Querying Agents
 
 ```python
-from faccoder_agents.catalog import AgentCatalog
+from nexcoder_agents.catalog import AgentCatalog
 
 catalog = AgentCatalog.from_directory("agents")
 architect = catalog.get("lead-architect")
@@ -52,8 +52,8 @@ print(architect.render_prompt(project_name="BillingService"))
 ### Building a Pipeline with Reusable Blocks
 
 ```python
-from faccoder_agents.engine import PipelineBuilder
-from faccoder_agents.engine.blocks import (
+from nexcoder_agents.engine import PipelineBuilder
+from nexcoder_agents.engine.blocks import (
     ConditionBlock,
     HumanApprovalBlock,
     PromptBlock,

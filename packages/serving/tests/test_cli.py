@@ -1,4 +1,4 @@
-"""Tests for faccoder-serving CLI interface."""
+"""Tests for nexcoder-serving CLI interface."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import yaml
-from faccoder_serving.cli import app, main
+from nexcoder_serving.cli import app, main
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -65,6 +65,6 @@ def test_serving_cli_compose_invalid_port(tmp_path: Path) -> None:
 
 
 def test_serving_cli_main_entrypoint() -> None:
-    with patch("faccoder_serving.cli.app") as mock_app:
+    with patch("nexcoder_serving.cli.app") as mock_app:
         main()
         mock_app.assert_called_once()

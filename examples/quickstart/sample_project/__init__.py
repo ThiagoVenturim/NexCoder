@@ -1,4 +1,4 @@
-"""Sample task management library for faccoder quickstart."""
+"""Sample task management library for nexcoder quickstart."""
 
 from .models import Task
 from .service import TaskService

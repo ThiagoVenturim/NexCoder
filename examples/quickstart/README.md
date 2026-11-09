@@ -1,22 +1,22 @@
-# faccoder Quickstart: End-to-End Offline Delivery Pipeline
+# nexcoder Quickstart: End-to-End Offline Delivery Pipeline
 
-This example demonstrates how faccoder orchestrates the complete software engineering lifecycle without requiring external API keys or network access.
+This example demonstrates how nexcoder orchestrates the complete software engineering lifecycle without requiring external API keys or network access.
 
 ## What This Example Demonstrates
 
 The script runs a full pipeline on an included sample Python project (`sample_project/`):
 
-1. **Idea Intake & Architectural Jury (`faccoder-ideation`)**:
+1. **Idea Intake & Architectural Jury (`nexcoder-ideation`)**:
    Processes a high-level proposal ("add due dates to tasks") and evaluates market viability, architecture, and alignment across six automated juror personas returning a consensus verdict (GO / PIVOT / NO-GO).
 2. **Product Requirement Document (`PRD.md`)**:
    Synthesizes the intake analysis, competitive research citations, architecture specs, and jury rubric into an actionable requirements document.
-3. **Sprint & Backlog Planning (`faccoder-planning`)**:
+3. **Sprint & Backlog Planning (`nexcoder-planning`)**:
    Decomposes the PRD into Epics, User Stories, and Tasks with acceptance criteria, computes team sprint capacity (hours, velocity, limits), and commits the initial sprint backlog into a local Git repository.
-4. **Code Intelligence & GraphRAG (`faccoder-code-intel`)**:
+4. **Code Intelligence & GraphRAG (`nexcoder-code-intel`)**:
    Parses the `sample_project/` codebase, extracts AST symbols into SQLite FTS5/vector store, and executes a code search answering architectural questions about existing implementations.
-5. **Multi-Agent Delivery Pipeline (`faccoder-agents`)**:
+5. **Multi-Agent Delivery Pipeline (`nexcoder-agents`)**:
    Runs the `bugfix-delivery` workflow from the agent catalog with a deterministic fake model, identifying a subtle bug in the sample project and preparing a validated patch.
-6. **Security Gate (`faccoder-security`)**:
+6. **Security Gate (`nexcoder-security`)**:
    Scans the codebase with offline SAST analyzers (Semgrep and Bandit rule engines) and evaluates release policies against severity thresholds.
 
 ## How to Run
@@ -40,7 +40,7 @@ The script outputs each stage with clear execution metrics:
 
 ```text
 ======================================================================
-faccoder Offline Quickstart: End-to-End Delivery Pipeline
+nexcoder Offline Quickstart: End-to-End Delivery Pipeline
 ======================================================================
 
 [1/6] Ideation & Architectural Jury
@@ -114,7 +114,7 @@ To connect real providers (Anthropic, OpenAI, Gemini, or local models via Ollama
 2. **Use `get_chat_model`**:
    Replace `FakeChatModel(...)` with `get_chat_model`:
    ```python
-   from faccoder_core.llm.registry import get_chat_model
+   from nexcoder_core.llm.registry import get_chat_model
 
    # Tiers: 'small' (fast triage), 'medium' (standard coding), 'large' (deep reasoning)
    model = get_chat_model("medium")
@@ -123,7 +123,7 @@ To connect real providers (Anthropic, OpenAI, Gemini, or local models via Ollama
 3. **Enable Real Web Search in Ideation**:
    In `IdeationPipeline`, pass `allow_network=True` to use DuckDuckGo or configured search backends:
    ```python
-   from faccoder_ideation.pipeline import IdeationPipeline
+   from nexcoder_ideation.pipeline import IdeationPipeline
 
    pipeline = IdeationPipeline(allow_network=True, model=model)
    ```

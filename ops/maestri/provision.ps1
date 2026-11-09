@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Provisions Maestri workspaces, floors and Antigravity (agy) agents for the faccoder portfolio.
+  Provisions Maestri workspaces, floors and Antigravity (agy) agents for the nexcoder portfolio.
 
 .DESCRIPTION
   Must run inside a Maestri terminal with Maestro Mode enabled (MAESTRI_PIPE set).
@@ -17,13 +17,13 @@
 
 .EXAMPLE
   ./ops/maestri/provision.ps1 -Bootstrap -Root C:\Users\me\projetos-oss
-  ./ops/maestri/provision.ps1 -Layers -Project faccoder
+  ./ops/maestri/provision.ps1 -Layers -Project nexcoder
 #>
 param(
   [switch]$Bootstrap,
   [switch]$Layers,
-  [ValidateSet("faccoder", "askdash", "support-engine", "acompanhamento-np")]
-  [string]$Project = "faccoder",
+  [ValidateSet("nexcoder", "askdash", "support-engine", "acompanhamento-np")]
+  [string]$Project = "nexcoder",
   [string]$Root = (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))),
   [string]$AgentCommand = "agy",
   [switch]$WhatIf
@@ -42,7 +42,7 @@ function Invoke-Maestri([string[]]$Arguments) {
 }
 
 $Workspaces = [ordered]@{
-  "faccoder"          = @{ Name = "faccoder";             Dir = "fabrica-code" }
+  "nexcoder"          = @{ Name = "nexcoder";             Dir = "fabrica-code" }
   "askdash"           = @{ Name = "askdash";              Dir = "askdash" }
   "support-engine"    = @{ Name = "Support Engine";       Dir = "Support_Intelligence_Engine" }
   # Dir may be absolute when a project lives outside -Root.
@@ -51,14 +51,14 @@ $Workspaces = [ordered]@{
 
 # Layer = floor. Each floor is a git worktree on its own branch, staffed by one agy agent.
 $LayerPlan = @{
-  "faccoder" = @(
-    @{ Floor = "Ideation and Jury";  Branch = "layer/ideation";  Agent = "Lumen";  Role = "faccoder Ideation" }
-    @{ Floor = "Planning";           Branch = "layer/planning";  Agent = "Quill";  Role = "faccoder Planner" }
-    @{ Floor = "Code Intelligence";  Branch = "layer/code-intel"; Agent = "Atlas"; Role = "faccoder Code Intel" }
-    @{ Floor = "Agents and Pipelines"; Branch = "layer/agents";  Agent = "Loom";   Role = "faccoder Agents" }
-    @{ Floor = "Capture and QA";     Branch = "layer/capture";   Agent = "Prism";  Role = "faccoder Capture QA" }
-    @{ Floor = "Security";           Branch = "layer/security";  Agent = "Bastion"; Role = "faccoder Security" }
-    @{ Floor = "Docs";               Branch = "layer/docs";      Agent = "Scribe"; Role = "faccoder Docs" }
+  "nexcoder" = @(
+    @{ Floor = "Ideation and Jury";  Branch = "layer/ideation";  Agent = "Lumen";  Role = "nexcoder Ideation" }
+    @{ Floor = "Planning";           Branch = "layer/planning";  Agent = "Quill";  Role = "nexcoder Planner" }
+    @{ Floor = "Code Intelligence";  Branch = "layer/code-intel"; Agent = "Atlas"; Role = "nexcoder Code Intel" }
+    @{ Floor = "Agents and Pipelines"; Branch = "layer/agents";  Agent = "Loom";   Role = "nexcoder Agents" }
+    @{ Floor = "Capture and QA";     Branch = "layer/capture";   Agent = "Prism";  Role = "nexcoder Capture QA" }
+    @{ Floor = "Security";           Branch = "layer/security";  Agent = "Bastion"; Role = "nexcoder Security" }
+    @{ Floor = "Docs";               Branch = "layer/docs";      Agent = "Scribe"; Role = "nexcoder Docs" }
   )
   "askdash" = @(
     @{ Floor = "Semantic Layer";     Branch = "layer/semantic";  Agent = "Cubist"; Role = "askdash Builder" }
@@ -85,13 +85,13 @@ Rules for every agent in this portfolio:
 "@
 
 $Roles = @{
-  "faccoder Ideation"     = "You own packages/ideation: idea intake, research squad (market, competitors, differentiators, gaps) and the jury that votes go, pivot or no-go with cited sources."
-  "faccoder Planner"      = "You own packages/planning: PRD to epics, stories and tasks, sprint planning by capacity and dependencies, idempotent GitHub/GitLab/Azure DevOps adapters."
-  "faccoder Code Intel"   = "You own packages/code-intel: parsers for every language (tree-sitter plus Delphi, COBOL, OutSystems), hybrid RAG, GraphRAG and bottom-up documentation generation."
-  "faccoder Agents"       = "You own packages/agents: the agent and skill catalog, Claude Code export, and the LangGraph pipeline engine with human approval and committee blocks."
-  "faccoder Capture QA"   = "You own packages/capture: Playwright DOM and accessibility capture, desktop UI Automation, test generation and visual regression. Never bypass captchas or site terms."
-  "faccoder Security"     = "You own packages/security: Semgrep, gitleaks, OSV-Scanner, Trivy and Syft wrappers, the security agents and the release security gate."
-  "faccoder Docs"         = "You own docs/: guides for RAG, GraphRAG, reranking, embeddings, models open vs paid, Langfuse, pipelines and the case study. English, with a pt-BR README."
+  "nexcoder Ideation"     = "You own packages/ideation: idea intake, research squad (market, competitors, differentiators, gaps) and the jury that votes go, pivot or no-go with cited sources."
+  "nexcoder Planner"      = "You own packages/planning: PRD to epics, stories and tasks, sprint planning by capacity and dependencies, idempotent GitHub/GitLab/Azure DevOps adapters."
+  "nexcoder Code Intel"   = "You own packages/code-intel: parsers for every language (tree-sitter plus Delphi, COBOL, OutSystems), hybrid RAG, GraphRAG and bottom-up documentation generation."
+  "nexcoder Agents"       = "You own packages/agents: the agent and skill catalog, Claude Code export, and the LangGraph pipeline engine with human approval and committee blocks."
+  "nexcoder Capture QA"   = "You own packages/capture: Playwright DOM and accessibility capture, desktop UI Automation, test generation and visual regression. Never bypass captchas or site terms."
+  "nexcoder Security"     = "You own packages/security: Semgrep, gitleaks, OSV-Scanner, Trivy and Syft wrappers, the security agents and the release security gate."
+  "nexcoder Docs"         = "You own docs/: guides for RAG, GraphRAG, reranking, embeddings, models open vs paid, Langfuse, pipelines and the case study. English, with a pt-BR README."
   "askdash Builder"       = "You build askdash: semantic layer, safe parameterized SQL, live dashboards with SSRF and SQL guards, and the MCP server."
   "Support Engine Builder" = "You build the Support Intelligence Engine: connectors, ingestion quality, curated hybrid RAG, sentiment, trends and the support copilot. Synthetic data only."
   "Legal Tools Builder"   = "You build acompanhamento_de_np: the MV3 extension, deadline engine, DataJud integration, MCP server and Claude skills for lawyers. LGPD first; no captcha bypass."

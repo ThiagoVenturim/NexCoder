@@ -1,22 +1,22 @@
-# Quickstart faccoder: Esteira de Entrega Ponta a Ponta Offline
+# Quickstart nexcoder: Esteira de Entrega Ponta a Ponta Offline
 
-Este exemplo demonstra como o faccoder orquestra o ciclo completo de engenharia de software sem exigir chaves de API externas nem conexao com a internet.
+Este exemplo demonstra como o nexcoder orquestra o ciclo completo de engenharia de software sem exigir chaves de API externas nem conexao com a internet.
 
 ## O Que Este Exemplo Mostra
 
 O script executa uma esteira completa sobre o mini-projeto Python incluso (`sample_project/`):
 
-1. **Intake de Ideia e Juri Arquitetural (`faccoder-ideation`)**:
+1. **Intake de Ideia e Juri Arquitetural (`nexcoder-ideation`)**:
    Processa uma proposta ("add due dates to tasks") e avalia viabilidade de mercado, arquitetura e alinhamento atraves de seis personas automatizadas de jurados, devolvendo um veredito em consenso (GO / PIVOT / NO-GO).
 2. **Geracao do PRD (`prd.md`)**:
    Sintetiza a analise inicial, citacoes de pesquisa competitiva, especificacao de arquitetura e rubrica do juri em um documento formal de requisitos.
-3. **Planejamento de Sprints e Backlog (`faccoder-planning`)**:
+3. **Planejamento de Sprints e Backlog (`nexcoder-planning`)**:
    Decompoe o PRD em Epicos, Historias de Usuario e Tarefas com criterios de aceite, calcula a capacidade da equipe (horas, velocidade, limites) e commita o backlog inicial em um repositorio Git local.
-4. **Inteligencia de Codigo e GraphRAG (`faccoder-code-intel`)**:
+4. **Inteligencia de Codigo e GraphRAG (`nexcoder-code-intel`)**:
    Indexa os modulos de `sample_project/`, extrai simbolos AST para SQLite FTS5/vetorial e responde a uma consulta de busca semantica sobre o codigo existente.
-5. **Esteira de Agentes Especializados (`faccoder-agents`)**:
+5. **Esteira de Agentes Especializados (`nexcoder-agents`)**:
    Executa o fluxo de trabalho `bugfix-delivery` do catalogo de agentes com um modelo deterministico, identificando uma falha sutil no projeto de exemplo e sintetizando um patch validado.
-6. **Gate de Seguranca (`faccoder-security`)**:
+6. **Gate de Seguranca (`nexcoder-security`)**:
    Analisa o codigo-fonte com scanners SAST offline (regras de Semgrep e Bandit) e valida politicas de liberacao contra niveis de severidade.
 
 ## Como Executar
@@ -40,7 +40,7 @@ O terminal exibe o progresso de cada etapa com indicadores claros:
 
 ```text
 ======================================================================
-faccoder Offline Quickstart: End-to-End Delivery Pipeline
+nexcoder Offline Quickstart: End-to-End Delivery Pipeline
 ======================================================================
 
 [1/6] Ideation & Architectural Jury
@@ -114,7 +114,7 @@ Para conectar provedores reais (Anthropic, OpenAI, Gemini ou modelos locais via 
 2. **Use `get_chat_model`**:
    Substitua `FakeChatModel(...)` por `get_chat_model`:
    ```python
-   from faccoder_core.llm.registry import get_chat_model
+   from nexcoder_core.llm.registry import get_chat_model
 
    # Tiers: 'small' (triagem rapida), 'medium' (codigo geral), 'large' (raciocinio complexo)
    model = get_chat_model("medium")
@@ -123,7 +123,7 @@ Para conectar provedores reais (Anthropic, OpenAI, Gemini ou modelos locais via 
 3. **Habilite Busca Web Real na Ideacao**:
    Em `IdeationPipeline`, use `allow_network=True` para consultar o DuckDuckGo ou outro mecanismo configurado:
    ```python
-   from faccoder_ideation.pipeline import IdeationPipeline
+   from nexcoder_ideation.pipeline import IdeationPipeline
 
    pipeline = IdeationPipeline(allow_network=True, model=model)
    ```

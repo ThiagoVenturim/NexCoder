@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "faccoder-continuous-improvement"
+name = "nexcoder-continuous-improvement"
 version = "0.1.0"
 description = "Continuous improvement engine: scheduled research diffs, Langfuse observability monitors, security watchers, and automated issue creation."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
-    "faccoder-core>=0.1.0",
+    "nexcoder-core>=0.1.0",
     "pydantic>=2.7",
     "pyyaml>=6.0",
 ]
@@ -21,7 +21,7 @@ cli = [
 ]
 
 [project.scripts]
-faccoder-ci = "faccoder_continuous_improvement.cli:main"
+nexcoder-ci = "nexcoder_continuous_improvement.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/faccoder_continuous_improvement"]
+packages = ["src/nexcoder_continuous_improvement"]

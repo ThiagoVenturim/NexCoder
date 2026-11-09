@@ -1,4 +1,4 @@
-"""Unit tests for faccoder_capture.qa.visual."""
+"""Unit tests for nexcoder_capture.qa.visual."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import sys
 import zlib
 from unittest.mock import MagicMock, patch
 
-from faccoder_capture.qa.visual import _parse_png_dimensions, compare_screenshots
+from nexcoder_capture.qa.visual import _parse_png_dimensions, compare_screenshots
 
 # Deterministic 1x1 synthetic PNG
 PNG_1X1_A = (

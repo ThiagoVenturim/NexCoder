@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_ideation.models import (
+from nexcoder_ideation.models import (
     AudienceSegment,
     GateStatus,
     HumanApprovalGate,

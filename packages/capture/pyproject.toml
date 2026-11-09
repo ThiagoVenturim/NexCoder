@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "faccoder-capture"
+name = "nexcoder-capture"
 version = "0.1.0"
-description = "Web and desktop capture, stable selectors, test generation and QA checks for faccoder."
+description = "Web and desktop capture, stable selectors, test generation and QA checks for nexcoder."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
-    "faccoder-core>=0.1.0",
+    "nexcoder-core>=0.1.0",
     "pydantic>=2.7",
     "pyyaml>=6.0",
 ]
@@ -21,4 +21,4 @@ desktop = ["pywinauto>=0.6.8", "pillow>=10.0", "pytesseract>=0.3.10"]
 qa = ["axe-core-python>=0.1.0"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/faccoder_capture"]
+packages = ["src/nexcoder_capture"]

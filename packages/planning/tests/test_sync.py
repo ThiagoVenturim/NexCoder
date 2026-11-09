@@ -1,7 +1,7 @@
-from faccoder_planning.adapters.base import PlatformAdapter, RemoteIssue
-from faccoder_planning.capacity import SprintCapacityConfig, TeamMember
-from faccoder_planning.models import Epic, Plan, Story, Task
-from faccoder_planning.sync import BoardColumn, BoardSynchronizer
+from nexcoder_planning.adapters.base import PlatformAdapter, RemoteIssue
+from nexcoder_planning.capacity import SprintCapacityConfig, TeamMember
+from nexcoder_planning.models import Epic, Plan, Story, Task
+from nexcoder_planning.sync import BoardColumn, BoardSynchronizer
 
 
 class DummyPlatformAdapter(PlatformAdapter):
@@ -126,22 +126,22 @@ def test_replan_backlog_cascading_dependencies():
 
 
 def test_sync_board_and_sprint_full():
-    t1 = Task(id="T1", faccoder_id="f-1", title="Task 1", estimate_hours=8.0)
-    t2 = Task(id="T2", faccoder_id="f-2", title="Task 2", estimate_hours=8.0)
+    t1 = Task(id="T1", nexcoder_id="f-1", title="Task 1", estimate_hours=8.0)
+    t2 = Task(id="T2", nexcoder_id="f-2", title="Task 2", estimate_hours=8.0)
 
     issue1 = RemoteIssue(
         id="101",
         number=1,
         title="Task 1",
         status="closed",
-        faccoder_id="f-1",
+        nexcoder_id="f-1",
     )
     issue2 = RemoteIssue(
         id="102",
         number=2,
         title="Task 2",
         status="open",
-        faccoder_id="f-2",
+        nexcoder_id="f-2",
     )
 
     adapter = DummyPlatformAdapter([issue1, issue2])
@@ -183,10 +183,10 @@ def test_sync_board_and_sprint_full():
 
 
 def test_sync_board_matching_by_node_id_and_number():
-    from faccoder_planning.adapters.base import ProjectV2Item
+    from nexcoder_planning.adapters.base import ProjectV2Item
 
-    t1 = Task(id="T1", faccoder_id="f-1", title="Task 1")
-    t2 = Task(id="T2", faccoder_id="f-2", title="Task 2")
+    t1 = Task(id="T1", nexcoder_id="f-1", title="Task 1")
+    t2 = Task(id="T2", nexcoder_id="f-2", title="Task 2")
 
     # Issue 1 has REST id "1001", node_id "I_kwDO1", number 1
     # Issue 2 has REST id "1002", node_id None, number 2
@@ -196,7 +196,7 @@ def test_sync_board_matching_by_node_id_and_number():
         number=1,
         title="Task 1",
         status="open",
-        faccoder_id="f-1",
+        nexcoder_id="f-1",
     )
     issue2 = RemoteIssue(
         id="1002",
@@ -204,7 +204,7 @@ def test_sync_board_matching_by_node_id_and_number():
         number=2,
         title="Task 2",
         status="closed",
-        faccoder_id="f-2",
+        nexcoder_id="f-2",
     )
 
     # Board item 1 matches issue1 by content_id == node_id

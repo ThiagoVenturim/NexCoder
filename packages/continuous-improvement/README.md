@@ -1,6 +1,6 @@
-# faccoder-continuous-improvement
+# nexcoder-continuous-improvement
 
-Continuous improvement engine for faccoder projects.
+Continuous improvement engine for nexcoder projects.
 
 ## Capabilities
 

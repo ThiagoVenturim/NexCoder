@@ -3,8 +3,8 @@ from __future__ import annotations
 import io
 import json
 
-from faccoder_interfaces.mcp.protocol import JSONRPCRequest
-from faccoder_interfaces.mcp.server import MCPServer
+from nexcoder_interfaces.mcp.protocol import JSONRPCRequest
+from nexcoder_interfaces.mcp.server import MCPServer
 
 
 def test_mcp_initialize() -> None:
@@ -15,7 +15,7 @@ def test_mcp_initialize() -> None:
     assert res is not None
     assert res.id == 1
     assert res.result["protocolVersion"] == "2024-11-05"
-    assert res.result["serverInfo"]["name"] == "faccoder"
+    assert res.result["serverInfo"]["name"] == "nexcoder"
     assert "tools" in res.result["capabilities"]
 
 

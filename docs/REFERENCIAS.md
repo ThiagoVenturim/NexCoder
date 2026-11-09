@@ -1,6 +1,6 @@
-# Referencias e diferencial do faccoder
+# Referencias e diferencial do nexcoder
 
-Projetos parecidos (open source e privados), o diferencial do faccoder e o que da para melhorar com base neles. Pesquisa de 2026-11-08; verifique cada projeto antes de usar como referencia.
+Projetos parecidos (open source e privados), o diferencial do nexcoder e o que da para melhorar com base neles. Pesquisa de 2026-11-08; verifique cada projeto antes de usar como referencia.
 
 ## Parecidos
 
@@ -19,7 +19,7 @@ Projetos parecidos (open source e privados), o diferencial do faccoder e o que d
 ## Nosso diferencial
 - **Esteira completa, nao so "escrever codigo"**: ideia -> squad de pesquisa -> juri (go/pivot/no-go) -> PRD -> sprints em git -> codigo -> captura e testes -> seguranca -> release -> melhoria continua.
 - **Code intelligence forte**: AST/symbols, CodeGraph, GraphRAG com deteccao de comunidades e documentacao bottom-up, em varias linguagens (inclui Delphi; C/C++/Java/Go/JS/TS/Rust/Python).
-- **Escolha de modelo por nivel** (aberto ou pago) via faccoder-core, com Langfuse, cache e orcamento; roda offline com preset offline.
+- **Escolha de modelo por nivel** (aberto ou pago) via nexcoder-core, com Langfuse, cache e orcamento; roda offline com preset offline.
 - **Control plane** proprio: chaves, custo, orcamento e auditoria.
 - **Politica de uso etica + gate**: so alvo proprio/autorizado, divulgacao responsavel (ver USAGE_POLICY planejada, issue #74). MIT de verdade.
 - **Modo open source** (issue #75): analisar projeto, achar melhorias e contribuir com responsabilidade.
@@ -29,7 +29,7 @@ Projetos parecidos (open source e privados), o diferencial do faccoder e o que d
 - **Sandbox de execucao** robusto (OpenHands roda em runtime isolado): reforcar o ambiente efemero para rodar e testar com seguranca.
 - **Catalogo real e honesto de agentes**: a auditoria (#66) ja ajustou a contagem; seguir enxugando o que nao agrega (ver issues #80/#81 de qualidade).
 - **Onboarding em minutos** (Cursor/Aider sao faceis de comecar): o quickstart offline (#64) ajudou; faltam exemplo gravado e docs navegaveis (mkdocs).
-- **Integracao com editor/IDE** (Copilot/Cursor): expor o faccoder dentro do editor, nao so CLI/MCP.
+- **Integracao com editor/IDE** (Copilot/Cursor): expor o nexcoder dentro do editor, nao so CLI/MCP.
 - **Marketplace de pipelines/skills** ajustaveis, como varios frameworks multi-agente oferecem.
 
 ## Sources

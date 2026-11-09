@@ -1,14 +1,14 @@
 import json
 from pathlib import Path
 
-from faccoder_security.cli import main
+from nexcoder_security.cli import main
 
 
 def test_cli_help(capsys):
     rc = main([])
     assert rc == 0
     captured = capsys.readouterr()
-    assert "faccoder-security" in captured.out
+    assert "nexcoder-security" in captured.out
 
 
 def test_cli_scan_offline(tmp_path: Path, capsys):

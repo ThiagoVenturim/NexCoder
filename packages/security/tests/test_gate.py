@@ -1,5 +1,5 @@
-from faccoder_security.gate import GatePolicy, SecurityGateEvaluator
-from faccoder_security.models import (
+from nexcoder_security.gate import GatePolicy, SecurityGateEvaluator
+from nexcoder_security.models import (
     Finding,
     FindingCategory,
     SBOMComponent,
@@ -8,8 +8,8 @@ from faccoder_security.models import (
     ScanResult,
     Severity,
 )
-from faccoder_security.scanners.base import BaseScanner
-from faccoder_security.scanners.engine import MultiScannerEngine
+from nexcoder_security.scanners.base import BaseScanner
+from nexcoder_security.scanners.engine import MultiScannerEngine
 
 
 def test_security_gate_blocks_critical_and_high():

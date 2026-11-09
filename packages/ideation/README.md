@@ -1,6 +1,6 @@
-# faccoder-ideation
+# nexcoder-ideation
 
-Ideation, research squad, and jury committee package for faccoder: transforms free-text product ideas into rigorous, verified Product Requirement Documents (PRDs) and system architecture proposals through autonomous multi-agent diligence and human governance gates.
+Ideation, research squad, and jury committee package for nexcoder: transforms free-text product ideas into rigorous, verified Product Requirement Documents (PRDs) and system architecture proposals through autonomous multi-agent diligence and human governance gates.
 
 ## Features
 
@@ -23,7 +23,7 @@ Ideation, research squad, and jury committee package for faccoder: transforms fr
   - Quorum-based voting mechanism producing consensus decisions: `go`, `pivot`, or `no-go`.
   - Support for multi-round refinement and re-evaluation cycles.
 - **Deliverables & b85 Governance Gate**:
-  - Generates standard Markdown PRD directly compatible with `faccoder-planning`.
+  - Generates standard Markdown PRD directly compatible with `nexcoder-planning`.
   - Comprehensive Markdown and self-contained responsive HTML executive reports.
   - Modular system architecture proposal with component breakdown and security controls.
   - Cryptographic b85 human approval gate with 30-minute token expiration before advancing to sprint planning.
@@ -37,7 +37,7 @@ pip install -e packages/ideation
 ## Quick Start
 
 ```python
-from faccoder_ideation import IdeationPipeline
+from nexcoder_ideation import IdeationPipeline
 
 # Initialize pipeline (100% offline with mock search provider)
 pipeline = IdeationPipeline(allow_network=False)

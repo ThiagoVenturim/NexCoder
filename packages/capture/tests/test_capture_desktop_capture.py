@@ -1,26 +1,26 @@
-"""Unit tests for faccoder_capture.desktop.capture."""
+"""Unit tests for nexcoder_capture.desktop.capture."""
 
 from __future__ import annotations
 
 from unittest.mock import patch
 
-from faccoder_capture.desktop.capture import DesktopCaptureEngine
-from faccoder_capture.desktop.engine import MockUIAutomationProvider
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.capture import DesktopCaptureEngine
+from nexcoder_capture.desktop.engine import MockUIAutomationProvider
+from nexcoder_capture.desktop.models import (
     DesktopBoundingBox,
     DesktopCaptureConfig,
     DesktopControlNode,
     DesktopWindowInfo,
     OCRTextBlock,
 )
-from faccoder_capture.desktop.ocr import MockOCRProvider
+from nexcoder_capture.desktop.ocr import MockOCRProvider
 
 
 def test_desktop_capture_engine_default_providers() -> None:
     # When native Windows or Tesseract are unavailable, engine falls back to Mock providers
     with (
-        patch("faccoder_capture.desktop.capture.WindowsUIAutomationProvider.is_available", return_value=False),
-        patch("faccoder_capture.desktop.capture.TesseractOCRProvider.is_available", return_value=False),
+        patch("nexcoder_capture.desktop.capture.WindowsUIAutomationProvider.is_available", return_value=False),
+        patch("nexcoder_capture.desktop.capture.TesseractOCRProvider.is_available", return_value=False),
     ):
         engine = DesktopCaptureEngine()
         assert isinstance(engine.ui_provider, MockUIAutomationProvider)

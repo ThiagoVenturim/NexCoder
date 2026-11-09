@@ -1,10 +1,10 @@
-# faccoder-security
+# nexcoder-security
 
-Security scanners, specialist agents, and release gate for the faccoder platform.
+Security scanners, specialist agents, and release gate for the nexcoder platform.
 
 ## Overview
 
-`faccoder-security` provides automated vulnerability scanning, specialist security intelligence agents, and a release gating engine designed to protect software throughout the development pipeline:
+`nexcoder-security` provides automated vulnerability scanning, specialist security intelligence agents, and a release gating engine designed to protect software throughout the development pipeline:
 
 1. **Scanners and Adapters**: Unified wrapper and offline heuristic engine integrating:
    - **Semgrep**: Static analysis for security vulnerabilities and code anti-patterns.
@@ -30,7 +30,7 @@ Security scanners, specialist agents, and release gate for the faccoder platform
 ## Installation
 
 ```bash
-pip install faccoder-security
+pip install nexcoder-security
 ```
 
 ## Quick Start
@@ -38,7 +38,7 @@ pip install faccoder-security
 ### Multi-Scanner Engine
 
 ```python
-from faccoder_security import MultiScannerEngine
+from nexcoder_security import MultiScannerEngine
 
 engine = MultiScannerEngine()
 result = engine.scan(".", force_offline=True)
@@ -51,7 +51,7 @@ for finding in result.findings:
 ### Security Release Gate
 
 ```python
-from faccoder_security import GatePolicy, MultiScannerEngine, SecurityGateEvaluator
+from nexcoder_security import GatePolicy, MultiScannerEngine, SecurityGateEvaluator
 
 engine = MultiScannerEngine()
 scan_result = engine.scan(".", force_offline=True)
@@ -69,7 +69,7 @@ if not verdict.passed:
 ### Specialist Security Agents
 
 ```python
-from faccoder_security.agents import ThreatModelAgent, SecurityFixerAgent
+from nexcoder_security.agents import ThreatModelAgent, SecurityFixerAgent
 
 # Threat Modeling
 tm = ThreatModelAgent()
@@ -93,16 +93,16 @@ for patch in fix_report.patches:
 
 ```bash
 # Run scanners over a directory
-faccoder-security scan ./src --offline
+nexcoder-security scan ./src --offline
 
 # Evaluate the security release gate
-faccoder-security gate . --max-critical 0 --max-high 0 --offline
+nexcoder-security gate . --max-critical 0 --max-high 0 --offline
 
 # Generate CycloneDX SBOM
-faccoder-security sbom . --format cyclonedx-json --offline
+nexcoder-security sbom . --format cyclonedx-json --offline
 
 # Scaffold security baseline assets
-faccoder-security init-app-security . --name "MyService" --email "security@example.com"
+nexcoder-security init-app-security . --name "MyService" --email "security@example.com"
 ```
 
 ## Origin

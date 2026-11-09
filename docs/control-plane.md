@@ -1,10 +1,10 @@
 # Control Plane: Governance, Budgets and Security
 
-> **Status**: This module is currently Planned ([Issue #9](https://github.com/ThiagoVenturim/faccoder/issues/9)). Code examples illustrate the upcoming release API.
+> **Status**: This module is currently Planned ([Issue #9](https://github.com/ThiagoVenturim/nexcoder/issues/9)). Code examples illustrate the upcoming release API.
 
 Autonomous coding agents possess significant capabilities: editing files, running test scripts, invoking LLM reasoning engines, and interacting with remote issue trackers.
 
-The `faccoder` **Control Plane** establishes governance boundaries: API key budgeting, per-tool rate limiting, immutable audit logging, path sandboxing, and human approval gates.
+The `nexcoder` **Control Plane** establishes governance boundaries: API key budgeting, per-tool rate limiting, immutable audit logging, path sandboxing, and human approval gates.
 
 ---
 
@@ -12,7 +12,7 @@ The `faccoder` **Control Plane** establishes governance boundaries: API key budg
 
 ```
 +-------------------------------------------------------------+
-|                      faccoder Control                       |
+|                      nexcoder Control                       |
 +-------------------------------------------------------------+
 |  1. Key & Budget Caps   |  Monthly USD limits & token quotas|
 |  2. Tool Middleware     |  Per-tool rate limiting & audit   |
@@ -28,14 +28,14 @@ The `faccoder` **Control Plane** establishes governance boundaries: API key budg
 
 Autonomous agent loops can accidentally consume extensive token budgets if unbounded recursive loops or repetitive retries occur.
 
-`faccoder-core` incorporates a central `UsageMeter` and `BudgetGuard`:
+`nexcoder-core` incorporates a central `UsageMeter` and `BudgetGuard`:
 
 - **Per-Execution Budget**: Enforces maximum dollar spend per pipeline run (e.g. `$2.00`).
 - **Monthly Project Cap**: Restricts cumulative consumption per tenant or project.
 - **Circuit Trip**: When budget reaches 100%, subsequent model calls are rejected with `BudgetExceededError`, terminating recursive execution safely.
 
 ```python
-from faccoder_core.observability.usage import BudgetExceededError, usage_scope
+from nexcoder_core.observability.usage import BudgetExceededError, usage_scope
 
 # Enforce budget scope during pipeline or agent execution
 try:
@@ -52,10 +52,10 @@ except BudgetExceededError as err:
 
 Agents equipped with file system access must be strictly prohibited from modifying files outside the designated workspace or accessing sensitive host configuration (e.g. `~/.ssh`, `/etc/passwd`, `C:\Windows`).
 
-`faccoder_core.sandbox` provides path containment validation:
+`nexcoder_core.sandbox` provides path containment validation:
 
 ```python
-from faccoder_core.sandbox import PathOutsideSandboxError, resolve_inside
+from nexcoder_core.sandbox import PathOutsideSandboxError, resolve_inside
 
 workspace_root = "/path/to/project"
 
@@ -74,9 +74,9 @@ except PathOutsideSandboxError as err:
 
 ## 3. Human Approval Gates (b85 Guard)
 
-For destructive, costly, or externally-visible actions (e.g. deleting tables, opening pull requests, running database migrations, or executing shell scripts), `faccoder` requires human-in-the-loop authorization.
+For destructive, costly, or externally-visible actions (e.g. deleting tables, opening pull requests, running database migrations, or executing shell scripts), `nexcoder` requires human-in-the-loop authorization.
 
-The `HumanApprovalBlock` in `faccoder-agents` implements this pattern:
+The `HumanApprovalBlock` in `nexcoder-agents` implements this pattern:
 
 1. **Dry-Run Simulation**: The agent executes a dry run first, producing a diff or summary of intended mutations.
 2. **Approval Request**: The block suspends pipeline execution and issues a short-lived, cryptographically signed approval token.
@@ -85,7 +85,7 @@ The `HumanApprovalBlock` in `faccoder-agents` implements this pattern:
    - If unapproved within the time limit (e.g. 30 minutes), the token expires and the pipeline aborts cleanly without making modifications.
 
 ```python
-from faccoder_agents.engine.blocks import HumanApprovalBlock
+from nexcoder_agents.engine.blocks import HumanApprovalBlock
 
 approval_block = HumanApprovalBlock(
     name="approve-pr-creation",

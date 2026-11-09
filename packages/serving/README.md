@@ -1,6 +1,6 @@
-# faccoder-serving
+# nexcoder-serving
 
-Serving orchestration, RAG evaluation, and RAFT dataset building for faccoder.
+Serving orchestration, RAG evaluation, and RAFT dataset building for nexcoder.
 
 ## Features
 

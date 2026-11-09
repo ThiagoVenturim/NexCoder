@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from faccoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter
-from faccoder_code_intel.retrieval import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter
+from nexcoder_code_intel.retrieval import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 
 class MockReranker:

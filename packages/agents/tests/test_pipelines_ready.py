@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_agents.catalog.registry import AgentCatalog
-from faccoder_agents.catalog.skills import SkillCatalog
-from faccoder_agents.cli import main
-from faccoder_agents.engine.models import ApprovalStatus
-from faccoder_agents.engine.pipelines import (
+from nexcoder_agents.catalog.registry import AgentCatalog
+from nexcoder_agents.catalog.skills import SkillCatalog
+from nexcoder_agents.cli import main
+from nexcoder_agents.engine.models import ApprovalStatus
+from nexcoder_agents.engine.pipelines import (
     build_pipeline,
     get_pipeline_template,
     list_pipeline_templates,
 )
-from faccoder_core.llm.fake import FakeChatModel
+from nexcoder_core.llm.fake import FakeChatModel
 
 
 def test_new_stack_and_jury_personas_in_catalog() -> None:
@@ -168,7 +168,7 @@ def test_documentation_pipeline() -> None:
     pipeline = build_pipeline("documentation", model=fake_llm)
     res = pipeline.run(
         inputs={
-            "project_name": "faccoder",
+            "project_name": "nexcoder",
             "source_scope": "packages/agents and packages/core",
         },
         dry_run=True,

@@ -3,8 +3,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from faccoder_code_intel.retrieval import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel.retrieval import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 
 def test_code_search_index_hybrid_and_mmr(tmp_path: Path) -> None:

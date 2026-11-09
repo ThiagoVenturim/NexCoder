@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_control.approval.machines import MachineApprovalManager
-from faccoder_control.approval.tokens import ApprovalRequiredError, ApprovalTokenManager
-from faccoder_control.auth.base import ForbiddenError
+from nexcoder_control.approval.machines import MachineApprovalManager
+from nexcoder_control.approval.tokens import ApprovalRequiredError, ApprovalTokenManager
+from nexcoder_control.auth.base import ForbiddenError
 
 
 class TestApprovalTokens:
     def test_issue_and_consume_token(self, approval_manager: ApprovalTokenManager) -> None:
         record, raw_token = approval_manager.issue_token(
             action_name="git_force_push",
-            target_resource="repo:faccoder/main",
+            target_resource="repo:nexcoder/main",
             approver="lead_engineer",
             ttl_minutes=15,
         )
@@ -23,7 +23,7 @@ class TestApprovalTokens:
         consumed = approval_manager.verify_and_consume(
             raw_token=raw_token,
             action_name="git_force_push",
-            target_resource="repo:faccoder/main",
+            target_resource="repo:nexcoder/main",
             dry_run=False,
         )
         assert consumed.is_consumed
@@ -34,7 +34,7 @@ class TestApprovalTokens:
             approval_manager.verify_and_consume(
                 raw_token=raw_token,
                 action_name="git_force_push",
-                target_resource="repo:faccoder/main",
+                target_resource="repo:nexcoder/main",
                 dry_run=False,
             )
 

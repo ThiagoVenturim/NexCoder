@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import time
 
-from faccoder_agents.engine.blocks import (
+from nexcoder_agents.engine.blocks import (
     ConditionBlock,
     HumanApprovalBlock,
     PromptBlock,
     ValidatorBlock,
 )
-from faccoder_agents.engine.models import ApprovalStatus, BlockStatus
-from faccoder_core.llm.fake import FakeChatModel
+from nexcoder_agents.engine.models import ApprovalStatus, BlockStatus
+from nexcoder_core.llm.fake import FakeChatModel
 from pydantic import BaseModel
 
 
