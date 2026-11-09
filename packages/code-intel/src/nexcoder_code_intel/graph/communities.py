@@ -9,7 +9,7 @@ import networkx as nx
 from networkx.algorithms.community import louvain_communities
 from pydantic import BaseModel, ConfigDict, Field
 
-from faccoder_code_intel.graph.code_graph import CodeGraph
+from nexcoder_code_intel.graph.code_graph import CodeGraph
 
 logger = logging.getLogger(__name__)
 

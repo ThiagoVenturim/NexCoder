@@ -1,12 +1,12 @@
 """Desktop window capture, UI Automation, and OCR fallback module."""
 
-from faccoder_capture.desktop.capture import DesktopCaptureEngine
-from faccoder_capture.desktop.engine import (
+from nexcoder_capture.desktop.capture import DesktopCaptureEngine
+from nexcoder_capture.desktop.engine import (
     MockUIAutomationProvider,
     UIAutomationProvider,
     WindowsUIAutomationProvider,
 )
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.models import (
     DesktopBoundingBox,
     DesktopCaptureConfig,
     DesktopCaptureResult,
@@ -14,7 +14,7 @@ from faccoder_capture.desktop.models import (
     DesktopWindowInfo,
     OCRTextBlock,
 )
-from faccoder_capture.desktop.ocr import (
+from nexcoder_capture.desktop.ocr import (
     MockOCRProvider,
     OCRProvider,
     TesseractOCRProvider,

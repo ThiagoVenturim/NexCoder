@@ -11,12 +11,12 @@ def plan_sprints(
 ) -> dict[str, Any]:
     """Parse a PRD into epics, stories, and tasks, then schedule into sprints with capacity calculation."""
     try:
-        from faccoder_planning.capacity import (
+        from nexcoder_planning.capacity import (
             CapacityCalculator,
             SprintCapacityConfig,
             TeamMember,
         )
-        from faccoder_planning.prd import PRDConverter
+        from nexcoder_planning.prd import PRDConverter
     except ImportError as exc:
         return {
             "status": "error",
@@ -75,12 +75,12 @@ def sync_board(
 ) -> dict[str, Any]:
     """Synchronize planned tasks with a Git platform issue tracker / Kanban board."""
     try:
-        from faccoder_planning.adapters.azure_devops import AzureDevOpsAdapter
-        from faccoder_planning.adapters.github import GitHubAdapter
-        from faccoder_planning.adapters.gitlab import GitLabAdapter
-        from faccoder_planning.models import Plan
-        from faccoder_planning.prd import PRDConverter
-        from faccoder_planning.sync import BoardSynchronizer
+        from nexcoder_planning.adapters.azure_devops import AzureDevOpsAdapter
+        from nexcoder_planning.adapters.github import GitHubAdapter
+        from nexcoder_planning.adapters.gitlab import GitLabAdapter
+        from nexcoder_planning.models import Plan
+        from nexcoder_planning.prd import PRDConverter
+        from nexcoder_planning.sync import BoardSynchronizer
     except ImportError as exc:
         return {
             "status": "error",

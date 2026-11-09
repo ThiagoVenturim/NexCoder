@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_control.auth.base import AuthenticationError, ForbiddenError
-from faccoder_control.keys.models import APIKeyCreate
-from faccoder_control.keys.rate_limit import (
+from nexcoder_control.auth.base import AuthenticationError, ForbiddenError
+from nexcoder_control.keys.models import APIKeyCreate
+from nexcoder_control.keys.rate_limit import (
     CapExceededError,
     FixedWindowRateLimiter,
     RateLimitExceededError,
     TokenBucket,
 )
-from faccoder_control.keys.store import APIKeyService
+from nexcoder_control.keys.store import APIKeyService
 
 
 class TestAPIKeyService:

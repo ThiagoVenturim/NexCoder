@@ -7,7 +7,7 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any
 
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.models import (
     DesktopBoundingBox,
     DesktopControlNode,
     DesktopWindowInfo,

@@ -9,9 +9,9 @@ import threading
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 
-from faccoder_control.auth.base import AuthenticationError, ForbiddenError
-from faccoder_control.keys.models import APIKeyCreate, APIKeyCreatedResult, APIKeyRecord
-from faccoder_control.keys.rate_limit import (
+from nexcoder_control.auth.base import AuthenticationError, ForbiddenError
+from nexcoder_control.keys.models import APIKeyCreate, APIKeyCreatedResult, APIKeyRecord
+from nexcoder_control.keys.rate_limit import (
     CapExceededError,
     FixedWindowRateLimiter,
     RateLimitExceededError,

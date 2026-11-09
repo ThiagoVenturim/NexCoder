@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Any
 
-from faccoder_ideation.models import (
+from nexcoder_ideation.models import (
     ArchitectureProposal,
     ComponentSpec,
     ResearchSquadReport,
@@ -95,7 +95,7 @@ class ArchitectureDesigner:
                 ComponentSpec(
                     name="Agent Orchestration & Pipeline Runner",
                     purpose="Executes structured workflows, manages block transitions, and aggregates citations.",
-                    technology_choices=["Python 3.11+", "LangChain", "faccoder-core"],
+                    technology_choices=["Python 3.11+", "LangChain", "nexcoder-core"],
                     data_stores=["SQLite / PostgreSQL (State store)"],
                     dependencies=["Model Registry", "Observability Circuit Breaker"],
                 ),

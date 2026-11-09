@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import json
 
-from faccoder_core.llm.fake import FakeChatModel
-from faccoder_ideation.models import StructuredIdea, ValueHypothesis
-from faccoder_ideation.research.specialists import (
+from nexcoder_core.llm.fake import FakeChatModel
+from nexcoder_ideation.models import StructuredIdea, ValueHypothesis
+from nexcoder_ideation.research.specialists import (
     CompetitorScout,
     MarketResearcher,
     PricingResearcher,
 )
-from faccoder_ideation.research.squad import ResearchSquad
-from faccoder_ideation.search.providers import MockSearchProvider
+from nexcoder_ideation.research.squad import ResearchSquad
+from nexcoder_ideation.search.providers import MockSearchProvider
 
 
 def _sample_idea() -> StructuredIdea:

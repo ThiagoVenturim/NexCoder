@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from html.parser import HTMLParser
 
-from faccoder_capture.models import StableSelector
+from nexcoder_capture.models import StableSelector
 
 TEST_ID_ATTRS = ("data-testid", "data-test", "data-cy", "data-qa", "data-test-id")
 INTERACTIVE_TAGS = {"button", "input", "select", "textarea", "a", "form"}

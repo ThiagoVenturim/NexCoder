@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from faccoder_capture.models import AccessibilityNode
-from faccoder_capture.web.selectors import DOMParser, ElementNode
+from nexcoder_capture.models import AccessibilityNode
+from nexcoder_capture.web.selectors import DOMParser, ElementNode
 
 
 def parse_playwright_a11y(raw_node: dict[str, Any]) -> AccessibilityNode:

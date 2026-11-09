@@ -7,8 +7,8 @@ from typing import Any
 
 import httpx
 
-from faccoder_ideation.models import ResearchSource
-from faccoder_ideation.search.base import SearchProvider
+from nexcoder_ideation.models import ResearchSource
+from nexcoder_ideation.search.base import SearchProvider
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class DuckDuckGoSearchProvider(SearchProvider):
             # DuckDuckGo HTML or Instant Answer API
             url = "https://api.duckduckgo.com/"
             params = {"q": query, "format": "json", "no_html": "1", "no_redirect": "1"}
-            headers = {"User-Agent": "faccoder-ideation/0.1.0 (research-bot; open-source)"}
+            headers = {"User-Agent": "nexcoder-ideation/0.1.0 (research-bot; open-source)"}
 
             with httpx.Client(timeout=self.timeout) as client:
                 resp = client.get(url, params=params, headers=headers)
@@ -268,7 +268,7 @@ def get_search_provider(
 ) -> SearchProvider:
     """Factory selecting the appropriate search provider based on configuration and available keys."""
     mock = MockSearchProvider()
-    if not allow_network or os.getenv("FACCODER_PRESET") == "offline":
+    if not allow_network or os.getenv("NEXCODER_PRESET") == "offline":
         return mock
 
     name = (preferred_name or os.getenv("SEARCH_PROVIDER", "duckduckgo")).lower()

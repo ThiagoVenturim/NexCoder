@@ -8,16 +8,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from faccoder_control.approval.machines import CLIMachine, MachineApprovalManager, MachineStatus
-from faccoder_control.approval.tokens import ApprovalRequiredError, ApprovalTokenManager, ApprovalTokenRecord
-from faccoder_control.auth.base import AuthPrincipal, BaseAuthProvider
-from faccoder_control.keys.models import APIKeyCreate, APIKeyCreatedResult, APIKeyRecord
-from faccoder_control.keys.store import APIKeyService
-from faccoder_control.metering.audit import AppendOnlyAuditLog, AuditEvent, AuditSeverity
-from faccoder_control.metering.budgets import BudgetAlert, BudgetManager, BudgetPolicy
-from faccoder_control.metering.cost_tracker import CostTracker, DimensionType
-from faccoder_control.metering.mcp_middleware import MCPToolMeter
-from faccoder_control.web.panel import ControlPlaneOverview, build_overview, render_html_panel
+from nexcoder_control.approval.machines import CLIMachine, MachineApprovalManager, MachineStatus
+from nexcoder_control.approval.tokens import ApprovalRequiredError, ApprovalTokenManager, ApprovalTokenRecord
+from nexcoder_control.auth.base import AuthPrincipal, BaseAuthProvider
+from nexcoder_control.keys.models import APIKeyCreate, APIKeyCreatedResult, APIKeyRecord
+from nexcoder_control.keys.store import APIKeyService
+from nexcoder_control.metering.audit import AppendOnlyAuditLog, AuditEvent, AuditSeverity
+from nexcoder_control.metering.budgets import BudgetAlert, BudgetManager, BudgetPolicy
+from nexcoder_control.metering.cost_tracker import CostTracker, DimensionType
+from nexcoder_control.metering.mcp_middleware import MCPToolMeter
+from nexcoder_control.web.panel import ControlPlaneOverview, build_overview, render_html_panel
 
 
 class IssueTokenRequest(BaseModel):

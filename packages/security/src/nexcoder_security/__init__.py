@@ -1,6 +1,6 @@
-"""faccoder-security: Security scanners, specialist agents, and release gate for faccoder."""
+"""nexcoder-security: Security scanners, specialist agents, and release gate for nexcoder."""
 
-from faccoder_security.gate import (
+from nexcoder_security.gate import (
     GatePolicy,
     GateVerdict,
     SecurityGateEvaluator,
@@ -9,7 +9,7 @@ from faccoder_security.gate import (
     pin_dependencies,
     scaffold_app_security,
 )
-from faccoder_security.models import (
+from nexcoder_security.models import (
     Finding,
     FindingCategory,
     Location,
@@ -20,7 +20,7 @@ from faccoder_security.models import (
     ScanResult,
     Severity,
 )
-from faccoder_security.scanners import (
+from nexcoder_security.scanners import (
     BanditScanner,
     BaseScanner,
     GitleaksScanner,

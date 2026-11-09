@@ -1,4 +1,4 @@
-"""Data models for faccoder-capture."""
+"""Data models for nexcoder-capture."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.models import (
     DesktopBoundingBox,
     DesktopCaptureConfig,
     DesktopCaptureResult,
@@ -107,7 +107,7 @@ class WebCaptureConfig(BaseModel):
     capture_har: bool = True
     extract_selectors: bool = True
     timeout_ms: int = 30000
-    user_agent: str = "faccoder-capture/0.1.0"
+    user_agent: str = "nexcoder-capture/0.1.0"
     honor_robots_txt: bool = True
     allowed_domains: list[str] = Field(default_factory=list)
     read_only: bool = True

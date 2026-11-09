@@ -1,6 +1,6 @@
 """Unit tests for security scan watcher and vulnerability diffing."""
 
-from faccoder_continuous_improvement.security.scan_watcher import (
+from nexcoder_continuous_improvement.security.scan_watcher import (
     SecurityVulnerability,
     SecurityWatcher,
     Severity,

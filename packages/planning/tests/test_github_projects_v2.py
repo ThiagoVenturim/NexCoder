@@ -1,6 +1,6 @@
 import httpx
-from faccoder_planning.adapters.github import GitHubAdapter
-from faccoder_planning.models import Task
+from nexcoder_planning.adapters.github import GitHubAdapter
+from nexcoder_planning.models import Task
 
 
 def test_get_project_v2_graphql():

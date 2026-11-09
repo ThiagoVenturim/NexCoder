@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from faccoder_agents.catalog import (
+from nexcoder_agents.catalog import (
     AgentCatalog,
     AgentSector,
     AgentSpec,
@@ -47,8 +47,8 @@ def test_render_prompt_interpolation() -> None:
         tier="medium",
         prompt="Review pull request #{pr_id} on repository {repo_name}.",
     )
-    rendered = spec.render_prompt(pr_id=42, repo_name="faccoder")
-    assert rendered == "Review pull request #42 on repository faccoder."
+    rendered = spec.render_prompt(pr_id=42, repo_name="nexcoder")
+    assert rendered == "Review pull request #42 on repository nexcoder."
 
 
 def test_seed_catalog_covers_all_ten_sectors() -> None:
@@ -132,7 +132,7 @@ def test_load_agents_from_dir_empty_or_nonexistent(tmp_path: Path) -> None:
 
 
 def test_validate_safe_slug_centralized() -> None:
-    from faccoder_agents.catalog.models import validate_safe_slug
+    from nexcoder_agents.catalog.models import validate_safe_slug
 
     assert validate_safe_slug("python-dev_1") == "python-dev_1"
     assert validate_safe_slug("security_auditor") == "security_auditor"

@@ -1,14 +1,14 @@
-"""faccoder-serving: Serving orchestration, RAG evaluation, and RAFT dataset building."""
+"""nexcoder-serving: Serving orchestration, RAG evaluation, and RAFT dataset building."""
 
-from faccoder_serving.compose import ServingConfig, ServingProfile, generate_compose_config
-from faccoder_serving.eval.rag_eval import (
+from nexcoder_serving.compose import ServingConfig, ServingProfile, generate_compose_config
+from nexcoder_serving.eval.rag_eval import (
     EvaluationResult,
     EvaluationSample,
     LLMJudge,
     RagEvaluator,
 )
-from faccoder_serving.raft.anonymizer import Anonymizer
-from faccoder_serving.raft.builder import RaftBuilder, RaftDataset, RaftSample
+from nexcoder_serving.raft.anonymizer import Anonymizer
+from nexcoder_serving.raft.builder import RaftBuilder, RaftDataset, RaftSample
 
 __all__ = [
     "Anonymizer",

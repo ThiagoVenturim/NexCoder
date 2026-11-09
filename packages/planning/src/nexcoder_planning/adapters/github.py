@@ -7,7 +7,7 @@ from typing import Any
 
 import httpx
 
-from faccoder_planning.adapters.base import (
+from nexcoder_planning.adapters.base import (
     IssueSyncResult,
     PlatformAdapter,
     ProjectV2Info,
@@ -15,10 +15,10 @@ from faccoder_planning.adapters.base import (
     ProjectV2ItemResult,
     RemoteIssue,
     RemoteMilestone,
-    embed_faccoder_id,
-    extract_faccoder_id,
+    embed_nexcoder_id,
+    extract_nexcoder_id,
 )
-from faccoder_planning.models import Task
+from nexcoder_planning.models import Task
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class GitHubAdapter(PlatformAdapter):
         if self._client is None:
             headers = {
                 "Accept": "application/vnd.github+json",
-                "User-Agent": "faccoder-planning",
+                "User-Agent": "nexcoder-planning",
             }
             if self.token:
                 headers["Authorization"] = f"Bearer {self.token}"
@@ -117,7 +117,7 @@ class GitHubAdapter(PlatformAdapter):
                     continue
 
                 body = item.get("body") or ""
-                fid = extract_faccoder_id(body)
+                fid = extract_nexcoder_id(body)
                 labels = [lbl.get("name", "") if isinstance(lbl, dict) else str(lbl) for lbl in item.get("labels", [])]
 
                 remote_issues.append(
@@ -127,7 +127,7 @@ class GitHubAdapter(PlatformAdapter):
                         node_id=item.get("node_id"),
                         title=item.get("title", ""),
                         body=body,
-                        faccoder_id=fid,
+                        nexcoder_id=fid,
                         url=item.get("html_url"),
                         status=item.get("state", "open"),
                         labels=labels,
@@ -157,12 +157,12 @@ class GitHubAdapter(PlatformAdapter):
             simulated_url = f"https://github.com/{self.repo}/issues/{simulated_number}"
             return IssueSyncResult(
                 task_id=task.id,
-                faccoder_id=task.faccoder_id,
+                nexcoder_id=task.nexcoder_id,
                 action="dry_run_create",
-                remote_id=f"dry-run-{task.faccoder_id[:8]}",
+                remote_id=f"dry-run-{task.nexcoder_id[:8]}",
                 remote_number=simulated_number,
                 url=simulated_url,
-                message=f"[DRY-RUN] Would create GitHub issue '{task.title}' with tracking marker {task.faccoder_id}",
+                message=f"[DRY-RUN] Would create GitHub issue '{task.title}' with tracking marker {task.nexcoder_id}",
                 dry_run=True,
             )
 
@@ -185,7 +185,7 @@ class GitHubAdapter(PlatformAdapter):
             number=data.get("number"),
             title=data.get("title", ""),
             body=body,
-            faccoder_id=task.faccoder_id,
+            nexcoder_id=task.nexcoder_id,
             url=data.get("html_url"),
             status=data.get("state", "open"),
             labels=labels,
@@ -195,7 +195,7 @@ class GitHubAdapter(PlatformAdapter):
 
         return IssueSyncResult(
             task_id=task.id,
-            faccoder_id=task.faccoder_id,
+            nexcoder_id=task.nexcoder_id,
             action="created",
             remote_id=str(data["id"]),
             remote_number=data.get("number"),
@@ -213,13 +213,13 @@ class GitHubAdapter(PlatformAdapter):
     ) -> IssueSyncResult:
         """Update an existing GitHub issue while preserving marker and identity."""
         is_dry = self.dry_run if dry_run is None else dry_run
-        body = embed_faccoder_id(task.format_markdown_body(), task.faccoder_id)
+        body = embed_nexcoder_id(task.format_markdown_body(), task.nexcoder_id)
         labels = self._compute_labels(task)
 
         if is_dry:
             return IssueSyncResult(
                 task_id=task.id,
-                faccoder_id=task.faccoder_id,
+                nexcoder_id=task.nexcoder_id,
                 action="dry_run_update",
                 remote_id=remote.id,
                 remote_number=remote.number,
@@ -248,7 +248,7 @@ class GitHubAdapter(PlatformAdapter):
 
         return IssueSyncResult(
             task_id=task.id,
-            faccoder_id=task.faccoder_id,
+            nexcoder_id=task.nexcoder_id,
             action="updated",
             remote_id=str(data["id"]),
             remote_number=data.get("number"),

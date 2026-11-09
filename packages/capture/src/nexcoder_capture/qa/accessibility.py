@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from faccoder_capture.models import AccessibilityNode
-from faccoder_capture.qa.models import AccessibilityAuditResult, AccessibilityViolation
+from nexcoder_capture.models import AccessibilityNode
+from nexcoder_capture.qa.models import AccessibilityAuditResult, AccessibilityViolation
 
 STANDARD_ARIA_ROLES = {
     "alert",

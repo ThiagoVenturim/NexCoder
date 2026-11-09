@@ -7,7 +7,7 @@ A preset maps the three tiers to concrete models:
 - ``large``: planning, architecture, juries, hard debugging.
 
 Model names change often. Treat these as sensible defaults and override them in
-``faccoder.yaml`` when a provider retires or releases a model.
+``nexcoder.yaml`` when a provider retires or releases a model.
 """
 
 from __future__ import annotations

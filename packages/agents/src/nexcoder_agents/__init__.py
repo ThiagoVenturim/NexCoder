@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from faccoder_agents.catalog import (
+from nexcoder_agents.catalog import (
     AgentCatalog,
     AgentSector,
     AgentSpec,
@@ -14,7 +14,7 @@ from faccoder_agents.catalog import (
     parse_agent_markdown,
     parse_skill_markdown,
 )
-from faccoder_agents.engine import (
+from nexcoder_agents.engine import (
     END,
     START,
     ApprovalRequest,
@@ -36,7 +36,7 @@ from faccoder_agents.engine import (
     PromptBlock,
     ValidatorBlock,
 )
-from faccoder_agents.engine.pipelines import (
+from nexcoder_agents.engine.pipelines import (
     PipelineTemplate,
     build_pipeline,
     create_bugfix_pipeline,
@@ -49,7 +49,7 @@ from faccoder_agents.engine.pipelines import (
     list_pipeline_templates,
     register_pipeline_template,
 )
-from faccoder_agents.export import ClaudeExportResult, export_claude_package
+from nexcoder_agents.export import ClaudeExportResult, export_claude_package
 
 __version__ = "0.2.0"
 

@@ -16,7 +16,7 @@ import re
 from langchain_core.messages import BaseMessage
 from pydantic import BaseModel
 
-from faccoder_core.llm.context import count_tokens
+from nexcoder_core.llm.context import count_tokens
 
 # Low-entropy conversational fluff patterns (LLMLingua-style heuristic)
 FILLER_PATTERNS = [

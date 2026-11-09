@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from faccoder_agents.engine.pipelines.models import PipelineTemplate
-from faccoder_agents.engine.pipelines.registry import (
+from nexcoder_agents.engine.pipelines.models import PipelineTemplate
+from nexcoder_agents.engine.pipelines.registry import (
     build_pipeline,
     get_pipeline_template,
     list_pipeline_templates,
     register_pipeline_template,
 )
-from faccoder_agents.engine.pipelines.templates import (
+from nexcoder_agents.engine.pipelines.templates import (
     create_bugfix_pipeline,
     create_documentation_pipeline,
     create_feature_pipeline,

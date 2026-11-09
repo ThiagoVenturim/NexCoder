@@ -6,7 +6,7 @@ import math
 
 from pydantic import BaseModel, Field
 
-from faccoder_planning.models import Plan, Task
+from nexcoder_planning.models import Plan, Task
 
 
 class TeamMember(BaseModel):

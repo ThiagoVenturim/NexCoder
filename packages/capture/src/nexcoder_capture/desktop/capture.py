@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from faccoder_capture.desktop.engine import (
+from nexcoder_capture.desktop.engine import (
     MockUIAutomationProvider,
     UIAutomationProvider,
     WindowsUIAutomationProvider,
 )
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.models import (
     DesktopCaptureConfig,
     DesktopCaptureResult,
     DesktopControlNode,
     DesktopWindowInfo,
     OCRTextBlock,
 )
-from faccoder_capture.desktop.ocr import MockOCRProvider, OCRProvider, TesseractOCRProvider
+from nexcoder_capture.desktop.ocr import MockOCRProvider, OCRProvider, TesseractOCRProvider
 
 
 class DesktopCaptureEngine:

@@ -13,7 +13,7 @@ import os
 import threading
 import time
 
-from faccoder_core.config import FaccoderConfig
+from nexcoder_core.config import NexcoderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -56,12 +56,12 @@ class CircuitBreaker:
 _breaker = CircuitBreaker()
 
 
-def langfuse_configured(cfg: FaccoderConfig) -> bool:
+def langfuse_configured(cfg: NexcoderConfig) -> bool:
     spec = cfg.langfuse
     return bool(spec.enabled and os.environ.get(spec.public_key_env) and os.environ.get(spec.secret_key_env))
 
 
-def langfuse_callbacks(cfg: FaccoderConfig, **metadata) -> list:
+def langfuse_callbacks(cfg: NexcoderConfig, **metadata) -> list:
     """Return ``[CallbackHandler]`` when Langfuse is usable, otherwise ``[]``."""
     if not langfuse_configured(cfg) or not _breaker.allow():
         return []

@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from faccoder_control.metering.cost_tracker import CostTracker, DimensionType
+from nexcoder_control.metering.cost_tracker import CostTracker, DimensionType
 
 
 class BudgetExceededError(Exception):

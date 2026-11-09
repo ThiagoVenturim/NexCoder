@@ -3,9 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from faccoder_ideation.models import ResearchSource, StructuredIdea
-from faccoder_ideation.search.base import SearchProvider
-from faccoder_ideation.search.providers import MockSearchProvider
+from nexcoder_ideation.models import ResearchSource, StructuredIdea
+from nexcoder_ideation.search.base import SearchProvider
+from nexcoder_ideation.search.providers import MockSearchProvider
 
 
 class BaseResearcher(ABC):

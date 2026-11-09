@@ -34,7 +34,7 @@ async def pipeline_event_generator(
     await asyncio.sleep(0.01)
 
     try:
-        from faccoder_interfaces.tools.agents import run_pipeline
+        from nexcoder_interfaces.tools.agents import run_pipeline
 
         # Yield progress events
         yield format_sse_event(

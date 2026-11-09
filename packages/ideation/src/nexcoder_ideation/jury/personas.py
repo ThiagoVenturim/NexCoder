@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from faccoder_ideation.models import RubricCriterion
+from nexcoder_ideation.models import RubricCriterion
 
 
 class JurorPersonaConfig(BaseModel):

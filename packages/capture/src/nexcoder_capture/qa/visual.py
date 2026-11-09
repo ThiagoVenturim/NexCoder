@@ -6,7 +6,7 @@ import io
 import logging
 import struct
 
-from faccoder_capture.qa.models import VisualDiffResult
+from nexcoder_capture.qa.models import VisualDiffResult
 
 logger = logging.getLogger(__name__)
 

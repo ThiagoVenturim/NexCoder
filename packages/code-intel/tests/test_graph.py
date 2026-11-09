@@ -1,8 +1,8 @@
 """Tests for CodeGraph representation and structural impact analysis."""
 
 import pytest
-from faccoder_code_intel.graph import CodeGraph, EdgeType
-from faccoder_code_intel.models import (
+from nexcoder_code_intel.graph import CodeGraph, EdgeType
+from nexcoder_code_intel.models import (
     RelationshipKind,
     Symbol,
     SymbolLocation,

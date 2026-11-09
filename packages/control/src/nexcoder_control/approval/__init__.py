@@ -1,11 +1,11 @@
 """Approval tokens for high-risk actions and CLI machine governance."""
 
-from faccoder_control.approval.machines import (
+from nexcoder_control.approval.machines import (
     CLIMachine,
     MachineApprovalManager,
     MachineStatus,
 )
-from faccoder_control.approval.tokens import (
+from nexcoder_control.approval.tokens import (
     ApprovalRequiredError,
     ApprovalTokenManager,
     ApprovalTokenRecord,

@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from faccoder_code_intel.models import (
+from nexcoder_code_intel.models import (
     RelationshipKind,
     Symbol,
     SymbolLocation,
@@ -18,7 +18,7 @@ from faccoder_code_intel.models import (
     SymbolSignature,
     SymbolType,
 )
-from faccoder_code_intel.parsers.base import BaseParser
+from nexcoder_code_intel.parsers.base import BaseParser
 
 
 class DelphiParser(BaseParser):

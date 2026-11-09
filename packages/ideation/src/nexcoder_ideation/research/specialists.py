@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Any
 
-from faccoder_ideation.models import (
+from nexcoder_ideation.models import (
     CompetitorProfile,
     CompetitorScoutData,
     ComplianceRisk,
@@ -19,7 +19,7 @@ from faccoder_ideation.models import (
     SyntheticPersona,
     UserVoiceData,
 )
-from faccoder_ideation.research.base import BaseResearcher
+from nexcoder_ideation.research.base import BaseResearcher
 
 logger = logging.getLogger(__name__)
 

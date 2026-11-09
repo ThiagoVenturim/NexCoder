@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from faccoder_interfaces.registry import ToolDefinition
-from faccoder_interfaces.tools.agents import approve_step, run_agent, run_pipeline
-from faccoder_interfaces.tools.base import unavailable_tool_handler
-from faccoder_interfaces.tools.code import generate_docs, impact_analysis, search_code
-from faccoder_interfaces.tools.ideation import judge_idea, research_idea
-from faccoder_interfaces.tools.planning import plan_sprints, sync_board
-from faccoder_interfaces.tools.security import security_scan
-from faccoder_interfaces.tools.unavailable import (
+from nexcoder_interfaces.registry import ToolDefinition
+from nexcoder_interfaces.tools.agents import approve_step, run_agent, run_pipeline
+from nexcoder_interfaces.tools.base import unavailable_tool_handler
+from nexcoder_interfaces.tools.code import generate_docs, impact_analysis, search_code
+from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
+from nexcoder_interfaces.tools.planning import plan_sprints, sync_board
+from nexcoder_interfaces.tools.security import security_scan
+from nexcoder_interfaces.tools.unavailable import (
     audit_log,
     capture_page,
     check_budget,
@@ -202,7 +202,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     # Unavailable tools (flagged cleanly as unavailable)
     "capture_page": ToolDefinition(
         name="capture_page",
-        description="Capture page DOM and screenshot (faccoder-capture, not yet in develop).",
+        description="Capture page DOM and screenshot (nexcoder-capture, not yet in develop).",
         module="capture",
         parameters={
             "type": "object",
@@ -216,7 +216,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     ),
     "generate_tests": ToolDefinition(
         name="generate_tests",
-        description="Generate integration tests from captured DOM (faccoder-capture, not yet in develop).",
+        description="Generate integration tests from captured DOM (nexcoder-capture, not yet in develop).",
         module="capture",
         parameters={
             "type": "object",
@@ -230,7 +230,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     ),
     "serve_model": ToolDefinition(
         name="serve_model",
-        description="Serve LLM inference via vLLM or Ollama (faccoder-serving, not yet in develop).",
+        description="Serve LLM inference via vLLM or Ollama (nexcoder-serving, not yet in develop).",
         module="serving",
         parameters={
             "type": "object",
@@ -244,7 +244,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     ),
     "evaluate_rag": ToolDefinition(
         name="evaluate_rag",
-        description="Run RAG evaluation suite (faccoder-serving, not yet in develop).",
+        description="Run RAG evaluation suite (nexcoder-serving, not yet in develop).",
         module="serving",
         parameters={
             "type": "object",
@@ -258,7 +258,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     ),
     "check_budget": ToolDefinition(
         name="check_budget",
-        description="Check project spending and budget (faccoder-control, not yet in develop).",
+        description="Check project spending and budget (nexcoder-control, not yet in develop).",
         module="control",
         parameters={
             "type": "object",
@@ -272,7 +272,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     ),
     "audit_log": ToolDefinition(
         name="audit_log",
-        description="Retrieve control plane audit logs (faccoder-control, not yet in develop).",
+        description="Retrieve control plane audit logs (nexcoder-control, not yet in develop).",
         module="control",
         parameters={
             "type": "object",
@@ -285,7 +285,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     ),
     "schedule_job": ToolDefinition(
         name="schedule_job",
-        description="Schedule continuous scans (faccoder-continuous-improvement, not yet in develop).",
+        description="Schedule continuous scans (nexcoder-continuous-improvement, not yet in develop).",
         module="continuous-improvement",
         parameters={
             "type": "object",
@@ -300,7 +300,7 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     ),
     "trigger_improvement": ToolDefinition(
         name="trigger_improvement",
-        description="Trigger continuous scan (faccoder-continuous-improvement, not yet in develop).",
+        description="Trigger continuous scan (nexcoder-continuous-improvement, not yet in develop).",
         module="continuous-improvement",
         parameters={
             "type": "object",

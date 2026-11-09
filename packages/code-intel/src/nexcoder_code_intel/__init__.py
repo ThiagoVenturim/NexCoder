@@ -1,11 +1,11 @@
-"""faccoder_code_intel - Code intelligence for faccoder.
+"""nexcoder_code_intel - Code intelligence for nexcoder.
 
 AST parsers, symbol models, code graph, GraphRAG communities, HyDE retrieval, and bottom-up docgen.
 """
 
-from faccoder_code_intel.chunking import CodeChunk, SymbolChunker
-from faccoder_code_intel.docgen import BottomUpDocEngine, DocLevel, DocNode
-from faccoder_code_intel.graph import (
+from nexcoder_code_intel.chunking import CodeChunk, SymbolChunker
+from nexcoder_code_intel.docgen import BottomUpDocEngine, DocLevel, DocNode
+from nexcoder_code_intel.graph import (
     AffectedSymbol,
     CodeGraph,
     Community,
@@ -14,7 +14,7 @@ from faccoder_code_intel.graph import (
     GraphRAGContext,
     ImpactReport,
 )
-from faccoder_code_intel.models import (
+from nexcoder_code_intel.models import (
     RelationshipKind,
     Symbol,
     SymbolLocation,
@@ -22,7 +22,7 @@ from faccoder_code_intel.models import (
     SymbolSignature,
     SymbolType,
 )
-from faccoder_code_intel.parsers import (
+from nexcoder_code_intel.parsers import (
     BaseParser,
     DelphiParser,
     TreeSitterParser,
@@ -30,8 +30,8 @@ from faccoder_code_intel.parsers import (
     get_parser_for_language,
     parse_file,
 )
-from faccoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter, RewrittenQuery
-from faccoder_code_intel.retrieval import CodeSearchIndex
+from nexcoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter, RewrittenQuery
+from nexcoder_code_intel.retrieval import CodeSearchIndex
 
 __all__ = [
     "AffectedSymbol",

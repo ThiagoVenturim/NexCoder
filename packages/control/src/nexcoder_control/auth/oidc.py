@@ -11,7 +11,7 @@ import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from faccoder_control.auth.base import (
+from nexcoder_control.auth.base import (
     AuthenticationError,
     AuthPrincipal,
     BaseAuthProvider,
@@ -187,8 +187,8 @@ class MockOIDCProvider:
 
     def __init__(
         self,
-        issuer: str = "https://auth.faccoder.local/oauth2",
-        audience: str = "faccoder-api",
+        issuer: str = "https://auth.nexcoder.local/oauth2",
+        audience: str = "nexcoder-api",
         key_id: str = "mock-key-1",
     ) -> None:
         self.issuer = issuer

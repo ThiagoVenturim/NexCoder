@@ -1,7 +1,7 @@
 """Platform adapters for issue trackers (GitHub, GitLab, Azure DevOps)."""
 
-from faccoder_planning.adapters.azure_devops import AzureDevOpsAdapter
-from faccoder_planning.adapters.base import (
+from nexcoder_planning.adapters.azure_devops import AzureDevOpsAdapter
+from nexcoder_planning.adapters.base import (
     IssueSyncResult,
     PlatformAdapter,
     ProjectV2Info,
@@ -10,11 +10,11 @@ from faccoder_planning.adapters.base import (
     RemoteIssue,
     RemoteMilestone,
     SyncSummary,
-    embed_faccoder_id,
-    extract_faccoder_id,
+    embed_nexcoder_id,
+    extract_nexcoder_id,
 )
-from faccoder_planning.adapters.github import GitHubAdapter
-from faccoder_planning.adapters.gitlab import GitLabAdapter
+from nexcoder_planning.adapters.github import GitHubAdapter
+from nexcoder_planning.adapters.gitlab import GitLabAdapter
 
 __all__ = [
     "AzureDevOpsAdapter",
@@ -28,6 +28,6 @@ __all__ = [
     "RemoteIssue",
     "RemoteMilestone",
     "SyncSummary",
-    "embed_faccoder_id",
-    "extract_faccoder_id",
+    "embed_nexcoder_id",
+    "extract_nexcoder_id",
 ]

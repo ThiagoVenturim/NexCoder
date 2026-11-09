@@ -1,13 +1,13 @@
-"""faccoder-interfaces: Unified CLI, MCP server, and REST API for faccoder."""
+"""nexcoder-interfaces: Unified CLI, MCP server, and REST API for nexcoder."""
 
 from __future__ import annotations
 
-from faccoder_interfaces.api.app import app, create_app
-from faccoder_interfaces.cli.main import main
-from faccoder_interfaces.mcp.server import MCPServer
-from faccoder_interfaces.plugin.claude import export_claude_plugin, generate_mcp_json, write_mcp_json
-from faccoder_interfaces.registry import get_module_statuses
-from faccoder_interfaces.tools import TOOL_DEFINITIONS
+from nexcoder_interfaces.api.app import app, create_app
+from nexcoder_interfaces.cli.main import main
+from nexcoder_interfaces.mcp.server import MCPServer
+from nexcoder_interfaces.plugin.claude import export_claude_plugin, generate_mcp_json, write_mcp_json
+from nexcoder_interfaces.registry import get_module_statuses
+from nexcoder_interfaces.tools import TOOL_DEFINITIONS
 
 __version__ = "0.1.0"
 

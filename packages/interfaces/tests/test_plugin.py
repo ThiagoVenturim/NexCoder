@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from faccoder_interfaces.plugin.claude import (
+from nexcoder_interfaces.plugin.claude import (
     export_claude_plugin,
     generate_mcp_json,
     write_mcp_json,
@@ -13,15 +13,15 @@ from faccoder_interfaces.plugin.claude import (
 def test_generate_mcp_json_stdio() -> None:
     config = generate_mcp_json(transport="stdio")
     assert "mcpServers" in config
-    assert "faccoder" in config["mcpServers"]
-    server = config["mcpServers"]["faccoder"]
-    assert server["command"] == "faccoder"
+    assert "nexcoder" in config["mcpServers"]
+    server = config["mcpServers"]["nexcoder"]
+    assert server["command"] == "nexcoder"
     assert server["args"] == ["serve", "--transport", "stdio"]
 
 
 def test_generate_mcp_json_sse() -> None:
     config = generate_mcp_json(transport="sse", url="http://127.0.0.1:9000/sse")
-    server = config["mcpServers"]["faccoder"]
+    server = config["mcpServers"]["nexcoder"]
     assert server["transport"] == "sse"
     assert server["url"] == "http://127.0.0.1:9000/sse"
 
@@ -32,7 +32,7 @@ def test_write_mcp_json(tmp_path: Path) -> None:
     assert out_file.name == ".mcp.json"
 
     data = json.loads(out_file.read_text(encoding="utf-8"))
-    assert "faccoder" in data["mcpServers"]
+    assert "nexcoder" in data["mcpServers"]
 
 
 def test_export_claude_plugin(tmp_path: Path) -> None:

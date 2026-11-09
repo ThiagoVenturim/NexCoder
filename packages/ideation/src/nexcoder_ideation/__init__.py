@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from faccoder_ideation.intake import IdeaAnalyst
-from faccoder_ideation.jury.committee import JuryCommittee
-from faccoder_ideation.jury.personas import STANDARD_JURY_PERSONAS, JurorPersonaConfig
-from faccoder_ideation.jury.rubric import DEFAULT_RUBRIC, RubricDefinition
-from faccoder_ideation.models import (
+from nexcoder_ideation.intake import IdeaAnalyst
+from nexcoder_ideation.jury.committee import JuryCommittee
+from nexcoder_ideation.jury.personas import STANDARD_JURY_PERSONAS, JurorPersonaConfig
+from nexcoder_ideation.jury.rubric import DEFAULT_RUBRIC, RubricDefinition
+from nexcoder_ideation.models import (
     ArchitectureProposal,
     AudienceSegment,
     ComponentSpec,
@@ -23,13 +23,13 @@ from faccoder_ideation.models import (
     ValueHypothesis,
     VerdictDecision,
 )
-from faccoder_ideation.output.architecture import ArchitectureDesigner
-from faccoder_ideation.output.gate import HumanGateManager
-from faccoder_ideation.output.prd import PRDGenerator
-from faccoder_ideation.output.report import ReportGenerator
-from faccoder_ideation.pipeline import IdeationPipeline
-from faccoder_ideation.research.base import BaseResearcher
-from faccoder_ideation.research.specialists import (
+from nexcoder_ideation.output.architecture import ArchitectureDesigner
+from nexcoder_ideation.output.gate import HumanGateManager
+from nexcoder_ideation.output.prd import PRDGenerator
+from nexcoder_ideation.output.report import ReportGenerator
+from nexcoder_ideation.pipeline import IdeationPipeline
+from nexcoder_ideation.research.base import BaseResearcher
+from nexcoder_ideation.research.specialists import (
     CompetitorScout,
     DifferentiatorAnalyst,
     GapHunter,
@@ -38,9 +38,9 @@ from faccoder_ideation.research.specialists import (
     PricingResearcher,
     UserVoiceResearcher,
 )
-from faccoder_ideation.research.squad import ResearchSquad
-from faccoder_ideation.search.base import SearchProvider
-from faccoder_ideation.search.providers import (
+from nexcoder_ideation.research.squad import ResearchSquad
+from nexcoder_ideation.search.base import SearchProvider
+from nexcoder_ideation.search.providers import (
     DuckDuckGoSearchProvider,
     MockSearchProvider,
     get_search_provider,

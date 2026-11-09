@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from typing import Protocol
 
-from faccoder_core.config import RerankerSpec
+from nexcoder_core.config import RerankerSpec
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class CrossEncoderReranker:
         try:
             from sentence_transformers import CrossEncoder
         except ImportError as exc:
-            raise ImportError("pip install faccoder-core[local-embeddings]") from exc
+            raise ImportError("pip install nexcoder-core[local-embeddings]") from exc
         self._model = CrossEncoder(model)
 
     def rerank(self, query: str, docs: list[dict], *, text_field: str = "text", top_k: int | None = None) -> list[dict]:

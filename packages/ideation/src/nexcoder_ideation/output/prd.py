@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from faccoder_ideation.models import (
+from nexcoder_ideation.models import (
     ArchitectureProposal,
     HumanApprovalGate,
     JuryVerdict,
@@ -10,7 +10,7 @@ from faccoder_ideation.models import (
 
 
 class PRDGenerator:
-    """Generates structured Markdown PRD documents compatible with faccoder-planning converters."""
+    """Generates structured Markdown PRD documents compatible with nexcoder-planning converters."""
 
     @staticmethod
     def generate(
@@ -197,7 +197,7 @@ class PRDGenerator:
                 f"- **Approved By**: {gate.approved_by or 'None'}",
                 f"- **Approval Notes**: {gate.comments or 'Awaiting human authorization before planning handoff.'}",
                 "",
-                "<!-- faccoder-id: prd-" + idea.id + " -->",
+                "<!-- nexcoder-id: prd-" + idea.id + " -->",
             ]
         )
 

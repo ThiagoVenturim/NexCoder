@@ -13,8 +13,8 @@ import json
 import time
 from typing import Any
 
-from faccoder_core.retrieval.embeddings import Embedder
-from faccoder_core.store.sqlite_store import HybridStore, StoredChunk
+from nexcoder_core.retrieval.embeddings import Embedder
+from nexcoder_core.store.sqlite_store import HybridStore, StoredChunk
 
 NEGATIVE_MARKERS = (
     "not found",

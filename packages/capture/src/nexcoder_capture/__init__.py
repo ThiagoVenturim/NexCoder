@@ -1,12 +1,12 @@
-"""faccoder-capture: Web and desktop capture, stable selectors, test generation, and QA checks."""
+"""nexcoder-capture: Web and desktop capture, stable selectors, test generation, and QA checks."""
 
-from faccoder_capture.desktop.capture import DesktopCaptureEngine
-from faccoder_capture.desktop.engine import (
+from nexcoder_capture.desktop.capture import DesktopCaptureEngine
+from nexcoder_capture.desktop.engine import (
     MockUIAutomationProvider,
     UIAutomationProvider,
     WindowsUIAutomationProvider,
 )
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.models import (
     DesktopBoundingBox,
     DesktopCaptureConfig,
     DesktopCaptureResult,
@@ -14,14 +14,14 @@ from faccoder_capture.desktop.models import (
     DesktopWindowInfo,
     OCRTextBlock,
 )
-from faccoder_capture.desktop.ocr import (
+from nexcoder_capture.desktop.ocr import (
     MockOCRProvider,
     OCRProvider,
     TesseractOCRProvider,
 )
-from faccoder_capture.generators.page_objects import generate_page_object
-from faccoder_capture.generators.playwright import generate_playwright_test
-from faccoder_capture.models import (
+from nexcoder_capture.generators.page_objects import generate_page_object
+from nexcoder_capture.generators.playwright import generate_playwright_test
+from nexcoder_capture.models import (
     AccessibilityNode,
     CaptchaDetectedError,
     CapturePolicyError,
@@ -33,15 +33,15 @@ from faccoder_capture.models import (
     WebCaptureConfig,
     WebCaptureResult,
 )
-from faccoder_capture.qa.accessibility import audit_accessibility_tree
-from faccoder_capture.qa.models import (
+from nexcoder_capture.qa.accessibility import audit_accessibility_tree
+from nexcoder_capture.qa.models import (
     AccessibilityAuditResult,
     AccessibilityViolation,
     VisualDiffResult,
 )
-from faccoder_capture.qa.screen_doc import generate_screen_documentation
-from faccoder_capture.qa.visual import compare_screenshots
-from faccoder_capture.web.capture import WebCaptureEngine
+from nexcoder_capture.qa.screen_doc import generate_screen_documentation
+from nexcoder_capture.qa.visual import compare_screenshots
+from nexcoder_capture.web.capture import WebCaptureEngine
 
 __all__ = [
     "AccessibilityAuditResult",

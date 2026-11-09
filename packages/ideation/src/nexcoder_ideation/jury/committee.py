@@ -4,8 +4,8 @@ import json
 import logging
 from typing import Any
 
-from faccoder_ideation.jury.personas import STANDARD_JURY_PERSONAS, JurorPersonaConfig
-from faccoder_ideation.models import (
+from nexcoder_ideation.jury.personas import STANDARD_JURY_PERSONAS, JurorPersonaConfig
+from nexcoder_ideation.models import (
     JurorBallot,
     JuryVerdict,
     ResearchSquadReport,

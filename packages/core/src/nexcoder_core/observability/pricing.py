@@ -3,7 +3,7 @@
 Prices are USD per one million tokens (input, output). The defaults below are
 illustrative starting values: check each provider's pricing page before using
 the numbers for billing. They change; override
-them with ``FACCODER_PRICES_FILE`` pointing at a YAML file with the same shape,
+them with ``NEXCODER_PRICES_FILE`` pointing at a YAML file with the same shape,
 or edit them in the control panel. Local models (Ollama, vLLM) cost zero here:
 their cost is hardware, not tokens.
 """
@@ -31,7 +31,7 @@ DEFAULT_PRICES: dict[str, tuple[float, float]] = {
 @lru_cache(maxsize=1)
 def price_table() -> dict[str, tuple[float, float]]:
     table = dict(DEFAULT_PRICES)
-    path = os.environ.get("FACCODER_PRICES_FILE")
+    path = os.environ.get("NEXCODER_PRICES_FILE")
     if path and Path(path).is_file():
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
         for model, value in data.items():

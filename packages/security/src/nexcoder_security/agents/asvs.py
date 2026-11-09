@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from faccoder_security.agents.base import BaseSecurityAgent
+from nexcoder_security.agents.base import BaseSecurityAgent
 
 
 class ASVSLevel(enum.StrEnum):

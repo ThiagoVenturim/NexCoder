@@ -10,7 +10,7 @@ from typing import Any
 import networkx as nx
 from pydantic import BaseModel, ConfigDict, Field
 
-from faccoder_code_intel.models import RelationshipKind, Symbol, SymbolType
+from nexcoder_code_intel.models import RelationshipKind, Symbol, SymbolType
 
 logger = logging.getLogger(__name__)
 

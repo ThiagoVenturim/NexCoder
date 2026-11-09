@@ -1,9 +1,9 @@
-"""Unit tests for faccoder_capture.qa.accessibility."""
+"""Unit tests for nexcoder_capture.qa.accessibility."""
 
 from __future__ import annotations
 
-from faccoder_capture.models import AccessibilityNode
-from faccoder_capture.qa.accessibility import audit_accessibility_tree
+from nexcoder_capture.models import AccessibilityNode
+from nexcoder_capture.qa.accessibility import audit_accessibility_tree
 
 
 def test_audit_fully_compliant_tree() -> None:

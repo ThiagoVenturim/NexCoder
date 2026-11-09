@@ -1,10 +1,10 @@
-"""faccoder-planning: agentic sprints and tasks in git.
+"""nexcoder-planning: agentic sprints and tasks in git.
 
 Decomposes PRDs into structured backlogs, computes sprint capacity
 and velocity, and idempotently syncs tasks with Git platform issue trackers.
 """
 
-from faccoder_planning.adapters import (
+from nexcoder_planning.adapters import (
     AzureDevOpsAdapter,
     GitHubAdapter,
     GitLabAdapter,
@@ -17,7 +17,7 @@ from faccoder_planning.adapters import (
     RemoteMilestone,
     SyncSummary,
 )
-from faccoder_planning.capacity import (
+from nexcoder_planning.capacity import (
     CapacityCalculator,
     CapacityReport,
     SprintCapacityConfig,
@@ -28,7 +28,7 @@ from faccoder_planning.capacity import (
     VelocityRecord,
     VelocityTracker,
 )
-from faccoder_planning.git_helpers import (
+from nexcoder_planning.git_helpers import (
     GitResult,
     PRResult,
     build_conventional_commit,
@@ -39,15 +39,15 @@ from faccoder_planning.git_helpers import (
     strip_co_author_trailers,
     validate_no_emoji,
 )
-from faccoder_planning.models import (
+from nexcoder_planning.models import (
     AcceptanceCriterion,
     Epic,
     Plan,
     Story,
     Task,
 )
-from faccoder_planning.prd import PRDConverter
-from faccoder_planning.sync import (
+from nexcoder_planning.prd import PRDConverter
+from nexcoder_planning.sync import (
     BoardColumn,
     BoardSynchronizer,
     BoardSyncSummary,

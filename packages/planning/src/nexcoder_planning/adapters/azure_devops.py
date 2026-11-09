@@ -9,18 +9,18 @@ from typing import Any
 
 import httpx
 
-from faccoder_planning.adapters.base import (
+from nexcoder_planning.adapters.base import (
     IssueSyncResult,
     PlatformAdapter,
     RemoteIssue,
-    embed_faccoder_id,
-    extract_faccoder_id,
+    embed_nexcoder_id,
+    extract_nexcoder_id,
 )
-from faccoder_planning.models import Task
+from nexcoder_planning.models import Task
 
 logger = logging.getLogger(__name__)
 
-TAG_MARKER_REGEX = re.compile(r"\bfaccoder-id:([a-zA-Z0-9_\-]+)\b")
+TAG_MARKER_REGEX = re.compile(r"\bnexcoder-id:([a-zA-Z0-9_\-]+)\b")
 
 
 class AzureDevOpsAdapter(PlatformAdapter):
@@ -53,7 +53,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
         if self._client is None:
             headers = {
                 "Content-Type": "application/json-patch+json",
-                "User-Agent": "faccoder-planning",
+                "User-Agent": "nexcoder-planning",
             }
             if self.pat:
                 encoded_pat = base64.b64encode(f":{self.pat}".encode()).decode()
@@ -126,7 +126,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
                     if tag_match:
                         fid = tag_match.group(1)
                 if not fid:
-                    fid = extract_faccoder_id(body)
+                    fid = extract_nexcoder_id(body)
 
                 labels = [t.strip() for t in tags_str.split(";") if t.strip()] if tags_str else []
 
@@ -136,7 +136,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
                         number=wi.get("id"),
                         title=fields.get("System.Title", ""),
                         body=body,
-                        faccoder_id=fid,
+                        nexcoder_id=fid,
                         url=wi.get("url"),
                         status=fields.get("System.State", "To Do"),
                         labels=labels,
@@ -150,15 +150,15 @@ class AzureDevOpsAdapter(PlatformAdapter):
         """Create a new work item in Azure DevOps storing tracking id in both tags and body."""
         is_dry = self.dry_run if dry_run is None else dry_run
         body = task.format_markdown_body()
-        tag_marker = f"faccoder-id:{task.faccoder_id}"
+        tag_marker = f"nexcoder-id:{task.nexcoder_id}"
 
         if is_dry:
             simulated_id = 7777
             return IssueSyncResult(
                 task_id=task.id,
-                faccoder_id=task.faccoder_id,
+                nexcoder_id=task.nexcoder_id,
                 action="dry_run_create",
-                remote_id=f"dry-run-{task.faccoder_id[:8]}",
+                remote_id=f"dry-run-{task.nexcoder_id[:8]}",
                 remote_number=simulated_id,
                 url=f"{self.api_url}/{self.organization}/{self.project}/_workitems/edit/{simulated_id}",
                 message=f"[DRY-RUN] Would create Azure DevOps work item '{task.title}'",
@@ -181,7 +181,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
 
         return IssueSyncResult(
             task_id=task.id,
-            faccoder_id=task.faccoder_id,
+            nexcoder_id=task.nexcoder_id,
             action="created",
             remote_id=str(data["id"]),
             remote_number=data.get("id"),
@@ -193,13 +193,13 @@ class AzureDevOpsAdapter(PlatformAdapter):
     def update_issue(self, remote: RemoteIssue, task: Task, dry_run: bool | None = None) -> IssueSyncResult:
         """Update an existing work item in Azure DevOps preserving marker in tags and body."""
         is_dry = self.dry_run if dry_run is None else dry_run
-        body = embed_faccoder_id(task.format_markdown_body(), task.faccoder_id)
-        tag_marker = f"faccoder-id:{task.faccoder_id}"
+        body = embed_nexcoder_id(task.format_markdown_body(), task.nexcoder_id)
+        tag_marker = f"nexcoder-id:{task.nexcoder_id}"
 
         if is_dry:
             return IssueSyncResult(
                 task_id=task.id,
-                faccoder_id=task.faccoder_id,
+                nexcoder_id=task.nexcoder_id,
                 action="dry_run_update",
                 remote_id=remote.id,
                 remote_number=remote.number,
@@ -212,7 +212,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
         url = f"{self.api_url}/{self.organization}/{self.project}/_apis/wit/workitems/{remote.id}?api-version=7.0"
 
         # Combine existing labels with tag_marker
-        existing_tags = [lbl for lbl in remote.labels if not lbl.startswith("faccoder-id:")]
+        existing_tags = [lbl for lbl in remote.labels if not lbl.startswith("nexcoder-id:")]
         combined_tags = "; ".join(existing_tags + [tag_marker])
 
         patch_doc = [
@@ -226,7 +226,7 @@ class AzureDevOpsAdapter(PlatformAdapter):
 
         return IssueSyncResult(
             task_id=task.id,
-            faccoder_id=task.faccoder_id,
+            nexcoder_id=task.nexcoder_id,
             action="updated",
             remote_id=str(data["id"]),
             remote_number=data.get("id"),

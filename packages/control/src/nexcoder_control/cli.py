@@ -1,4 +1,4 @@
-"""Command-line interface for faccoder-control plane."""
+"""Command-line interface for nexcoder-control plane."""
 
 from __future__ import annotations
 
@@ -6,19 +6,19 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from faccoder_control.approval.machines import MachineApprovalManager
-from faccoder_control.approval.tokens import ApprovalTokenManager
-from faccoder_control.keys.models import APIKeyCreate
-from faccoder_control.keys.store import APIKeyService
-from faccoder_control.metering.audit import AppendOnlyAuditLog
-from faccoder_control.metering.budgets import BudgetManager
-from faccoder_control.metering.cost_tracker import CostTracker
-from faccoder_control.metering.mcp_middleware import MCPToolMeter
-from faccoder_control.web.panel import build_overview
+from nexcoder_control.approval.machines import MachineApprovalManager
+from nexcoder_control.approval.tokens import ApprovalTokenManager
+from nexcoder_control.keys.models import APIKeyCreate
+from nexcoder_control.keys.store import APIKeyService
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
+from nexcoder_control.metering.budgets import BudgetManager
+from nexcoder_control.metering.cost_tracker import CostTracker
+from nexcoder_control.metering.mcp_middleware import MCPToolMeter
+from nexcoder_control.web.panel import build_overview
 
 app = typer.Typer(
-    name="faccoder-control",
-    help="Control plane management CLI for faccoder.",
+    name="nexcoder-control",
+    help="Control plane management CLI for nexcoder.",
     no_args_is_help=True,
 )
 keys_app = typer.Typer(name="keys", help="Manage API keys, USD caps, and scopes.")
@@ -52,7 +52,7 @@ def status() -> None:
         _machine_mgr,
         _audit_log,
     )
-    table = Table(title="faccoder Control Plane Status")
+    table = Table(title="nexcoder Control Plane Status")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
 

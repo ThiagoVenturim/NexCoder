@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Any
 
-from faccoder_ideation.models import (
+from nexcoder_ideation.models import (
     AudienceSegment,
     RawIdea,
     StructuredIdea,

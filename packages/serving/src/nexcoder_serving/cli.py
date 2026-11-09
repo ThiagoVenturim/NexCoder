@@ -1,4 +1,4 @@
-"""CLI entrypoint for faccoder-serving."""
+"""CLI entrypoint for nexcoder-serving."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from pathlib import Path
 import typer
 import yaml
 
-from faccoder_serving.compose import ServingConfig, ServingProfile, generate_compose_config
+from nexcoder_serving.compose import ServingConfig, ServingProfile, generate_compose_config
 
-app = typer.Typer(help="faccoder-serving management and evaluation tool")
+app = typer.Typer(help="nexcoder-serving management and evaluation tool")
 
 
 @app.command()

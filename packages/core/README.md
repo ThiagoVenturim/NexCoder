@@ -1,6 +1,6 @@
-# faccoder-core
+# nexcoder-core
 
-Foundation shared by every faccoder package and by the sibling projects
+Foundation shared by every nexcoder package and by the sibling projects
 (askdash, Support Intelligence Engine).
 
 - Model registry with tiers (`small`, `medium`, `large`) mapped to open source
@@ -27,11 +27,11 @@ All deliverables from Issue #1 are fully implemented and verified offline:
 - [x] 13/13 unit tests passing offline with zero external dependencies
 
 ```bash
-pip install "faccoder-core[all]"
+pip install "nexcoder-core[all]"
 ```
 
 ```python
-from faccoder_core import get_chat_model, load_config
+from nexcoder_core import get_chat_model, load_config
 
 model = get_chat_model("medium", config=load_config())
 print(model.invoke("Explain RRF in one sentence.").content)

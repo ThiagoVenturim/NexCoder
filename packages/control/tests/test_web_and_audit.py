@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_control.approval.machines import MachineApprovalManager
-from faccoder_control.approval.tokens import ApprovalTokenManager
-from faccoder_control.auth.local import LocalAuthProvider
-from faccoder_control.keys.models import APIKeyCreate
-from faccoder_control.keys.store import APIKeyService
-from faccoder_control.metering.audit import AppendOnlyAuditLog
-from faccoder_control.metering.budgets import BudgetManager
-from faccoder_control.metering.cost_tracker import CostTracker
-from faccoder_control.metering.mcp_middleware import MCPToolMeter
-from faccoder_control.web.api import create_control_router
-from faccoder_control.web.panel import build_overview, render_html_panel
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from nexcoder_control.approval.machines import MachineApprovalManager
+from nexcoder_control.approval.tokens import ApprovalTokenManager
+from nexcoder_control.auth.local import LocalAuthProvider
+from nexcoder_control.keys.models import APIKeyCreate
+from nexcoder_control.keys.store import APIKeyService
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
+from nexcoder_control.metering.budgets import BudgetManager
+from nexcoder_control.metering.cost_tracker import CostTracker
+from nexcoder_control.metering.mcp_middleware import MCPToolMeter
+from nexcoder_control.web.api import create_control_router
+from nexcoder_control.web.panel import build_overview, render_html_panel
 
 
 @pytest.fixture
@@ -293,10 +293,10 @@ class TestControlWebAPI:
     ) -> None:
         overview = build_overview(key_service, cost_tracker, tool_meter, budget_manager, machine_manager, audit_log)
         html = render_html_panel(overview)
-        assert "<title>faccoder Control Plane</title>" in html
+        assert "<title>nexcoder Control Plane</title>" in html
         assert "Active API Keys" in html
 
         resp = client.get("/control/panel", headers={"Authorization": auth_setup["admin_auth"]})
         assert resp.status_code == 200
         assert "text/html" in resp.headers["content-type"]
-        assert "faccoder Control Plane" in resp.text
+        assert "nexcoder Control Plane" in resp.text

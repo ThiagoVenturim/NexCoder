@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from faccoder_ideation.models import ResearchSource
+from nexcoder_ideation.models import ResearchSource
 
 
 class SearchProvider(ABC):

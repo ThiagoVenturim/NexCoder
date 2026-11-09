@@ -7,26 +7,26 @@ from abc import ABC, abstractmethod
 
 from pydantic import BaseModel, Field
 
-from faccoder_planning.models import Plan, Task
+from nexcoder_planning.models import Plan, Task
 
-MARKER_REGEX = re.compile(r"<!--\s*faccoder-id:\s*([a-zA-Z0-9_\-]+)\s*-->")
-MARKER_TEMPLATE = "<!-- faccoder-id: {faccoder_id} -->"
+MARKER_REGEX = re.compile(r"<!--\s*nexcoder-id:\s*([a-zA-Z0-9_\-]+)\s*-->")
+MARKER_TEMPLATE = "<!-- nexcoder-id: {nexcoder_id} -->"
 
 
-def extract_faccoder_id(text: str) -> str | None:
-    """Extract faccoder tracking UUID from issue text or markdown body."""
+def extract_nexcoder_id(text: str) -> str | None:
+    """Extract nexcoder tracking UUID from issue text or markdown body."""
     if not text:
         return None
     match = MARKER_REGEX.search(text)
     return match.group(1) if match else None
 
 
-def embed_faccoder_id(body: str, faccoder_id: str) -> str:
+def embed_nexcoder_id(body: str, nexcoder_id: str) -> str:
     """Ensure the text contains the hidden tracking marker."""
-    existing_id = extract_faccoder_id(body)
-    if existing_id == faccoder_id:
+    existing_id = extract_nexcoder_id(body)
+    if existing_id == nexcoder_id:
         return body
-    marker = MARKER_TEMPLATE.format(faccoder_id=faccoder_id)
+    marker = MARKER_TEMPLATE.format(nexcoder_id=nexcoder_id)
     if not body.strip():
         return marker
     return f"{body.rstrip()}\n\n{marker}"
@@ -40,7 +40,7 @@ class RemoteIssue(BaseModel):
     node_id: str | None = None
     title: str
     body: str = ""
-    faccoder_id: str | None = None
+    nexcoder_id: str | None = None
     url: str | None = None
     status: str = "open"
     labels: list[str] = Field(default_factory=list)
@@ -50,7 +50,7 @@ class IssueSyncResult(BaseModel):
     """Outcome of attempting to sync a local task to a remote issue."""
 
     task_id: str
-    faccoder_id: str
+    nexcoder_id: str
     action: str  # created, updated, skipped, dry_run_create, dry_run_update
     remote_id: str | None = None
     remote_number: int | None = None
@@ -124,10 +124,10 @@ class PlatformAdapter(ABC):
     def list_issues(self) -> list[RemoteIssue]:
         """Fetch all existing issues, handling remote pagination."""
 
-    def find_issue_by_marker(self, faccoder_id: str) -> RemoteIssue | None:
+    def find_issue_by_marker(self, nexcoder_id: str) -> RemoteIssue | None:
         """Locate an existing remote issue by its unique embedded tracking marker."""
         for issue in self.list_issues():
-            if issue.faccoder_id == faccoder_id or extract_faccoder_id(issue.body) == faccoder_id:
+            if issue.nexcoder_id == nexcoder_id or extract_nexcoder_id(issue.body) == nexcoder_id:
                 return issue
         return None
 
@@ -142,7 +142,7 @@ class PlatformAdapter(ABC):
     def sync_task(self, task: Task, dry_run: bool | None = None) -> IssueSyncResult:
         """Idempotently create or update a single task issue."""
         is_dry = self.dry_run if dry_run is None else dry_run
-        existing = self.find_issue_by_marker(task.faccoder_id)
+        existing = self.find_issue_by_marker(task.nexcoder_id)
 
         if existing is None:
             return self.create_issue(task, dry_run=is_dry)
@@ -157,7 +157,7 @@ class PlatformAdapter(ABC):
 
         return IssueSyncResult(
             task_id=task.id,
-            faccoder_id=task.faccoder_id,
+            nexcoder_id=task.nexcoder_id,
             action="skipped",
             remote_id=existing.id,
             remote_number=existing.number,

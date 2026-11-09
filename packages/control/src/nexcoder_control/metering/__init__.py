@@ -1,24 +1,24 @@
 """Metering, cost tracking, budgets, and tamper-evident audit logging."""
 
-from faccoder_control.metering.audit import (
+from nexcoder_control.metering.audit import (
     AppendOnlyAuditLog,
     AuditEvent,
     AuditSeverity,
     compute_event_hash,
 )
-from faccoder_control.metering.budgets import (
+from nexcoder_control.metering.budgets import (
     BudgetAlert,
     BudgetExceededError,
     BudgetManager,
     BudgetPolicy,
 )
-from faccoder_control.metering.cost_tracker import (
+from nexcoder_control.metering.cost_tracker import (
     CostEntry,
     CostTracker,
     DimensionSummary,
     DimensionType,
 )
-from faccoder_control.metering.mcp_middleware import (
+from nexcoder_control.metering.mcp_middleware import (
     MCPToolMeter,
     ToolInvocationRecord,
     ToolMetrics,

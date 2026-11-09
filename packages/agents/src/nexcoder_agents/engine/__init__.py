@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from faccoder_agents.engine.blocks import (
+from nexcoder_agents.engine.blocks import (
     Ballot,
     BaseBlock,
     CommitteeBlock,
@@ -13,8 +13,8 @@ from faccoder_agents.engine.blocks import (
     PromptBlock,
     ValidatorBlock,
 )
-from faccoder_agents.engine.graph import END, START, PipelineBuilder, PipelineGraph
-from faccoder_agents.engine.models import (
+from nexcoder_agents.engine.graph import END, START, PipelineBuilder, PipelineGraph
+from nexcoder_agents.engine.models import (
     ApprovalRequest,
     ApprovalStatus,
     BlockResult,

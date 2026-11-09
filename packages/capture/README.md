@@ -1,6 +1,6 @@
-# faccoder-capture
+# nexcoder-capture
 
-Web and desktop capture, stable selectors extraction, test generation, and QA checks for faccoder.
+Web and desktop capture, stable selectors extraction, test generation, and QA checks for nexcoder.
 
 ## Features
 
@@ -20,23 +20,23 @@ Web and desktop capture, stable selectors extraction, test generation, and QA ch
 
 ## Origin
 
-Ported and generalized for the faccoder open-source platform, distilling testing patterns and screen
+Ported and generalized for the nexcoder open-source platform, distilling testing patterns and screen
 capture mechanisms from earlier enterprise platforms into a vendor-neutral, offline-capable package.
 
 ## Installation
 
 ```bash
-pip install faccoder-capture
+pip install nexcoder-capture
 # With Playwright web support:
-pip install faccoder-capture[web]
+pip install nexcoder-capture[web]
 # With desktop UI automation support:
-pip install faccoder-capture[desktop]
+pip install nexcoder-capture[desktop]
 ```
 
 ## Quick Start
 
 ```python
-from faccoder_capture.web import WebCaptureEngine, WebCaptureConfig
+from nexcoder_capture.web import WebCaptureEngine, WebCaptureConfig
 
 engine = WebCaptureEngine(config=WebCaptureConfig(capture_har=True, capture_screenshot=True))
 # Capture from local fixture or URL

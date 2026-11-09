@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from faccoder_control.auth.base import ForbiddenError
+from nexcoder_control.auth.base import ForbiddenError
 
 MachineStatus = Literal["pending", "approved", "rejected", "revoked"]
 

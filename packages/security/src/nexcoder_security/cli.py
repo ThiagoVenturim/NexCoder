@@ -5,18 +5,18 @@ import os
 import sys
 from pathlib import Path
 
-from faccoder_security.gate import (
+from nexcoder_security.gate import (
     GatePolicy,
     SecurityGateEvaluator,
     scaffold_app_security,
 )
-from faccoder_security.scanners import MultiScannerEngine, SyftScanner
+from nexcoder_security.scanners import MultiScannerEngine, SyftScanner
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="faccoder-security",
-        description="Security scanners, specialist agents, and release gate for faccoder.",
+        prog="nexcoder-security",
+        description="Security scanners, specialist agents, and release gate for nexcoder.",
     )
     subparsers = parser.add_subparsers(dest="command", help="Available security commands")
 

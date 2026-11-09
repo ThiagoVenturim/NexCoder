@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from faccoder_capture.desktop.models import DesktopCaptureResult, DesktopControlNode
-from faccoder_capture.models import WebCaptureResult
-from faccoder_capture.qa.models import AccessibilityAuditResult
+from nexcoder_capture.desktop.models import DesktopCaptureResult, DesktopControlNode
+from nexcoder_capture.models import WebCaptureResult
+from nexcoder_capture.qa.models import AccessibilityAuditResult
 
 
 def _flatten_desktop_controls(nodes: list[DesktopControlNode]) -> list[DesktopControlNode]:

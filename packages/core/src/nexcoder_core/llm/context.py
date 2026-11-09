@@ -14,7 +14,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from pydantic import BaseModel
 
-from faccoder_core.llm.memory import PinnedMemory
+from nexcoder_core.llm.memory import PinnedMemory
 
 MODEL_CONTEXT_WINDOWS: dict[str, int] = {
     # Gemini

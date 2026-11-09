@@ -3,11 +3,11 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from faccoder_core.observability.usage import current_meter
+from nexcoder_core.observability.usage import current_meter
 from pydantic import BaseModel, Field
 
-from faccoder_agents.engine.blocks.base import BaseBlock
-from faccoder_agents.engine.models import BlockResult, BlockStatus
+from nexcoder_agents.engine.blocks.base import BaseBlock
+from nexcoder_agents.engine.models import BlockResult, BlockStatus
 
 
 class ExecutionLimits(BaseModel):
@@ -73,7 +73,7 @@ class GuardrailBlock(BaseBlock):
                     message="Pipeline halted by timeout guardrail.",
                 )
 
-        # 3. Budget check (via faccoder_core meter or data['cost_usd'])
+        # 3. Budget check (via nexcoder_core meter or data['cost_usd'])
         meter = current_meter()
         current_cost = meter.cost_usd if meter is not None else float(data.get("cost_usd", 0.0))
         if self.limits.max_budget_usd is not None and current_cost >= self.limits.max_budget_usd:

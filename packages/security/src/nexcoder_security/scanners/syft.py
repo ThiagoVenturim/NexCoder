@@ -9,8 +9,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from faccoder_security.models import Finding, FindingCategory, Location, SBOMComponent, SBOMDocument
-from faccoder_security.scanners.base import BaseScanner
+from nexcoder_security.models import Finding, FindingCategory, Location, SBOMComponent, SBOMDocument
+from nexcoder_security.scanners.base import BaseScanner
 
 logger = logging.getLogger(__name__)
 

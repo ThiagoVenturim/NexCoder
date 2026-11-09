@@ -7,14 +7,14 @@ import sys
 import uuid
 from typing import Any, TextIO
 
-from faccoder_interfaces.mcp.protocol import (
+from nexcoder_interfaces.mcp.protocol import (
     JSONRPCRequest,
     JSONRPCResponse,
     MCPContentItem,
     MCPToolCallResult,
     MCPToolSchema,
 )
-from faccoder_interfaces.tools import TOOL_DEFINITIONS, ToolDefinition
+from nexcoder_interfaces.tools import TOOL_DEFINITIONS, ToolDefinition
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class MCPServer:
 
     def __init__(
         self,
-        name: str = "faccoder",
+        name: str = "nexcoder",
         version: str = "0.1.0",
         tools: dict[str, ToolDefinition] | None = None,
     ) -> None:

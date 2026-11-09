@@ -1,6 +1,6 @@
 import httpx
 import pytest
-from faccoder_planning.git_helpers import (
+from nexcoder_planning.git_helpers import (
     build_conventional_commit,
     build_pull_request_body,
     create_branch,

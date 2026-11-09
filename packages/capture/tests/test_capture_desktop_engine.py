@@ -1,16 +1,16 @@
-"""Unit tests for faccoder_capture.desktop.engine."""
+"""Unit tests for nexcoder_capture.desktop.engine."""
 
 from __future__ import annotations
 
 import sys
 from unittest.mock import MagicMock, patch
 
-from faccoder_capture.desktop.engine import (
+from nexcoder_capture.desktop.engine import (
     OFFLINE_PNG_BYTES,
     MockUIAutomationProvider,
     WindowsUIAutomationProvider,
 )
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.models import (
     DesktopBoundingBox,
     DesktopControlNode,
     DesktopWindowInfo,

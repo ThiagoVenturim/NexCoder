@@ -1,6 +1,6 @@
 """Authentication subsystem: pluggable local, OIDC, and LDAP/AD authenticators."""
 
-from faccoder_control.auth.base import (
+from nexcoder_control.auth.base import (
     AuthenticationError,
     AuthPrincipal,
     BaseAuthProvider,
@@ -8,19 +8,19 @@ from faccoder_control.auth.base import (
     InvalidTokenError,
     TokenExpiredError,
 )
-from faccoder_control.auth.ldap import (
+from nexcoder_control.auth.ldap import (
     BaseDirectoryProvider,
     DirectoryUser,
     InMemoryDirectoryProvider,
     LDAPAuthProvider,
     LDAPGroupMapping,
 )
-from faccoder_control.auth.local import (
+from nexcoder_control.auth.local import (
     LocalAuthProvider,
     LocalBearerToken,
     LocalUser,
 )
-from faccoder_control.auth.oidc import (
+from nexcoder_control.auth.oidc import (
     JWKSCache,
     MockOIDCProvider,
     OIDCAuthProvider,

@@ -4,15 +4,15 @@ import time
 from pathlib import Path
 from typing import Any
 
-from faccoder_security.models import Finding, SBOMDocument, ScanMetadata, ScanResult
-from faccoder_security.scanners.bandit import BanditScanner
-from faccoder_security.scanners.base import BaseScanner
-from faccoder_security.scanners.gitleaks import GitleaksScanner
-from faccoder_security.scanners.osv import OSVScanner
-from faccoder_security.scanners.pip_audit import PipAuditScanner
-from faccoder_security.scanners.semgrep import SemgrepScanner
-from faccoder_security.scanners.syft import SyftScanner
-from faccoder_security.scanners.trivy import TrivyScanner
+from nexcoder_security.models import Finding, SBOMDocument, ScanMetadata, ScanResult
+from nexcoder_security.scanners.bandit import BanditScanner
+from nexcoder_security.scanners.base import BaseScanner
+from nexcoder_security.scanners.gitleaks import GitleaksScanner
+from nexcoder_security.scanners.osv import OSVScanner
+from nexcoder_security.scanners.pip_audit import PipAuditScanner
+from nexcoder_security.scanners.semgrep import SemgrepScanner
+from nexcoder_security.scanners.syft import SyftScanner
+from nexcoder_security.scanners.trivy import TrivyScanner
 
 
 class MultiScannerEngine:

@@ -7,8 +7,8 @@ from typing import Any
 
 def generate_mcp_json(
     transport: str = "stdio",
-    server_name: str = "faccoder",
-    command: str = "faccoder",
+    server_name: str = "nexcoder",
+    command: str = "nexcoder",
     args: list[str] | None = None,
     url: str = "http://127.0.0.1:8000/sse",
     env: dict[str, str] | None = None,
@@ -36,8 +36,8 @@ def generate_mcp_json(
 def write_mcp_json(
     output_dir: Path | str = ".",
     transport: str = "stdio",
-    server_name: str = "faccoder",
-    command: str = "faccoder",
+    server_name: str = "nexcoder",
+    command: str = "nexcoder",
     args: list[str] | None = None,
     url: str = "http://127.0.0.1:8000/sse",
     env: dict[str, str] | None = None,
@@ -77,8 +77,8 @@ def export_claude_plugin(
 
     if include_agents:
         try:
-            from faccoder_agents.catalog import AgentCatalog, SkillCatalog
-            from faccoder_agents.export import export_claude_package
+            from nexcoder_agents.catalog import AgentCatalog, SkillCatalog
+            from nexcoder_agents.export import export_claude_package
 
             catalog = AgentCatalog.default()
             skills = SkillCatalog.default()

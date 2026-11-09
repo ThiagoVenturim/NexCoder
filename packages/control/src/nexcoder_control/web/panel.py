@@ -6,12 +6,12 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from faccoder_control.approval.machines import MachineApprovalManager
-from faccoder_control.keys.store import APIKeyService
-from faccoder_control.metering.audit import AppendOnlyAuditLog
-from faccoder_control.metering.budgets import BudgetManager
-from faccoder_control.metering.cost_tracker import CostTracker
-from faccoder_control.metering.mcp_middleware import MCPToolMeter
+from nexcoder_control.approval.machines import MachineApprovalManager
+from nexcoder_control.keys.store import APIKeyService
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
+from nexcoder_control.metering.budgets import BudgetManager
+from nexcoder_control.metering.cost_tracker import CostTracker
+from nexcoder_control.metering.mcp_middleware import MCPToolMeter
 
 
 class TopToolStat(BaseModel):
@@ -148,7 +148,7 @@ def render_html_panel(overview: ControlPlaneOverview) -> str:
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>faccoder Control Plane</title>
+    <title>nexcoder Control Plane</title>
     <style>
         :root {{
             --bg: #0f172a;
@@ -254,7 +254,7 @@ def render_html_panel(overview: ControlPlaneOverview) -> str:
 <body>
     <header>
         <div>
-            <h1>faccoder Control Plane</h1>
+            <h1>nexcoder Control Plane</h1>
             <div class="subtitle">Operational security, access keys, metering, and budgets</div>
         </div>
         <div>

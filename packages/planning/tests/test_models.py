@@ -1,4 +1,4 @@
-from faccoder_planning.models import AcceptanceCriterion, Epic, Plan, Story, Task
+from nexcoder_planning.models import AcceptanceCriterion, Epic, Plan, Story, Task
 
 
 def test_acceptance_criterion_gherkin():
@@ -32,7 +32,7 @@ def test_task_marker_and_markdown():
 
     body = task.format_markdown_body()
     assert task.build_marker() in body
-    assert f"<!-- faccoder-id: {task.faccoder_id} -->" in body
+    assert f"<!-- nexcoder-id: {task.nexcoder_id} -->" in body
     assert "TSK-01-01" in body
     assert "backend-engineer" in body
     assert "HTTP 401 Unauthorized" in body

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from faccoder_code_intel.models import Symbol
-from faccoder_code_intel.parsers.base import BaseParser
-from faccoder_code_intel.parsers.delphi import DelphiParser
-from faccoder_code_intel.parsers.treesitter import TreeSitterParser
+from nexcoder_code_intel.models import Symbol
+from nexcoder_code_intel.parsers.base import BaseParser
+from nexcoder_code_intel.parsers.delphi import DelphiParser
+from nexcoder_code_intel.parsers.treesitter import TreeSitterParser
 
 _DELPHI_PARSER = DelphiParser()
 _TREESITTER_PARSER = TreeSitterParser()

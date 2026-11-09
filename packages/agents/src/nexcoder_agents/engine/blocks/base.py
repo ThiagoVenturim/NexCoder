@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 from typing import Any
 
-from faccoder_agents.engine.models import BlockResult
+from nexcoder_agents.engine.models import BlockResult
 
 
 class BaseBlock(abc.ABC):

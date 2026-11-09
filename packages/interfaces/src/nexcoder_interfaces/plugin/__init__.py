@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from faccoder_interfaces.plugin.claude import (
+from nexcoder_interfaces.plugin.claude import (
     export_claude_plugin,
     generate_mcp_json,
     write_mcp_json,

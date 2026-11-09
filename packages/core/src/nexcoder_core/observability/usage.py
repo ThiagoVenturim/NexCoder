@@ -25,7 +25,7 @@ from typing import Any
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.outputs import LLMResult
 
-from faccoder_core.observability.pricing import cost_usd
+from nexcoder_core.observability.pricing import cost_usd
 
 
 @dataclass
@@ -77,7 +77,7 @@ class BudgetExceededError(RuntimeError):
     pass
 
 
-_current: contextvars.ContextVar[UsageMeter | None] = contextvars.ContextVar("faccoder_usage", default=None)
+_current: contextvars.ContextVar[UsageMeter | None] = contextvars.ContextVar("nexcoder_usage", default=None)
 
 
 def current_meter() -> UsageMeter | None:

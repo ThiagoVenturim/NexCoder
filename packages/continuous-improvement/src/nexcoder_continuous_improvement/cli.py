@@ -1,12 +1,12 @@
-"""CLI entrypoint for faccoder continuous improvement."""
+"""CLI entrypoint for nexcoder continuous improvement."""
 
 from __future__ import annotations
 
 import typer
 
-from faccoder_continuous_improvement.scheduler.cron import CronJob, CronScheduler
+from nexcoder_continuous_improvement.scheduler.cron import CronJob, CronScheduler
 
-app = typer.Typer(help="faccoder continuous improvement management CLI")
+app = typer.Typer(help="nexcoder continuous improvement management CLI")
 
 
 @app.command()

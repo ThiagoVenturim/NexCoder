@@ -203,7 +203,7 @@ class RotatingChatModel(BaseChatModel):
         source_model = self._get_model_name(idx)
         target_model = self._get_model_name(next_idx)
 
-        from faccoder_core.observability.usage import current_meter
+        from nexcoder_core.observability.usage import current_meter
 
         meter = current_meter()
         if meter is not None:

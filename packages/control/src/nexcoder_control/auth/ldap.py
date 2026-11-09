@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from faccoder_control.auth.base import (
+from nexcoder_control.auth.base import (
     AuthenticationError,
     AuthPrincipal,
     BaseAuthProvider,
@@ -117,7 +117,7 @@ class InMemoryDirectoryProvider(BaseDirectoryProvider):
 
 @dataclass
 class LDAPGroupMapping:
-    """Rules mapping LDAP/AD security groups to faccoder roles and scopes."""
+    """Rules mapping LDAP/AD security groups to nexcoder roles and scopes."""
 
     group_to_roles: dict[str, list[str]] = field(
         default_factory=lambda: {

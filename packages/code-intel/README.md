@@ -1,6 +1,6 @@
-# faccoder-code-intel
+# nexcoder-code-intel
 
-Code intelligence package for `faccoder`: AST and symbol parsing across languages, symbol-level chunking, CodeGraph, GraphRAG community detection, HyDE retrieval, and bottom-up documentation generation.
+Code intelligence package for `nexcoder`: AST and symbol parsing across languages, symbol-level chunking, CodeGraph, GraphRAG community detection, HyDE retrieval, and bottom-up documentation generation.
 
 ## Features
 
@@ -38,8 +38,8 @@ pip install -e packages/code-intel
 ### 1. Code Search with HyDE and Reranking
 
 ```python
-from faccoder_code_intel import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 embedder = HashEmbedder(dimensions=256)
 index = CodeSearchIndex("code_index.db", embedder=embedder)
@@ -54,7 +54,7 @@ for hit in results:
 ### 2. CodeGraph & Structural Impact Analysis
 
 ```python
-from faccoder_code_intel import CodeGraph, parse_file
+from nexcoder_code_intel import CodeGraph, parse_file
 
 graph = CodeGraph()
 symbols = parse_file("service.py") + parse_file("repo.py")
@@ -70,7 +70,7 @@ for affected in report.affected_symbols:
 ### 3. GraphRAG Community Detection
 
 ```python
-from faccoder_code_intel import CommunityDetector, GraphRAGContext
+from nexcoder_code_intel import CommunityDetector, GraphRAGContext
 
 detector = CommunityDetector()
 communities = detector.detect_communities(graph, resolutions=[1.0])
@@ -83,7 +83,7 @@ print("Discovered Subsystems:", [c["title"] for c in context["communities"]])
 ### 4. Bottom-up Documentation Generation
 
 ```python
-from faccoder_code_intel import BottomUpDocEngine
+from nexcoder_code_intel import BottomUpDocEngine
 
 engine = BottomUpDocEngine()
 doc_tree = engine.generate_tree(symbols, communities=communities)

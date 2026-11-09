@@ -1,6 +1,6 @@
-# faccoder-planning
+# nexcoder-planning
 
-Agentic planning engine for faccoder: converts Product Requirement Documents (PRDs) into structured backlogs (epics, user stories, tasks), computes sprint capacity factoring in velocity and buffer reserves, and syncs tasks with platform trackers (GitHub, GitLab, Azure DevOps) idempotently using unique tracking markers.
+Agentic planning engine for nexcoder: converts Product Requirement Documents (PRDs) into structured backlogs (epics, user stories, tasks), computes sprint capacity factoring in velocity and buffer reserves, and syncs tasks with platform trackers (GitHub, GitLab, Azure DevOps) idempotently using unique tracking markers.
 
 ## Features
 
@@ -24,7 +24,7 @@ Agentic planning engine for faccoder: converts Product Requirement Documents (PR
   - Full cursor-based pagination for Projects v2 GraphQL API, overcoming 50/100 item limits.
   - Duplicate prevention when adding items to boards.
   - Milestone management and automated issue linking.
-  - Hidden tracking marker `<!-- faccoder-id: <uuid> -->` ensuring idempotent syncing.
+  - Hidden tracking marker `<!-- nexcoder-id: <uuid> -->` ensuring idempotent syncing.
   - Safe by default: `--dry-run` is enabled across all write operations.
 - **Git Automation Helpers**:
   - Standardized branch creation from integration bases (`develop`).
@@ -52,7 +52,7 @@ pip install -e packages/planning
 ## Quick Start
 
 ```python
-from faccoder_planning import (
+from nexcoder_planning import (
     BoardSynchronizer,
     CapacityCalculator,
     GitHubAdapter,

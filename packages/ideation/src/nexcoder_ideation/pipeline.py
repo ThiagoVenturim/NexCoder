@@ -4,19 +4,19 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from faccoder_ideation.intake import IdeaAnalyst
-from faccoder_ideation.jury.committee import JuryCommittee
-from faccoder_ideation.models import (
+from nexcoder_ideation.intake import IdeaAnalyst
+from nexcoder_ideation.jury.committee import JuryCommittee
+from nexcoder_ideation.models import (
     IdeationOutput,
     RawIdea,
 )
-from faccoder_ideation.output.architecture import ArchitectureDesigner
-from faccoder_ideation.output.gate import HumanGateManager
-from faccoder_ideation.output.prd import PRDGenerator
-from faccoder_ideation.output.report import ReportGenerator
-from faccoder_ideation.research.squad import ResearchSquad
-from faccoder_ideation.search.base import SearchProvider
-from faccoder_ideation.search.providers import get_search_provider
+from nexcoder_ideation.output.architecture import ArchitectureDesigner
+from nexcoder_ideation.output.gate import HumanGateManager
+from nexcoder_ideation.output.prd import PRDGenerator
+from nexcoder_ideation.output.report import ReportGenerator
+from nexcoder_ideation.research.squad import ResearchSquad
+from nexcoder_ideation.search.base import SearchProvider
+from nexcoder_ideation.search.providers import get_search_provider
 
 logger = logging.getLogger(__name__)
 

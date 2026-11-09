@@ -7,7 +7,7 @@ import random
 from pathlib import Path
 from typing import Any, Literal
 
-from faccoder_serving.raft.anonymizer import Anonymizer
+from nexcoder_serving.raft.anonymizer import Anonymizer
 from pydantic import BaseModel, Field
 
 

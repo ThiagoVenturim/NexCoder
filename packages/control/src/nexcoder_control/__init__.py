@@ -1,8 +1,8 @@
-"""faccoder-control: Control plane for authentication, API keys,
+"""nexcoder-control: Control plane for authentication, API keys,
 rate limits, metering, budgets, audit, and governance.
 """
 
-from faccoder_control.approval import (
+from nexcoder_control.approval import (
     ApprovalRequiredError,
     ApprovalTokenManager,
     ApprovalTokenRecord,
@@ -10,7 +10,7 @@ from faccoder_control.approval import (
     MachineApprovalManager,
     MachineStatus,
 )
-from faccoder_control.auth import (
+from nexcoder_control.auth import (
     AuthenticationError,
     AuthPrincipal,
     BaseAuthProvider,
@@ -30,7 +30,7 @@ from faccoder_control.auth import (
     OIDCConfig,
     TokenExpiredError,
 )
-from faccoder_control.keys import (
+from nexcoder_control.keys import (
     APIKeyCreate,
     APIKeyCreatedResult,
     APIKeyRecord,
@@ -42,7 +42,7 @@ from faccoder_control.keys import (
     RateLimitExceededError,
     TokenBucket,
 )
-from faccoder_control.metering import (
+from nexcoder_control.metering import (
     AppendOnlyAuditLog,
     AuditEvent,
     AuditSeverity,
@@ -59,7 +59,7 @@ from faccoder_control.metering import (
     ToolMetrics,
     compute_event_hash,
 )
-from faccoder_control.web import (
+from nexcoder_control.web import (
     ControlPlaneOverview,
     TopToolStat,
     build_overview,

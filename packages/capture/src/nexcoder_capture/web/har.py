@@ -7,7 +7,7 @@ import re
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from faccoder_capture.models import NetworkEntry
+from nexcoder_capture.models import NetworkEntry
 
 SENSITIVE_HEADERS = {
     "authorization",
@@ -123,7 +123,7 @@ class HarRecorder:
         self.entries.append(entry)
         return entry
 
-    def to_har_dict(self, creator_name: str = "faccoder-capture") -> dict[str, Any]:
+    def to_har_dict(self, creator_name: str = "nexcoder-capture") -> dict[str, Any]:
         """Convert recorded entries to HAR 1.2 standard dictionary structure."""
         har_entries: list[dict[str, Any]] = []
         for e in self.entries:

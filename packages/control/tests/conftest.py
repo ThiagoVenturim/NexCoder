@@ -1,18 +1,18 @@
-"""Pytest fixtures for faccoder-control tests."""
+"""Pytest fixtures for nexcoder-control tests."""
 
 from __future__ import annotations
 
 import pytest
-from faccoder_control.approval.machines import MachineApprovalManager
-from faccoder_control.approval.tokens import ApprovalTokenManager
-from faccoder_control.auth.ldap import InMemoryDirectoryProvider, LDAPAuthProvider
-from faccoder_control.auth.local import LocalAuthProvider
-from faccoder_control.auth.oidc import MockOIDCProvider, OIDCAuthProvider, OIDCConfig
-from faccoder_control.keys.store import APIKeyService, InMemoryAPIKeyStore
-from faccoder_control.metering.audit import AppendOnlyAuditLog
-from faccoder_control.metering.budgets import BudgetManager
-from faccoder_control.metering.cost_tracker import CostTracker
-from faccoder_control.metering.mcp_middleware import MCPToolMeter
+from nexcoder_control.approval.machines import MachineApprovalManager
+from nexcoder_control.approval.tokens import ApprovalTokenManager
+from nexcoder_control.auth.ldap import InMemoryDirectoryProvider, LDAPAuthProvider
+from nexcoder_control.auth.local import LocalAuthProvider
+from nexcoder_control.auth.oidc import MockOIDCProvider, OIDCAuthProvider, OIDCConfig
+from nexcoder_control.keys.store import APIKeyService, InMemoryAPIKeyStore
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
+from nexcoder_control.metering.budgets import BudgetManager
+from nexcoder_control.metering.cost_tracker import CostTracker
+from nexcoder_control.metering.mcp_middleware import MCPToolMeter
 
 
 @pytest.fixture

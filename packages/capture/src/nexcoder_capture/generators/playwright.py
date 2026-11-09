@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urlparse
 
-from faccoder_capture.models import StableSelector, WebCaptureResult
+from nexcoder_capture.models import StableSelector, WebCaptureResult
 
 
 def _sanitize_name(text: str, fallback: str = "capture_page") -> str:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from faccoder_security.gate.policy import GatePolicy, GateVerdict
-from faccoder_security.models import Finding, SBOMDocument, ScanResult, Severity
+from nexcoder_security.gate.policy import GatePolicy, GateVerdict
+from nexcoder_security.models import Finding, SBOMDocument, ScanResult, Severity
 
 
 class SecurityGateEvaluator:

@@ -10,10 +10,10 @@ def research_idea(
 ) -> dict[str, Any]:
     """Research an idea using the specialist research squad."""
     try:
-        from faccoder_ideation.intake import IdeaAnalyst
-        from faccoder_ideation.models import RawIdea
-        from faccoder_ideation.research.squad import ResearchSquad
-        from faccoder_ideation.search.providers import MockSearchProvider, get_search_provider
+        from nexcoder_ideation.intake import IdeaAnalyst
+        from nexcoder_ideation.models import RawIdea
+        from nexcoder_ideation.research.squad import ResearchSquad
+        from nexcoder_ideation.search.providers import MockSearchProvider, get_search_provider
     except ImportError as exc:
         return {
             "status": "error",
@@ -53,11 +53,11 @@ def judge_idea(
 ) -> dict[str, Any]:
     """Evaluate an idea through the jury committee."""
     try:
-        from faccoder_ideation.intake import IdeaAnalyst
-        from faccoder_ideation.jury.committee import JuryCommittee
-        from faccoder_ideation.models import RawIdea, ResearchSquadReport
-        from faccoder_ideation.research.squad import ResearchSquad
-        from faccoder_ideation.search.providers import MockSearchProvider, get_search_provider
+        from nexcoder_ideation.intake import IdeaAnalyst
+        from nexcoder_ideation.jury.committee import JuryCommittee
+        from nexcoder_ideation.models import RawIdea, ResearchSquadReport
+        from nexcoder_ideation.research.squad import ResearchSquad
+        from nexcoder_ideation.search.providers import MockSearchProvider, get_search_provider
     except ImportError as exc:
         return {
             "status": "error",

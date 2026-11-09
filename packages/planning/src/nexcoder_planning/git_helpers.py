@@ -351,7 +351,7 @@ def create_pull_request(
 
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "faccoder-planning",
+        "User-Agent": "nexcoder-planning",
     }
     if token:
         headers["Authorization"] = f"Bearer {token}"

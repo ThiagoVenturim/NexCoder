@@ -12,8 +12,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from faccoder_code_intel.graph.communities import Community
-from faccoder_code_intel.models import Symbol, SymbolType
+from nexcoder_code_intel.graph.communities import Community
+from nexcoder_code_intel.models import Symbol, SymbolType
 
 logger = logging.getLogger(__name__)
 

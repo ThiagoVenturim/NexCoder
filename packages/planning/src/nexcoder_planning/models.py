@@ -6,7 +6,7 @@ import uuid
 
 from pydantic import BaseModel, Field
 
-MARKER_TEMPLATE = "<!-- faccoder-id: {faccoder_id} -->"
+MARKER_TEMPLATE = "<!-- nexcoder-id: {nexcoder_id} -->"
 
 
 class AcceptanceCriterion(BaseModel):
@@ -25,7 +25,7 @@ class Task(BaseModel):
     """Granular actionable task derived from a user story."""
 
     id: str
-    faccoder_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nexcoder_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     description: str = ""
     acceptance_criteria: list[AcceptanceCriterion] = Field(default_factory=list)
@@ -39,7 +39,7 @@ class Task(BaseModel):
 
     def build_marker(self) -> str:
         """Generate the hidden HTML tracking comment embedded in ticket bodies."""
-        return MARKER_TEMPLATE.format(faccoder_id=self.faccoder_id)
+        return MARKER_TEMPLATE.format(nexcoder_id=self.nexcoder_id)
 
     def format_markdown_body(self) -> str:
         """Render a full markdown description including acceptance criteria and tracking marker."""
@@ -77,7 +77,7 @@ class Story(BaseModel):
     """User story grouping related tasks into a deliverable slice of value."""
 
     id: str
-    faccoder_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nexcoder_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     description: str = ""
     tasks: list[Task] = Field(default_factory=list)
@@ -97,7 +97,7 @@ class Epic(BaseModel):
     """Top-level thematic feature or project initiative."""
 
     id: str
-    faccoder_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nexcoder_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     description: str = ""
     stories: list[Story] = Field(default_factory=list)
@@ -142,10 +142,10 @@ class Plan(BaseModel):
                 return task
         return None
 
-    def find_task_by_faccoder_id(self, faccoder_id: str) -> Task | None:
-        """Look up a task by its unique faccoder ID."""
+    def find_task_by_nexcoder_id(self, nexcoder_id: str) -> Task | None:
+        """Look up a task by its unique nexcoder ID."""
         for task in self.all_tasks():
-            if task.faccoder_id == faccoder_id:
+            if task.nexcoder_id == nexcoder_id:
                 return task
         return None
 

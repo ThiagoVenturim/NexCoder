@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from faccoder_control.approval import ApprovalTokenManager
-from faccoder_control.auth.local import LocalAuthProvider
-from faccoder_control.keys import APIKeyCreate, APIKeyService
-from faccoder_interfaces.api.app import create_app
+from nexcoder_control.approval import ApprovalTokenManager
+from nexcoder_control.auth.local import LocalAuthProvider
+from nexcoder_control.keys import APIKeyCreate, APIKeyService
+from nexcoder_interfaces.api.app import create_app
 from starlette.testclient import TestClient
 
 

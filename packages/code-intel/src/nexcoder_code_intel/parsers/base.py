@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from faccoder_code_intel.models import Symbol
+from nexcoder_code_intel.models import Symbol
 
 
 class BaseParser(ABC):

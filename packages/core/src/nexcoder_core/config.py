@@ -1,10 +1,10 @@
 """Project configuration.
 
-Configuration comes from ``faccoder.yaml`` (searched from the current directory
+Configuration comes from ``nexcoder.yaml`` (searched from the current directory
 upwards) and can be overridden by environment variables. Secrets never live in
 the YAML file: the file names the environment variable that holds each key.
 
-Example ``faccoder.yaml``::
+Example ``nexcoder.yaml``::
 
     preset: hybrid            # all-open-source | all-paid | hybrid | local-vllm
     tiers:                    # optional overrides of the preset
@@ -23,11 +23,11 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, Field
 
-from faccoder_core.llm.presets import PRESETS
+from nexcoder_core.llm.presets import PRESETS
 
 Tier = Literal["small", "medium", "large"]
 
-CONFIG_FILENAMES = ("faccoder.yaml", "faccoder.yml", ".faccoder.yaml")
+CONFIG_FILENAMES = ("nexcoder.yaml", "nexcoder.yml", ".nexcoder.yaml")
 
 
 class ModelSpec(BaseModel):
@@ -76,11 +76,11 @@ class BudgetSpec(BaseModel):
 
 class StorageSpec(BaseModel):
     backend: Literal["sqlite", "postgres"] = "sqlite"
-    path: str = ".faccoder/index.sqlite"
-    dsn_env: str = "FACCODER_POSTGRES_DSN"
+    path: str = ".nexcoder/index.sqlite"
+    dsn_env: str = "NEXCODER_POSTGRES_DSN"
 
 
-class FaccoderConfig(BaseModel):
+class NexcoderConfig(BaseModel):
     preset: str = "hybrid"
     tiers: dict[str, ModelSpec] = Field(default_factory=dict)
     embeddings: EmbeddingSpec = Field(default_factory=EmbeddingSpec)
@@ -112,11 +112,11 @@ def find_config_file(start: Path | None = None) -> Path | None:
     return None
 
 
-def load_config(path: str | Path | None = None) -> FaccoderConfig:
-    """Load configuration from a file (or the nearest faccoder.yaml) plus env overrides.
+def load_config(path: str | Path | None = None) -> NexcoderConfig:
+    """Load configuration from a file (or the nearest nexcoder.yaml) plus env overrides.
 
     Environment overrides:
-        FACCODER_PRESET   replaces ``preset``
+        NEXCODER_PRESET   replaces ``preset``
     """
     file_path = Path(path) if path else find_config_file()
     data: dict = {}
@@ -124,7 +124,7 @@ def load_config(path: str | Path | None = None) -> FaccoderConfig:
         data = yaml.safe_load(file_path.read_text(encoding="utf-8")) or {}
         data.setdefault("project_root", str(file_path.parent))
 
-    if os.environ.get("FACCODER_PRESET"):
-        data["preset"] = os.environ["FACCODER_PRESET"]
+    if os.environ.get("NEXCODER_PRESET"):
+        data["preset"] = os.environ["NEXCODER_PRESET"]
 
-    return FaccoderConfig.model_validate(data)
+    return NexcoderConfig.model_validate(data)

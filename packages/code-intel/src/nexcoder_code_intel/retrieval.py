@@ -1,6 +1,6 @@
 """Symbol retrieval and semantic search over codebases.
 
-Integrates with faccoder-core HybridStore (SQLite FTS5 + vectors),
+Integrates with nexcoder-core HybridStore (SQLite FTS5 + vectors),
 rrf_fuse (Reciprocal Rank Fusion), mmr_select (Maximal Marginal Relevance),
 second-stage cross-encoder reranking, and HyDE query expansion.
 """
@@ -13,13 +13,13 @@ import os
 from pathlib import Path
 from typing import Any
 
-from faccoder_core.retrieval.embeddings import Embedder
-from faccoder_core.retrieval.fusion import mmr_select, rrf_fuse
-from faccoder_core.retrieval.rerank import NoReranker, Reranker
-from faccoder_core.store.sqlite_store import HybridStore
+from nexcoder_core.retrieval.embeddings import Embedder
+from nexcoder_core.retrieval.fusion import mmr_select, rrf_fuse
+from nexcoder_core.retrieval.rerank import NoReranker, Reranker
+from nexcoder_core.store.sqlite_store import HybridStore
 
-from faccoder_code_intel.chunking import CodeChunk, SymbolChunker
-from faccoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter
+from nexcoder_code_intel.chunking import CodeChunk, SymbolChunker
+from nexcoder_code_intel.query_expansion import HyDEGenerator, QueryRewriter
 
 logger = logging.getLogger(__name__)
 

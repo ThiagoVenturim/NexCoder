@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from faccoder_core.observability.pricing import cost_usd
+from nexcoder_core.observability.pricing import cost_usd
 from pydantic import BaseModel, Field
 
 

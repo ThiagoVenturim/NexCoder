@@ -20,7 +20,7 @@ from pathlib import Path
 
 import numpy as np
 
-from faccoder_core.retrieval.fusion import rrf_fuse
+from nexcoder_core.retrieval.fusion import rrf_fuse
 
 
 @dataclass

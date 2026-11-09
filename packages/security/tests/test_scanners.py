@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from faccoder_security.models import FindingCategory, Severity
-from faccoder_security.scanners import (
+from nexcoder_security.models import FindingCategory, Severity
+from nexcoder_security.scanners import (
     BanditScanner,
     GitleaksScanner,
     MultiScannerEngine,

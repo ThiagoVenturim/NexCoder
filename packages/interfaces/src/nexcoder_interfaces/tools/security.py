@@ -11,8 +11,8 @@ def security_scan(
 ) -> dict[str, Any]:
     """Execute multi-scanner security analysis and evaluate release gate verdict."""
     try:
-        from faccoder_security.gate import GatePolicy, SecurityGateEvaluator
-        from faccoder_security.scanners import MultiScannerEngine
+        from nexcoder_security.gate import GatePolicy, SecurityGateEvaluator
+        from nexcoder_security.scanners import MultiScannerEngine
     except ImportError as exc:
         return {
             "status": "error",

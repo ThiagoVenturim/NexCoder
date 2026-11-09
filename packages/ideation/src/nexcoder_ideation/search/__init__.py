@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from faccoder_ideation.search.base import SearchProvider
-from faccoder_ideation.search.providers import (
+from nexcoder_ideation.search.base import SearchProvider
+from nexcoder_ideation.search.providers import (
     BraveSearchProvider,
     DuckDuckGoSearchProvider,
     MockSearchProvider,

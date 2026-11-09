@@ -8,9 +8,9 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from faccoder_planning.adapters.base import PlatformAdapter, RemoteIssue
-from faccoder_planning.capacity import SprintCapacityConfig
-from faccoder_planning.models import Plan, Task
+from nexcoder_planning.adapters.base import PlatformAdapter, RemoteIssue
+from nexcoder_planning.capacity import SprintCapacityConfig
+from nexcoder_planning.models import Plan, Task
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class IssuePRBinding(BaseModel):
     """Reconciled state linking a local task, remote issue, and optional pull request."""
 
     task_id: str
-    faccoder_id: str
+    nexcoder_id: str
     issue_number: int | None = None
     pr_number: int | None = None
     current_column: str = BoardColumn.BACKLOG.value
@@ -236,14 +236,14 @@ class BoardSynchronizer:
         completed_task_ids: set[str] = set()
         moved_count = 0
 
-        # Build map of remote issues by faccoder_id
+        # Build map of remote issues by nexcoder_id
         remote_issues = self.adapter.list_issues()
         issues_by_marker: dict[str, RemoteIssue] = {}
         issues_by_id: dict[str, RemoteIssue] = {}
         for issue in remote_issues:
             issues_by_id[issue.id] = issue
-            if issue.faccoder_id:
-                issues_by_marker[issue.faccoder_id] = issue
+            if issue.nexcoder_id:
+                issues_by_marker[issue.nexcoder_id] = issue
 
         # If project_id provided, fetch actual board items to read current column
         board_items_by_content_id: dict[str, Any] = {}
@@ -256,7 +256,7 @@ class BoardSynchronizer:
                     board_items_by_number[b_item.content_number] = b_item
 
         for task in plan.all_tasks():
-            remote = issues_by_marker.get(task.faccoder_id)
+            remote = issues_by_marker.get(task.nexcoder_id)
             issue_num = remote.number if remote else None
             pr_state = pr_states.get(issue_num) if issue_num else None
 
@@ -306,7 +306,7 @@ class BoardSynchronizer:
             bindings.append(
                 IssuePRBinding(
                     task_id=task.id,
-                    faccoder_id=task.faccoder_id,
+                    nexcoder_id=task.nexcoder_id,
                     issue_number=issue_num,
                     pr_number=None,
                     current_column=current_col,

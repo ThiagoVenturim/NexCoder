@@ -1,11 +1,11 @@
 """Web capture module."""
 
-from faccoder_capture.web.accessibility import AccessibilityExtractor
-from faccoder_capture.web.capture import WebCaptureEngine
-from faccoder_capture.web.har import HarRecorder, sanitize_headers
-from faccoder_capture.web.policy import PolicyEnforcer
-from faccoder_capture.web.selectors import SelectorExtractor
-from faccoder_capture.web.session import SessionManager
+from nexcoder_capture.web.accessibility import AccessibilityExtractor
+from nexcoder_capture.web.capture import WebCaptureEngine
+from nexcoder_capture.web.har import HarRecorder, sanitize_headers
+from nexcoder_capture.web.policy import PolicyEnforcer
+from nexcoder_capture.web.selectors import SelectorExtractor
+from nexcoder_capture.web.session import SessionManager
 
 __all__ = [
     "AccessibilityExtractor",

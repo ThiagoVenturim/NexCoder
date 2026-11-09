@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from faccoder_capture.models import CaptchaDetectedError, ReadOnlyViolationError, WebCaptureConfig
-from faccoder_capture.web.policy import PolicyEnforcer
+from nexcoder_capture.models import CaptchaDetectedError, ReadOnlyViolationError, WebCaptureConfig
+from nexcoder_capture.web.policy import PolicyEnforcer
 
 MUTATING_KEYWORDS = (
     "delete",

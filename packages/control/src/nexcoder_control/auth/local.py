@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from faccoder_control.auth.base import (
+from nexcoder_control.auth.base import (
     AuthenticationError,
     AuthPrincipal,
     BaseAuthProvider,

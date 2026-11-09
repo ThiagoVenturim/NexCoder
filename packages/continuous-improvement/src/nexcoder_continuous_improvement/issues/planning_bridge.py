@@ -30,7 +30,7 @@ class ImprovementFinding(BaseModel):
 
 
 class PlanningBridge:
-    """Bridges improvement findings to formatted tasks compatible with faccoder-planning."""
+    """Bridges improvement findings to formatted tasks compatible with nexcoder-planning."""
 
     def create_task_payload(self, finding: ImprovementFinding) -> dict[str, Any]:
         """Format an improvement finding as a standardized task definition."""

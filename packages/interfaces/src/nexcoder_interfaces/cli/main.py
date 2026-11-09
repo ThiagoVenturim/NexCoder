@@ -6,17 +6,17 @@ from pathlib import Path
 
 import typer
 
-from faccoder_interfaces.mcp.server import MCPServer
-from faccoder_interfaces.plugin.claude import export_claude_plugin, write_mcp_json
-from faccoder_interfaces.tools.agents import run_agent, run_pipeline
-from faccoder_interfaces.tools.code import generate_docs, search_code
-from faccoder_interfaces.tools.ideation import judge_idea, research_idea
-from faccoder_interfaces.tools.planning import plan_sprints
-from faccoder_interfaces.tools.unavailable import capture_page, generate_tests
+from nexcoder_interfaces.mcp.server import MCPServer
+from nexcoder_interfaces.plugin.claude import export_claude_plugin, write_mcp_json
+from nexcoder_interfaces.tools.agents import run_agent, run_pipeline
+from nexcoder_interfaces.tools.code import generate_docs, search_code
+from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
+from nexcoder_interfaces.tools.planning import plan_sprints
+from nexcoder_interfaces.tools.unavailable import capture_page, generate_tests
 
 app = typer.Typer(
-    name="faccoder",
-    help="Unified CLI for the faccoder platform.",
+    name="nexcoder",
+    help="Unified CLI for the nexcoder platform.",
     no_args_is_help=True,
 )
 
@@ -34,16 +34,16 @@ def cmd_init(
     preset: str = typer.Option("hybrid", "--preset", help="Configuration preset (offline, hybrid, all-paid)."),
     force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing configuration file."),
 ) -> None:
-    """Initialize a new faccoder project with faccoder.yaml configuration."""
+    """Initialize a new nexcoder project with nexcoder.yaml configuration."""
     target_dir = path.resolve()
     target_dir.mkdir(parents=True, exist_ok=True)
-    config_file = target_dir / "faccoder.yaml"
+    config_file = target_dir / "nexcoder.yaml"
 
     if config_file.exists() and not force:
         print(f"Configuration file already exists at {config_file}. Use --force to overwrite.")
         return
 
-    content = f"""# faccoder project configuration
+    content = f"""# nexcoder project configuration
 preset: {preset}
 tiers:
   small: {{provider: local, model: mock}}
@@ -59,7 +59,7 @@ budget:
   max_delegation_depth: 2
 """
     config_file.write_text(content, encoding="utf-8")
-    print(f"Successfully initialized faccoder project at {config_file}")
+    print(f"Successfully initialized nexcoder project at {config_file}")
 
 
 @app.command(name="idea")
@@ -126,7 +126,7 @@ def cmd_capture(
     url_or_spec: str = typer.Argument(..., help="URL or target spec for capture."),
     generate_test: bool = typer.Option(False, "--tests", help="Generate tests from capture."),
 ) -> None:
-    """Capture page DOM and generate automated test suite (faccoder-capture)."""
+    """Capture page DOM and generate automated test suite (nexcoder-capture)."""
     if generate_test:
         result = generate_tests(page_or_spec=url_or_spec)
     else:
@@ -196,7 +196,7 @@ def cmd_serve(
 
         import uvicorn
 
-        from faccoder_interfaces.api.app import create_app
+        from nexcoder_interfaces.api.app import create_app
 
         fastapi_app = create_app(
             api_key=api_key,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from faccoder_ideation.research.base import BaseResearcher
-from faccoder_ideation.research.specialists import (
+from nexcoder_ideation.research.base import BaseResearcher
+from nexcoder_ideation.research.specialists import (
     CompetitorScout,
     DifferentiatorAnalyst,
     GapHunter,
@@ -10,7 +10,7 @@ from faccoder_ideation.research.specialists import (
     PricingResearcher,
     UserVoiceResearcher,
 )
-from faccoder_ideation.research.squad import ResearchSquad
+from nexcoder_ideation.research.squad import ResearchSquad
 
 __all__ = [
     "BaseResearcher",

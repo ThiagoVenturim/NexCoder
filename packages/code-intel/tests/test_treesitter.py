@@ -1,8 +1,8 @@
 """Tests for Tree-sitter parsers across supported languages."""
 
-from faccoder_code_intel.models import RelationshipKind, SymbolType
-from faccoder_code_intel.parsers import get_parser_for_file, parse_file
-from faccoder_code_intel.parsers.treesitter import TreeSitterParser
+from nexcoder_code_intel.models import RelationshipKind, SymbolType
+from nexcoder_code_intel.parsers import get_parser_for_file, parse_file
+from nexcoder_code_intel.parsers.treesitter import TreeSitterParser
 
 
 def test_python_parsing() -> None:

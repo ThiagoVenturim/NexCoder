@@ -1,10 +1,10 @@
-# faccoder-control
+# nexcoder-control
 
-Control plane for faccoder: authentication, API keys, rate limits, per-tool metering, budgets, audit, approval tokens, and web panel.
+Control plane for nexcoder: authentication, API keys, rate limits, per-tool metering, budgets, audit, approval tokens, and web panel.
 
 ## Overview
 
-`faccoder-control` provides security, cost governance, and operational policy enforcement for multi-tenant and agentic workflows:
+`nexcoder-control` provides security, cost governance, and operational policy enforcement for multi-tenant and agentic workflows:
 
 1. **Pluggable Authentication**:
    - **Local Authenticator**: Username/password with PBKDF2 hashing, bearer tokens with permission scopes.
@@ -33,13 +33,13 @@ Control plane for faccoder: authentication, API keys, rate limits, per-tool mete
 ## Installation
 
 ```bash
-pip install faccoder-control
+pip install nexcoder-control
 ```
 
 Or install with optional web panel and CLI dependencies:
 
 ```bash
-pip install "faccoder-control[web,cli]"
+pip install "nexcoder-control[web,cli]"
 ```
 
 ## Quick Start
@@ -47,7 +47,7 @@ pip install "faccoder-control[web,cli]"
 ### API Keys and Rate Limiting
 
 ```python
-from faccoder_control import APIKeyCreate, APIKeyService
+from nexcoder_control import APIKeyCreate, APIKeyService
 
 service = APIKeyService()
 
@@ -76,7 +76,7 @@ print(f"Authenticated Owner: {verified.owner}")
 ### Metering MCP Tools
 
 ```python
-from faccoder_control import MCPToolMeter
+from nexcoder_control import MCPToolMeter
 
 meter = MCPToolMeter()
 
@@ -101,7 +101,7 @@ print(f"Invocations: {metrics.invocations}, Cost: ${metrics.total_cost_usd:.4f}"
 ### Cryptographic Append-Only Audit Log
 
 ```python
-from faccoder_control import AppendOnlyAuditLog
+from nexcoder_control import AppendOnlyAuditLog
 
 audit = AppendOnlyAuditLog()
 

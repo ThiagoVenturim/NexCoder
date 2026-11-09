@@ -64,7 +64,7 @@ def run_agent(
 ) -> dict[str, Any]:
     """Execute a task with a specialist agent from the catalog."""
     try:
-        from faccoder_agents.catalog import AgentCatalog
+        from nexcoder_agents.catalog import AgentCatalog
     except ImportError as exc:
         return {
             "status": "error",
@@ -107,7 +107,7 @@ def run_pipeline(
 ) -> dict[str, Any]:
     """Execute a multi-block agentic pipeline graph."""
     try:
-        from faccoder_agents.engine import (
+        from nexcoder_agents.engine import (
             HumanApprovalBlock,
             PipelineBuilder,
             PromptBlock,
@@ -119,9 +119,9 @@ def run_pipeline(
             "message": f"Agents package not available: {exc}",
         }
 
-    from faccoder_core import FaccoderConfig
+    from nexcoder_core import NexcoderConfig
 
-    cfg = FaccoderConfig(preset="offline") if dry_run else None
+    cfg = NexcoderConfig(preset="offline") if dry_run else None
 
     builder = PipelineBuilder(pipeline_name)
     # Default pipeline scaffold if standard named pipeline requested
@@ -195,7 +195,7 @@ def approve_step(
 ) -> dict[str, Any]:
     """Approve a paused human approval gate using a secure token."""
     try:
-        from faccoder_agents.engine.models import ApprovalStatus
+        from nexcoder_agents.engine.models import ApprovalStatus
     except ImportError as exc:
         return {
             "status": "error",

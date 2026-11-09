@@ -5,8 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from faccoder_security.agents.base import BaseSecurityAgent
-from faccoder_security.models import Finding
+from nexcoder_security.agents.base import BaseSecurityAgent
+from nexcoder_security.models import Finding
 
 
 class TriageVerdict(enum.StrEnum):

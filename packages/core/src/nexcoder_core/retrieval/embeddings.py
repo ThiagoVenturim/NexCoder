@@ -22,7 +22,7 @@ from typing import Protocol
 
 import httpx
 
-from faccoder_core.config import EmbeddingSpec
+from nexcoder_core.config import EmbeddingSpec
 
 
 class Embedder(Protocol):
@@ -61,7 +61,7 @@ class SentenceTransformerEmbedder:
         try:
             from sentence_transformers import SentenceTransformer
         except ImportError as exc:
-            raise ImportError("pip install faccoder-core[local-embeddings]") from exc
+            raise ImportError("pip install nexcoder-core[local-embeddings]") from exc
         self._model = SentenceTransformer(model)
         self.dimensions = int(self._model.get_sentence_embedding_dimension())
 
@@ -172,7 +172,7 @@ def build_embedder(spec: EmbeddingSpec) -> Embedder:
         try:
             from langchain_google_genai import GoogleGenerativeAIEmbeddings
         except ImportError as exc:
-            raise ImportError("pip install faccoder-core[google]") from exc
+            raise ImportError("pip install nexcoder-core[google]") from exc
         model = GoogleGenerativeAIEmbeddings(
             model=spec.model, google_api_key=api_key or os.environ.get("GOOGLE_API_KEY")
         )

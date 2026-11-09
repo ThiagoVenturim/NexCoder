@@ -8,17 +8,17 @@ from typing import Any
 
 import httpx
 
-from faccoder_planning.adapters.base import (
+from nexcoder_planning.adapters.base import (
     IssueSyncResult,
     PlatformAdapter,
     ProjectV2Item,
     ProjectV2ItemResult,
     RemoteIssue,
     RemoteMilestone,
-    embed_faccoder_id,
-    extract_faccoder_id,
+    embed_nexcoder_id,
+    extract_nexcoder_id,
 )
-from faccoder_planning.models import Task
+from nexcoder_planning.models import Task
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class GitLabAdapter(PlatformAdapter):
 
         if self._client is None or self._client.is_closed:
             headers = {
-                "User-Agent": "faccoder-planning",
+                "User-Agent": "nexcoder-planning",
             }
             if self.token:
                 headers["PRIVATE-TOKEN"] = self.token
@@ -94,7 +94,7 @@ class GitLabAdapter(PlatformAdapter):
 
             for item in items:
                 body = item.get("description") or ""
-                fid = extract_faccoder_id(body)
+                fid = extract_nexcoder_id(body)
                 labels = item.get("labels", [])
 
                 remote_issues.append(
@@ -104,7 +104,7 @@ class GitLabAdapter(PlatformAdapter):
                         node_id=str(item.get("id")),
                         title=item.get("title", ""),
                         body=body,
-                        faccoder_id=fid,
+                        nexcoder_id=fid,
                         url=item.get("web_url"),
                         status="closed" if item.get("state") == "closed" else "open",
                         labels=labels,
@@ -128,9 +128,9 @@ class GitLabAdapter(PlatformAdapter):
             simulated_iid = 8888
             return IssueSyncResult(
                 task_id=task.id,
-                faccoder_id=task.faccoder_id,
+                nexcoder_id=task.nexcoder_id,
                 action="dry_run_create",
-                remote_id=f"dry-run-{task.faccoder_id[:8]}",
+                remote_id=f"dry-run-{task.nexcoder_id[:8]}",
                 remote_number=simulated_iid,
                 url=f"{self.api_url}/projects/{self.project_id}/issues/{simulated_iid}",
                 message=f"[DRY-RUN] Would create GitLab issue '{task.title}'",
@@ -150,7 +150,7 @@ class GitLabAdapter(PlatformAdapter):
 
         return IssueSyncResult(
             task_id=task.id,
-            faccoder_id=task.faccoder_id,
+            nexcoder_id=task.nexcoder_id,
             action="created",
             remote_id=str(data["id"]),
             remote_number=data.get("iid"),
@@ -162,13 +162,13 @@ class GitLabAdapter(PlatformAdapter):
     def update_issue(self, remote: RemoteIssue, task: Task, dry_run: bool | None = None) -> IssueSyncResult:
         """Update an existing GitLab issue."""
         is_dry = self.dry_run if dry_run is None else dry_run
-        body = embed_faccoder_id(task.format_markdown_body(), task.faccoder_id)
+        body = embed_nexcoder_id(task.format_markdown_body(), task.nexcoder_id)
         labels = self._compute_labels(task)
 
         if is_dry:
             return IssueSyncResult(
                 task_id=task.id,
-                faccoder_id=task.faccoder_id,
+                nexcoder_id=task.nexcoder_id,
                 action="dry_run_update",
                 remote_id=remote.id,
                 remote_number=remote.number,
@@ -191,7 +191,7 @@ class GitLabAdapter(PlatformAdapter):
 
         return IssueSyncResult(
             task_id=task.id,
-            faccoder_id=task.faccoder_id,
+            nexcoder_id=task.nexcoder_id,
             action="updated",
             remote_id=str(data["id"]),
             remote_number=data.get("iid"),

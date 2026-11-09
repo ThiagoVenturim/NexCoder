@@ -34,7 +34,7 @@ def generate_compose_config(config: ServingConfig) -> dict[str, Any]:
             "services": {
                 "vllm": {
                     "image": "vllm/vllm-openai:latest",
-                    "container_name": "faccoder-serving-vllm",
+                    "container_name": "nexcoder-serving-vllm",
                     "profiles": ["vllm"],
                     "environment": {
                         "HUGGING_FACE_HUB_TOKEN": f"${{{config.hf_token_env}:-}}",
@@ -78,7 +78,7 @@ def generate_compose_config(config: ServingConfig) -> dict[str, Any]:
         "services": {
             "ollama": {
                 "image": "ollama/ollama:latest",
-                "container_name": "faccoder-serving-ollama",
+                "container_name": "nexcoder-serving-ollama",
                 "profiles": ["ollama"],
                 "environment": {
                     "OLLAMA_KEEP_ALIVE": "24h",
@@ -91,7 +91,7 @@ def generate_compose_config(config: ServingConfig) -> dict[str, Any]:
         },
         "volumes": {
             "ollama_models": {
-                "name": "faccoder_serving_ollama_models",
+                "name": "nexcoder_serving_ollama_models",
             }
         },
     }

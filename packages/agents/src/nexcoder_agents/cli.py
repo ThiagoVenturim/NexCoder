@@ -4,16 +4,16 @@ import argparse
 import sys
 from pathlib import Path
 
-from faccoder_agents.catalog.registry import AgentCatalog
-from faccoder_agents.catalog.skills import SkillCatalog
-from faccoder_agents.engine.pipelines import get_pipeline_template, list_pipeline_templates
-from faccoder_agents.export import export_claude_package
+from nexcoder_agents.catalog.registry import AgentCatalog
+from nexcoder_agents.catalog.skills import SkillCatalog
+from nexcoder_agents.engine.pipelines import get_pipeline_template, list_pipeline_templates
+from nexcoder_agents.export import export_claude_package
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="faccoder-agents",
-        description="CLI tooling for faccoder agents, personas, skills, and Claude Code export.",
+        prog="nexcoder-agents",
+        description="CLI tooling for nexcoder agents, personas, skills, and Claude Code export.",
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 

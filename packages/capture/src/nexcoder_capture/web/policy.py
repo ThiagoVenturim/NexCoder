@@ -6,7 +6,7 @@ import re
 import urllib.robotparser
 from urllib.parse import urlparse
 
-from faccoder_capture.models import (
+from nexcoder_capture.models import (
     CaptchaDetectedError,
     DomainNotAllowedError,
     ReadOnlyViolationError,

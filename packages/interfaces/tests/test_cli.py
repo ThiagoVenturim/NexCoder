@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from faccoder_interfaces.cli.main import app
+from nexcoder_interfaces.cli.main import app
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -22,9 +22,9 @@ def test_cli_help() -> None:
 def test_cli_init_command(tmp_path: Path) -> None:
     result = runner.invoke(app, ["init", "--path", str(tmp_path)])
     assert result.exit_code == 0
-    assert "Successfully initialized faccoder project" in result.stdout
+    assert "Successfully initialized nexcoder project" in result.stdout
 
-    config_file = tmp_path / "faccoder.yaml"
+    config_file = tmp_path / "nexcoder.yaml"
     assert config_file.is_file()
     content = config_file.read_text(encoding="utf-8")
     assert "preset: hybrid" in content
@@ -107,7 +107,7 @@ def test_cli_export_mcp_command(tmp_path: Path) -> None:
     assert mcp_file.is_file()
     data = json.loads(mcp_file.read_text(encoding="utf-8"))
     assert "mcpServers" in data
-    assert "faccoder" in data["mcpServers"]
+    assert "nexcoder" in data["mcpServers"]
 
 
 def test_cli_export_claude_command(tmp_path: Path) -> None:

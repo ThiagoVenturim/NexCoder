@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from faccoder_agents.catalog.models import AgentSpec
+from nexcoder_agents.catalog.models import AgentSpec
 
 logger = logging.getLogger(__name__)
 

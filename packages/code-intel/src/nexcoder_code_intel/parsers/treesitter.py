@@ -14,7 +14,7 @@ from typing import Any
 import tree_sitter_language_pack as tslp
 from tree_sitter import Node
 
-from faccoder_code_intel.models import (
+from nexcoder_code_intel.models import (
     RelationshipKind,
     Symbol,
     SymbolLocation,
@@ -22,7 +22,7 @@ from faccoder_code_intel.models import (
     SymbolSignature,
     SymbolType,
 )
-from faccoder_code_intel.parsers.base import BaseParser
+from nexcoder_code_intel.parsers.base import BaseParser
 
 logger = logging.getLogger(__name__)
 

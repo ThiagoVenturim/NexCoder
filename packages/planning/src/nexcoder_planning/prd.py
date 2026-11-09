@@ -7,10 +7,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-from faccoder_core.prompts import load_prompt
-from faccoder_core.structured import call_structured
+from nexcoder_core.prompts import load_prompt
+from nexcoder_core.structured import call_structured
 
-from faccoder_planning.models import AcceptanceCriterion, Epic, Plan, Story, Task
+from nexcoder_planning.models import AcceptanceCriterion, Epic, Plan, Story, Task
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 

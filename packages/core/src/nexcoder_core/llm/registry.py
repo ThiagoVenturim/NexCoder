@@ -1,7 +1,7 @@
 """Single place where chat models are built.
 
 Every agent, pipeline step and tool asks for a *tier* (small, medium, large),
-never for a vendor model. The tier resolves through ``faccoder.yaml`` to one of
+never for a vendor model. The tier resolves through ``nexcoder.yaml`` to one of
 the providers below, so switching a whole installation from paid to open source
 models is a one-line configuration change.
 
@@ -19,9 +19,9 @@ Providers:
 ``fake``               Deterministic offline model for tests and dry runs.
 =====================  ==========================================================
 
-Provider SDKs are imported lazily so that installing ``faccoder-core`` does not
+Provider SDKs are imported lazily so that installing ``nexcoder-core`` does not
 pull every vendor library; install the matching extra (for example
-``pip install faccoder-core[ollama]``).
+``pip install nexcoder-core[ollama]``).
 """
 
 from __future__ import annotations
@@ -30,10 +30,10 @@ import logging
 import os
 from typing import Any
 
-from faccoder_core.config import FaccoderConfig, ModelSpec, load_config
-from faccoder_core.llm.fake import FakeChatModel
-from faccoder_core.llm.rotation import RotatingChatModel
-from faccoder_core.observability.callbacks import default_callbacks
+from nexcoder_core.config import ModelSpec, NexcoderConfig, load_config
+from nexcoder_core.llm.fake import FakeChatModel
+from nexcoder_core.llm.rotation import RotatingChatModel
+from nexcoder_core.observability.callbacks import default_callbacks
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 class ProviderNotInstalledError(ImportError):
     def __init__(self, provider: str, extra: str):
         super().__init__(
-            f"Provider '{provider}' needs an optional dependency. Install it with: pip install faccoder-core[{extra}]"
+            f"Provider '{provider}' needs an optional dependency. Install it with: pip install nexcoder-core[{extra}]"
         )
 
 
@@ -161,7 +161,7 @@ def build_chat_model(spec: ModelSpec, callbacks: list | None = None) -> Any:
 def get_chat_model(
     tier: str = "medium",
     *,
-    config: FaccoderConfig | None = None,
+    config: NexcoderConfig | None = None,
     temperature: float | None = None,
     tracing: bool = True,
 ) -> Any:
@@ -169,7 +169,7 @@ def get_chat_model(
 
     Args:
         tier: ``small``, ``medium`` or ``large``.
-        config: configuration to use; defaults to the nearest ``faccoder.yaml``.
+        config: configuration to use; defaults to the nearest ``nexcoder.yaml``.
         temperature: override the spec temperature for this call site.
         tracing: attach Langfuse and usage-metering callbacks.
     """

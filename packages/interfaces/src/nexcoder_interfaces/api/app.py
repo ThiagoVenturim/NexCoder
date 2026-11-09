@@ -9,8 +9,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from faccoder_interfaces.api.routes import router
-from faccoder_interfaces.registry import is_module_installed
+from nexcoder_interfaces.api.routes import router
+from nexcoder_interfaces.registry import is_module_installed
 
 logger = logging.getLogger(__name__)
 
@@ -25,16 +25,16 @@ def create_app(
     host: str = "127.0.0.1",
     cors_origins: list[str] | None = None,
 ) -> FastAPI:
-    """Create and configure the faccoder FastAPI application."""
+    """Create and configure the nexcoder FastAPI application."""
     app = FastAPI(
-        title="faccoder-interfaces",
-        description="REST API and MCP server for the faccoder platform.",
+        title="nexcoder-interfaces",
+        description="REST API and MCP server for the nexcoder platform.",
         version="0.1.0",
     )
 
     # 1. CORS Configuration: No CORS by default; explicit origins only, never '*' with credentials
     if cors_origins is None:
-        env_cors = os.environ.get("FACCODER_CORS_ORIGINS")
+        env_cors = os.environ.get("NEXCODER_CORS_ORIGINS")
         if env_cors:
             cors_origins = [o.strip() for o in env_cors.split(",") if o.strip()]
 
@@ -59,12 +59,12 @@ def create_app(
         require_auth = True
 
     # 3. Control Plane Integration Setup
-    has_control = is_module_installed("faccoder_control")
+    has_control = is_module_installed("nexcoder_control")
 
     if has_control:
         if api_key_service is None:
             try:
-                from faccoder_control.keys import APIKeyService
+                from nexcoder_control.keys import APIKeyService
 
                 api_key_service = APIKeyService()
             except Exception as e:
@@ -72,7 +72,7 @@ def create_app(
 
         if auth_provider is None:
             try:
-                from faccoder_control.auth import LocalAuthProvider
+                from nexcoder_control.auth import LocalAuthProvider
 
                 auth_provider = LocalAuthProvider()
             except Exception as e:
@@ -80,7 +80,7 @@ def create_app(
 
         if approval_token_manager is None:
             try:
-                from faccoder_control.approval import ApprovalTokenManager
+                from nexcoder_control.approval import ApprovalTokenManager
 
                 approval_token_manager = ApprovalTokenManager()
             except Exception as e:
@@ -119,7 +119,7 @@ def create_app(
         is_human = False
 
         # Constant-time comparison for static API key if configured
-        static_key = api_key or os.environ.get("FACCODER_API_KEY")
+        static_key = api_key or os.environ.get("NEXCODER_API_KEY")
         if static_key and provided_key:
             if hmac.compare_digest(provided_key, static_key):
                 authenticated = True

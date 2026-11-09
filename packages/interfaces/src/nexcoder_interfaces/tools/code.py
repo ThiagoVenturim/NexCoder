@@ -14,7 +14,7 @@ def search_code(
 ) -> dict[str, Any]:
     """Search code across the target path using lexical and symbol matching."""
     try:
-        from faccoder_code_intel.retrieval import CodeSearchIndex
+        from nexcoder_code_intel.retrieval import CodeSearchIndex
     except ImportError as exc:
         return {
             "status": "error",
@@ -22,7 +22,7 @@ def search_code(
         }
 
     root_path = Path(path).resolve()
-    db_path = root_path / ".faccoder_index.db" if root_path.is_dir() else root_path.parent / ".faccoder_index.db"
+    db_path = root_path / ".nexcoder_index.db" if root_path.is_dir() else root_path.parent / ".nexcoder_index.db"
 
     with CodeSearchIndex(db_path=db_path) as index:
         if root_path.is_file():
@@ -52,8 +52,8 @@ def impact_analysis(
 ) -> dict[str, Any]:
     """Calculate blast radius and affected symbols when modifying a symbol."""
     try:
-        from faccoder_code_intel.graph import CodeGraph
-        from faccoder_code_intel.parsers import parse_file
+        from nexcoder_code_intel.graph import CodeGraph
+        from nexcoder_code_intel.parsers import parse_file
     except ImportError as exc:
         return {
             "status": "error",
@@ -121,8 +121,8 @@ def generate_docs(
 ) -> dict[str, Any]:
     """Generate bottom-up documentation synthesized from code symbols."""
     try:
-        from faccoder_code_intel.docgen import BottomUpDocEngine
-        from faccoder_code_intel.parsers import parse_file
+        from nexcoder_code_intel.docgen import BottomUpDocEngine
+        from nexcoder_code_intel.parsers import parse_file
     except ImportError as exc:
         return {
             "status": "error",

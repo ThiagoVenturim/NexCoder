@@ -1,7 +1,7 @@
 """Tests for symbol-aware code chunker."""
 
-from faccoder_code_intel.chunking import SymbolChunker
-from faccoder_code_intel.models import SymbolType
+from nexcoder_code_intel.chunking import SymbolChunker
+from nexcoder_code_intel.models import SymbolType
 
 
 def test_chunking_python_code() -> None:

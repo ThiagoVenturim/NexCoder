@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
-from faccoder_agents.catalog.models import validate_safe_slug
+from nexcoder_agents.catalog.models import validate_safe_slug
 
 logger = logging.getLogger(__name__)
 

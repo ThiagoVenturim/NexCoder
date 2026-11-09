@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from faccoder_security.models import Finding, ScanMetadata, ScanResult
+from nexcoder_security.models import Finding, ScanMetadata, ScanResult
 
 
 class BaseScanner(abc.ABC):

@@ -9,11 +9,11 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
-from faccoder_core.store.sqlite_store import StoredChunk
+from nexcoder_core.store.sqlite_store import StoredChunk
 from pydantic import BaseModel, ConfigDict, Field
 
-from faccoder_code_intel.models import Symbol, SymbolType
-from faccoder_code_intel.parsers import get_parser_for_file
+from nexcoder_code_intel.models import Symbol, SymbolType
+from nexcoder_code_intel.parsers import get_parser_for_file
 
 
 class CodeChunk(BaseModel):
@@ -35,7 +35,7 @@ class CodeChunk(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
     def to_stored_chunk(self, embedding: list[float] | None = None) -> StoredChunk:
-        """Convert this chunk into faccoder-core StoredChunk for HybridStore."""
+        """Convert this chunk into nexcoder-core StoredChunk for HybridStore."""
         meta = {
             "file_path": self.file_path,
             "start_line": self.start_line,

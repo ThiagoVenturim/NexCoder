@@ -5,8 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
-from faccoder_agents.engine.blocks.base import BaseBlock
-from faccoder_agents.engine.models import BlockResult, BlockStatus
+from nexcoder_agents.engine.blocks.base import BaseBlock
+from nexcoder_agents.engine.models import BlockResult, BlockStatus
 
 
 class ValidatorBlock(BaseBlock):

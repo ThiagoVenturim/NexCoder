@@ -6,7 +6,7 @@ import threading
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from faccoder_core.observability.pricing import cost_usd
+from nexcoder_core.observability.pricing import cost_usd
 from pydantic import BaseModel, Field
 
 DimensionType = Literal["app", "person", "agent", "pipeline"]

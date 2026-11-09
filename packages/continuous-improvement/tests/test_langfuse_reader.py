@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from faccoder_continuous_improvement.observability.langfuse_reader import (
+from nexcoder_continuous_improvement.observability.langfuse_reader import (
     LangfuseLogReader,
     LangfuseTraceSummary,
 )

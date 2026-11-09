@@ -6,7 +6,7 @@ import secrets
 import time
 from datetime import UTC, datetime
 
-from faccoder_ideation.models import GateStatus, HumanApprovalGate
+from nexcoder_ideation.models import GateStatus, HumanApprovalGate
 
 
 class HumanGateManager:

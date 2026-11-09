@@ -23,7 +23,7 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from faccoder_core.jsonx import extract_json
+from nexcoder_core.jsonx import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +111,7 @@ async def call_structured(
         include_schema: append the JSON Schema to the prompt.
     """
     if llm is None:
-        from faccoder_core.llm.registry import get_chat_model
+        from nexcoder_core.llm.registry import get_chat_model
 
         llm = get_chat_model("medium")
 

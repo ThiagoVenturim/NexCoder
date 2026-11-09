@@ -7,10 +7,10 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from faccoder_interfaces.api.sse import format_sse_event, pipeline_event_generator
-from faccoder_interfaces.mcp.server import MCPServer
-from faccoder_interfaces.registry import get_module_statuses
-from faccoder_interfaces.tools import TOOL_DEFINITIONS
+from nexcoder_interfaces.api.sse import format_sse_event, pipeline_event_generator
+from nexcoder_interfaces.mcp.server import MCPServer
+from nexcoder_interfaces.registry import get_module_statuses
+from nexcoder_interfaces.tools import TOOL_DEFINITIONS
 
 router = APIRouter()
 mcp_server = MCPServer()
@@ -96,7 +96,7 @@ def get_health() -> dict[str, Any]:
     available_count = sum(1 for s in statuses.values() if s["available"])
     return {
         "status": "ok",
-        "service": "faccoder-interfaces",
+        "service": "nexcoder-interfaces",
         "version": "0.1.0",
         "available_modules": available_count,
         "total_modules": len(statuses),
@@ -257,7 +257,7 @@ def endpoint_pipelines_approve(
     if hasattr(request.state, "principal") and getattr(request.state.principal, "name", None):
         approver_name = request.state.principal.name
 
-    from faccoder_interfaces.tools.agents import GLOBAL_EXECUTION_REGISTRY
+    from nexcoder_interfaces.tools.agents import GLOBAL_EXECUTION_REGISTRY
 
     token_manager = getattr(request.app.state, "approval_token_manager", None)
     has_pending_execution = bool(

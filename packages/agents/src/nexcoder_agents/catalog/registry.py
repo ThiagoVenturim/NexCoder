@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from faccoder_agents.catalog.loader import load_agents_from_dir
-from faccoder_agents.catalog.models import AgentSpec
+from nexcoder_agents.catalog.loader import load_agents_from_dir
+from nexcoder_agents.catalog.models import AgentSpec
 
 
 class AgentCatalog:

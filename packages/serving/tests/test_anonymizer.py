@@ -1,6 +1,6 @@
 """Unit tests for PII and secret anonymizer."""
 
-from faccoder_serving.raft.anonymizer import Anonymizer
+from nexcoder_serving.raft.anonymizer import Anonymizer
 
 
 def test_anonymize_email_and_cpf() -> None:

@@ -3,12 +3,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from faccoder_ideation.models import (
+from nexcoder_ideation.models import (
     ResearchSource,
     ResearchSquadReport,
     StructuredIdea,
 )
-from faccoder_ideation.research.specialists import (
+from nexcoder_ideation.research.specialists import (
     CompetitorScout,
     DifferentiatorAnalyst,
     GapHunter,
@@ -17,8 +17,8 @@ from faccoder_ideation.research.specialists import (
     PricingResearcher,
     UserVoiceResearcher,
 )
-from faccoder_ideation.search.base import SearchProvider
-from faccoder_ideation.search.providers import MockSearchProvider
+from nexcoder_ideation.search.base import SearchProvider
+from nexcoder_ideation.search.providers import MockSearchProvider
 
 logger = logging.getLogger(__name__)
 

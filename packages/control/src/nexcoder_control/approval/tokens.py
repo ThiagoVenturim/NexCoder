@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from faccoder_control.auth.base import ForbiddenError
+from nexcoder_control.auth.base import ForbiddenError
 
 
 class ApprovalRequiredError(ForbiddenError):

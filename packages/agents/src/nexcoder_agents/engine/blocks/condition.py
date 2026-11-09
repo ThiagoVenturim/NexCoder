@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from faccoder_agents.engine.blocks.base import BaseBlock
-from faccoder_agents.engine.models import BlockResult, BlockStatus
+from nexcoder_agents.engine.blocks.base import BaseBlock
+from nexcoder_agents.engine.models import BlockResult, BlockStatus
 
 
 class ConditionBlock(BaseBlock):
