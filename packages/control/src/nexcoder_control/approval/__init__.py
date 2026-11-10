@@ -5,6 +5,14 @@ from nexcoder_control.approval.machines import (
     MachineApprovalManager,
     MachineStatus,
 )
+from nexcoder_control.approval.target_gate import (
+    TargetAuthorizationGate,
+    TargetAuthorizationRecord,
+    TargetNotAuthorizedError,
+    TargetOwnership,
+    normalize_target,
+    redact_secrets,
+)
 from nexcoder_control.approval.tokens import (
     ApprovalRequiredError,
     ApprovalTokenManager,
@@ -18,4 +26,10 @@ __all__ = [
     "CLIMachine",
     "MachineApprovalManager",
     "MachineStatus",
+    "TargetAuthorizationGate",
+    "TargetAuthorizationRecord",
+    "TargetNotAuthorizedError",
+    "TargetOwnership",
+    "normalize_target",
+    "redact_secrets",
 ]

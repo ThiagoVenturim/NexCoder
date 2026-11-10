@@ -8,9 +8,15 @@ def security_scan(
     path: str = ".",
     policy: str = "default",
     force_offline: bool = True,
+    owned_target: bool = False,
+    authorized_by: str = "owner",
+    approval_token: str | None = None,
+    audit_log: Any | None = None,
+    target_gate: Any | None = None,
 ) -> dict[str, Any]:
     """Execute multi-scanner security analysis and evaluate release gate verdict."""
     try:
+        from nexcoder_control.approval import TargetNotAuthorizedError
         from nexcoder_security.gate import GatePolicy, SecurityGateEvaluator
         from nexcoder_security.scanners import MultiScannerEngine
     except ImportError as exc:
@@ -20,8 +26,22 @@ def security_scan(
         }
 
     target = Path(path).resolve()
-    engine = MultiScannerEngine()
-    scan_result = engine.scan(target, force_offline=force_offline)
+    engine = MultiScannerEngine(target_gate=target_gate, audit_log=audit_log)
+    try:
+        scan_result = engine.scan(
+            target,
+            force_offline=force_offline,
+            owned_target=owned_target,
+            authorized_by=authorized_by,
+            approval_token=approval_token,
+        )
+    except TargetNotAuthorizedError as exc:
+        return {
+            "status": "rejected",
+            "authorized": False,
+            "target_path": str(target),
+            "reason": str(exc),
+        }
 
     evaluator = SecurityGateEvaluator()
     gate_policy = GatePolicy(max_high=0, max_critical=0) if policy == "strict" else GatePolicy()
@@ -29,6 +49,8 @@ def security_scan(
 
     return {
         "status": "success",
+        "authorized": True,
+        "authorized_by": authorized_by,
         "target_path": str(target),
         "scanner": scan_result.metadata.scanner if scan_result.metadata else "multi-scanner",
         "total_findings": len(scan_result.findings),
