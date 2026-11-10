@@ -11,6 +11,7 @@ from nexcoder_agents.engine.pipelines.templates import (
     create_legacy_migration_pipeline,
     create_refactor_pipeline,
     create_security_audit_pipeline,
+    create_software_engineering_pipeline,
 )
 
 _REGISTRY: dict[str, PipelineTemplate] = {}
@@ -103,6 +104,16 @@ def _init_default_templates() -> None:
             category="documentation",
             required_inputs=["project_name", "source_scope"],
             factory=create_documentation_pipeline,
+        ),
+        PipelineTemplate(
+            name="software-engineering-review",
+            description=(
+                "Software engineering review: pattern trade-offs, practices audit, ADRs, "
+                "bottom-up docs, sprint planning, and guided refactoring."
+            ),
+            category="engineering",
+            required_inputs=["project_name", "architecture_goal"],
+            factory=create_software_engineering_pipeline,
         ),
     ]
 
