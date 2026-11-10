@@ -44,8 +44,9 @@ git config core.hooksPath .githooks
 Install the core foundation and feature packages in editable mode:
 
 ```bash
-# Foundation package (required by all other packages)
+# Foundation packages (required by dependent packages)
 pip install -e packages/core
+pip install -e packages/control
 
 # Feature packages
 pip install -e packages/code-intel
@@ -54,7 +55,6 @@ pip install -e packages/planning
 pip install -e packages/ideation
 pip install -e packages/security
 pip install -e packages/capture
-pip install -e packages/control
 pip install -e packages/interfaces
 pip install -e packages/serving
 pip install -e packages/continuous-improvement
