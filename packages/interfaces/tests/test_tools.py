@@ -111,9 +111,25 @@ def test_generate_docs_offline(tmp_path: Path) -> None:
 def test_security_scan_offline(tmp_path: Path) -> None:
     safe_file = tmp_path / "clean.py"
     safe_file.write_text("def add(a: int, b: int) -> int:\n    return a + b\n", encoding="utf-8")
-    res = security_scan(path=str(tmp_path), force_offline=True)
+    res = security_scan(path=str(tmp_path), force_offline=True, owned_target=True, authorized_by="dev-owner")
     assert res["status"] == "success"
+    assert res["authorized"] is True
     assert "passed_gate" in res
+
+
+def test_security_scan_refuses_unmarked_target(tmp_path: Path) -> None:
+    from nexcoder_control.metering.audit import AppendOnlyAuditLog
+
+    safe_file = tmp_path / "clean.py"
+    safe_file.write_text("def add(a: int, b: int) -> int:\n    return a + b\n", encoding="utf-8")
+    audit = AppendOnlyAuditLog()
+    res = security_scan(path=str(tmp_path), force_offline=True, owned_target=False, audit_log=audit)
+    assert res["status"] == "rejected"
+    assert res["authorized"] is False
+    assert "USAGE_POLICY.md" in res["reason"]
+    events = audit.query(event_type="target.authorization.denied")
+    assert len(events) == 1
+    assert events[0].resource == str(tmp_path.resolve())
 
 
 def test_run_agent_offline() -> None:

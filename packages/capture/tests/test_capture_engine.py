@@ -148,6 +148,8 @@ def test_capture_page_async_mock() -> None:
         config = WebCaptureConfig(
             allowed_domains=["example.com"],
             capture_screenshot=True,
+            owned_target=True,
+            authorized_by="qa-engineer",
         )
         engine = WebCaptureEngine(config=config)
 
@@ -173,7 +175,9 @@ def test_capture_page_async_detects_captcha() -> None:
             return_value="<html><body><div id='cf-turnstile'>Verifying human</div></body></html>"
         )
 
-        engine = WebCaptureEngine(config=WebCaptureConfig(allowed_domains=["example.com"]))
+        engine = WebCaptureEngine(
+            config=WebCaptureConfig(allowed_domains=["example.com"], owned_target=True, authorized_by="qa-engineer")
+        )
 
         with pytest.raises(CaptchaDetectedError):
             await engine.capture_page_async(mock_page)
