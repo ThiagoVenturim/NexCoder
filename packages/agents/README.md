@@ -89,6 +89,18 @@ result = pipeline.run(inputs={"feature_request": "Multi-tenant tenant switcher"}
 print(result.status)
 ```
 
+### Software Engineering Review, ADRs, and Guided Refactoring
+
+```python
+from nexcoder_agents import SoftwareEngineeringAdvisor
+
+advisor = SoftwareEngineeringAdvisor()
+report = advisor.analyze_project("examples/quickstart/sample_project")
+
+print(report.architecture.recommended_pattern)
+print(report.to_markdown())
+```
+
 ## Origin
 
 A catalog of automation agents and personas distilled into a generic, vendor-agnostic architecture.

@@ -14,6 +14,7 @@ from nexcoder_agents.engine.pipelines.templates import (
     create_legacy_migration_pipeline,
     create_refactor_pipeline,
     create_security_audit_pipeline,
+    create_software_engineering_pipeline,
 )
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "create_legacy_migration_pipeline",
     "create_refactor_pipeline",
     "create_security_audit_pipeline",
+    "create_software_engineering_pipeline",
     "get_pipeline_template",
     "list_pipeline_templates",
     "register_pipeline_template",

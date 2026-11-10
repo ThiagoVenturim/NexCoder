@@ -8,6 +8,7 @@ from nexcoder_agents.engine.blocks.guardrails import ExecutionLimits
 from nexcoder_agents.engine.blocks.prompt import PromptBlock
 from nexcoder_agents.engine.blocks.validator import ValidatorBlock
 from nexcoder_agents.engine.graph import PipelineBuilder
+from nexcoder_agents.software_engineering import SoftwareEngineeringAuditBlock
 
 
 def create_feature_pipeline(
@@ -380,6 +381,64 @@ def create_documentation_pipeline(
     )
 
     builder.add_sequence([val, arch_doc, api_doc, gate])
+    if limits:
+        builder.set_limits(limits)
+    return builder
+
+
+def create_software_engineering_pipeline(
+    name: str = "software-engineering-review",
+    approval_action: str = "approve_architecture_and_refactoring",
+    limits: ExecutionLimits | None = None,
+    model: Any = None,
+) -> PipelineBuilder:
+    """Build an end-to-end software engineering review, ADR, planning, and guided refactoring pipeline."""
+    builder = PipelineBuilder(name)
+
+    val = ValidatorBlock(
+        name="engsw_validator",
+        required_keys=["project_name", "architecture_goal"],
+    )
+
+    audit_block = SoftwareEngineeringAuditBlock(
+        name="software_engineering_audit",
+        llm=model,
+    )
+
+    opinion = PromptBlock(
+        name="architecture_opinion",
+        user_prompt_template=(
+            "You are a principal software architect.\n"
+            "Project: {project_name}\n"
+            "Goal: {architecture_goal}\n"
+            "Assessment: {architecture_assessment}\n"
+            "Synthesize an executive architecture opinion, pattern trade-offs, and ADR recommendations."
+        ),
+        output_key="architecture_opinion_summary",
+        tier="large",
+        model=model,
+    )
+
+    committee = CommitteeBlock(
+        name="architecture_committee",
+        members=[
+            CommitteeMember(name="lead_architect", perspective="Clean Boundaries and Pattern Fit", weight=1.5),
+            CommitteeMember(name="qa_lead", perspective="Testing Pyramid and Refactoring Safety", weight=1.2),
+            CommitteeMember(name="cto_juror", perspective="Pragmatic Trade-offs and Delivery Velocity", weight=1.0),
+        ],
+        target_key="architecture_opinion_summary",
+        quorum_threshold=0.6,
+        model=model,
+    )
+
+    gate = HumanApprovalBlock(
+        name="engsw_gate",
+        action_name=approval_action,
+        description="Approve architecture review, ADRs, prioritized backlog, and guided refactoring",
+        payload_keys=["project_name", "architecture_opinion_summary", "prioritized_actions"],
+    )
+
+    builder.add_sequence([val, audit_block, opinion, committee, gate])
     if limits:
         builder.set_limits(limits)
     return builder
