@@ -8,6 +8,7 @@ from nexcoder_agents.catalog.registry import AgentCatalog
 from nexcoder_agents.catalog.skills import SkillCatalog
 from nexcoder_agents.engine.pipelines import get_pipeline_template, list_pipeline_templates
 from nexcoder_agents.export import export_claude_package
+from nexcoder_agents.software_engineering import SoftwareEngineeringAdvisor
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -46,6 +47,25 @@ def build_parser() -> argparse.ArgumentParser:
     # show-pipeline subcommand
     show_pipeline_parser = subparsers.add_parser("show-pipeline", help="Show details of a pipeline template.")
     show_pipeline_parser.add_argument("name", type=str, help="Pipeline template name.")
+
+    # review-project subcommand
+    review_parser = subparsers.add_parser(
+        "review-project",
+        help="Run software engineering architecture review, ADR generation, and guided refactoring on a project.",
+    )
+    review_parser.add_argument("project_dir", type=Path, help="Path to target project directory.")
+    review_parser.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="Optional path to write the Markdown assessment report.",
+    )
+    review_parser.add_argument(
+        "--no-refactor",
+        action="store_true",
+        help="Skip applying safe test-backed refactoring in workspace copy.",
+    )
 
     return parser
 
@@ -110,6 +130,25 @@ def main(args: list[str] | None = None) -> int:
             print(f"Required Inputs: {', '.join(tmpl.required_inputs)}")
             return 0
         except KeyError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+
+    if parsed.command == "review-project":
+        try:
+            advisor = SoftwareEngineeringAdvisor()
+            report = advisor.analyze_project(
+                parsed.project_dir,
+                apply_safe_refactor=not parsed.no_refactor,
+            )
+            md = report.to_markdown()
+            if parsed.output:
+                parsed.output.parent.mkdir(parents=True, exist_ok=True)
+                parsed.output.write_text(md, encoding="utf-8")
+                print(f"Software engineering report written to {parsed.output}")
+            else:
+                print(md)
+            return 0
+        except FileNotFoundError as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
 
