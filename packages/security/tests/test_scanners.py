@@ -204,7 +204,7 @@ subprocess.call("ls", shell=True)
     req_file.write_text("requests==2.31.0\n", encoding="utf-8")
 
     engine = MultiScannerEngine()
-    res = engine.scan(tmp_path, force_offline=True)
+    res = engine.scan(tmp_path, force_offline=True, owned_target=True, authorized_by="sec-engineer")
     assert res.metadata is not None
     assert res.metadata.scanner == "multi-scanner-engine"
     assert len(res.findings) > 0

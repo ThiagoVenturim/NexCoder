@@ -5,6 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from nexcoder_control.approval import TargetAuthorizationGate
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
+
 from nexcoder_capture.models import (
     WebCaptureConfig,
     WebCaptureResult,
@@ -19,9 +22,14 @@ from nexcoder_capture.web.session import SessionManager
 class WebCaptureEngine:
     """Unified web capture engine with Playwright and offline fixture support."""
 
-    def __init__(self, config: WebCaptureConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: WebCaptureConfig | None = None,
+        target_gate: TargetAuthorizationGate | None = None,
+        audit_log: AppendOnlyAuditLog | None = None,
+    ) -> None:
         self.config = config or WebCaptureConfig()
-        self.policy = PolicyEnforcer(self.config)
+        self.policy = PolicyEnforcer(self.config, target_gate=target_gate, audit_log=audit_log)
         self.selectors_extractor = SelectorExtractor()
         self.a11y_extractor = AccessibilityExtractor()
         self.session_manager = SessionManager(self.config, self.policy)
@@ -83,10 +91,25 @@ class WebCaptureEngine:
         url = path.as_uri()
         return self.capture_html(html=html, base_url=url, title=path.stem)
 
-    async def capture_page_async(self, page: Any, url: str | None = None) -> WebCaptureResult:
+    async def capture_page_async(
+        self,
+        page: Any,
+        url: str | None = None,
+        *,
+        owned_target: bool | None = None,
+        authorized_by: str | None = None,
+        approval_token: str | None = None,
+    ) -> WebCaptureResult:
         """Capture from an active Playwright async Page object."""
         target_url = url or page.url
         self.policy.validate_url(target_url)
+        self.policy.verify_target_authorization(
+            target_url,
+            owned_target=owned_target,
+            authorized_by=authorized_by,
+            approval_token=approval_token,
+            mode="web_capture",
+        )
 
         title = await page.title()
         dom = await page.content() if self.config.capture_dom else ""

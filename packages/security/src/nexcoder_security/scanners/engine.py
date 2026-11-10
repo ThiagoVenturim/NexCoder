@@ -4,6 +4,12 @@ import time
 from pathlib import Path
 from typing import Any
 
+from nexcoder_control.approval import (
+    TargetAuthorizationGate,
+    TargetAuthorizationRecord,
+)
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
+
 from nexcoder_security.models import Finding, SBOMDocument, ScanMetadata, ScanResult
 from nexcoder_security.scanners.bandit import BanditScanner
 from nexcoder_security.scanners.base import BaseScanner
@@ -16,9 +22,20 @@ from nexcoder_security.scanners.trivy import TrivyScanner
 
 
 class MultiScannerEngine:
-    """Unified engine to run multiple security scanners with deduplication."""
+    """Unified engine to run multiple security scanners with deduplication and target ownership gating."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        target_gate: TargetAuthorizationGate | None = None,
+        audit_log: AppendOnlyAuditLog | None = None,
+    ) -> None:
+        if target_gate is not None:
+            self.target_gate = target_gate
+            self.audit_log = audit_log if audit_log is not None else target_gate.audit_log
+        else:
+            self.audit_log = audit_log if audit_log is not None else AppendOnlyAuditLog()
+            self.target_gate = TargetAuthorizationGate(audit_log=self.audit_log)
+
         self.scanners: dict[str, BaseScanner] = {
             "semgrep": SemgrepScanner(),
             "bandit": BanditScanner(),
@@ -32,13 +49,39 @@ class MultiScannerEngine:
     def register_scanner(self, name: str, scanner: BaseScanner) -> None:
         self.scanners[name.lower()] = scanner
 
+    def authorize_target(
+        self,
+        target_path: str | Path,
+        authorized_by: str = "owner",
+        metadata: dict[str, Any] | None = None,
+    ) -> TargetAuthorizationRecord:
+        """Mark a target path as owned or explicitly authorized for scanning."""
+        return self.target_gate.mark_owned_target(
+            target=target_path,
+            authorized_by=authorized_by,
+            mode="security_scan",
+            metadata=metadata,
+        )
+
     def scan(
         self,
         target_path: str | Path,
         enabled_scanners: list[str] | None = None,
         force_offline: bool = False,
         options: dict[str, Any] | None = None,
+        *,
+        owned_target: bool = False,
+        authorized_by: str = "owner",
+        approval_token: str | None = None,
     ) -> ScanResult:
+        self.target_gate.verify_target(
+            target=target_path,
+            mode="security_scan",
+            owned_target=owned_target,
+            authorized_by=authorized_by,
+            approval_token=approval_token,
+            metadata=options,
+        )
         start_time = time.perf_counter()
         target = Path(target_path)
 

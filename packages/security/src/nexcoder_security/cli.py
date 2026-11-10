@@ -5,6 +5,12 @@ import os
 import sys
 from pathlib import Path
 
+from nexcoder_control.approval import (
+    TargetAuthorizationGate,
+    TargetNotAuthorizedError,
+)
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
+
 from nexcoder_security.gate import (
     GatePolicy,
     SecurityGateEvaluator,
@@ -13,7 +19,31 @@ from nexcoder_security.gate import (
 from nexcoder_security.scanners import MultiScannerEngine, SyftScanner
 
 
-def main(argv: list[str] | None = None) -> int:
+def _add_target_auth_args(subparser: argparse.ArgumentParser) -> None:
+    subparser.add_argument(
+        "--owned-target",
+        action="store_true",
+        default=False,
+        help="Confirm target is owned or explicitly authorized per USAGE_POLICY.md",
+    )
+    subparser.add_argument(
+        "--authorized-by",
+        default="owner",
+        help="Identity of the person or team authorizing the scan (recorded in audit log)",
+    )
+    subparser.add_argument(
+        "--approval-token",
+        default=None,
+        help="Single-use control plane approval token for target authorization",
+    )
+
+
+def main(
+    argv: list[str] | None = None,
+    *,
+    audit_log: AppendOnlyAuditLog | None = None,
+    target_gate: TargetAuthorizationGate | None = None,
+) -> int:
     parser = argparse.ArgumentParser(
         prog="nexcoder-security",
         description="Security scanners, specialist agents, and release gate for nexcoder.",
@@ -30,6 +60,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Specific scanners to run (semgrep, bandit, gitleaks, osv-scanner, trivy, pip-audit, syft)",
     )
     scan_p.add_argument("--json", action="store_true", help="Output full JSON result")
+    _add_target_auth_args(scan_p)
 
     # gate
     gate_p = subparsers.add_parser("gate", help="Evaluate security gate for release gating")
@@ -56,12 +87,14 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Explicitly forbid fallback heuristic scans",
     )
+    _add_target_auth_args(gate_p)
 
     # sbom
     sbom_p = subparsers.add_parser("sbom", help="Generate SBOM (CycloneDX / SPDX) for a repository or application")
     sbom_p.add_argument("path", default=".", nargs="?", help="Target project path")
     sbom_p.add_argument("--format", default="cyclonedx-json", choices=["cyclonedx-json", "spdx-json"])
     sbom_p.add_argument("--offline", action="store_true", help="Use offline dependency parser")
+    _add_target_auth_args(sbom_p)
 
     # init-app-security
     init_p = subparsers.add_parser("init-app-security", help="Scaffold SECURITY.md and CSP headers for a project")
@@ -75,13 +108,22 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 0
 
+    active_gate = target_gate or TargetAuthorizationGate(audit_log=audit_log)
+
     if args.command == "scan":
-        engine = MultiScannerEngine()
-        result = engine.scan(
-            target_path=args.path,
-            enabled_scanners=args.scanners,
-            force_offline=args.offline,
-        )
+        engine = MultiScannerEngine(target_gate=active_gate, audit_log=active_gate.audit_log)
+        try:
+            result = engine.scan(
+                target_path=args.path,
+                enabled_scanners=args.scanners,
+                force_offline=args.offline,
+                owned_target=args.owned_target,
+                authorized_by=args.authorized_by,
+                approval_token=args.approval_token,
+            )
+        except TargetNotAuthorizedError as exc:
+            print(f"Refused: {exc}", file=sys.stderr)
+            return 1
         if args.json:
             print(result.model_dump_json(indent=2))
         else:
@@ -97,8 +139,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "gate":
-        engine = MultiScannerEngine()
-        scan_res = engine.scan(target_path=args.path, force_offline=args.offline)
+        engine = MultiScannerEngine(target_gate=active_gate, audit_log=active_gate.audit_log)
+        try:
+            scan_res = engine.scan(
+                target_path=args.path,
+                force_offline=args.offline,
+                owned_target=args.owned_target,
+                authorized_by=args.authorized_by,
+                approval_token=args.approval_token,
+            )
+        except TargetNotAuthorizedError as exc:
+            print(f"Refused: {exc}", file=sys.stderr)
+            return 1
 
         is_ci = bool(os.environ.get("CI"))
         preset = args.policy or ("production" if is_ci else "default")
@@ -133,6 +185,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if verdict.passed else 1
 
     if args.command == "sbom":
+        try:
+            active_gate.verify_target(
+                target=args.path,
+                mode="sbom",
+                owned_target=args.owned_target,
+                authorized_by=args.authorized_by,
+                approval_token=args.approval_token,
+            )
+        except TargetNotAuthorizedError as exc:
+            print(f"Refused: {exc}", file=sys.stderr)
+            return 1
         syft = SyftScanner()
         doc = syft.generate_sbom(target_path=args.path, output_format=args.format, force_offline=args.offline)
         print(doc.raw_content)

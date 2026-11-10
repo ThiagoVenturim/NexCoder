@@ -67,6 +67,9 @@ class SecurityScanRequest(BaseModel):
     path: str = "."
     policy: str = "default"
     force_offline: bool = True
+    owned_target: bool = False
+    authorized_by: str = "owner"
+    approval_token: str | None = None
 
 
 class AgentRunRequest(BaseModel):
@@ -218,6 +221,9 @@ def endpoint_security_scan(req: SecurityScanRequest) -> dict[str, Any]:
         path=req.path,
         policy=req.policy,
         force_offline=req.force_offline,
+        owned_target=req.owned_target,
+        authorized_by=req.authorized_by,
+        approval_token=req.approval_token,
     )
 
 

@@ -77,7 +77,10 @@ def test_api_specialized_endpoints(tmp_path: Path) -> None:
     # Security scan
     sample_code = tmp_path / "main.py"
     sample_code.write_text("print('hello')\n", encoding="utf-8")
-    resp_sec = client.post("/v1/security/scan", json={"path": str(tmp_path), "force_offline": True})
+    resp_sec = client.post(
+        "/v1/security/scan",
+        json={"path": str(tmp_path), "force_offline": True, "owned_target": True, "authorized_by": "api-tester"},
+    )
     assert resp_sec.status_code == 200
     assert resp_sec.json()["status"] == "success"
 

@@ -146,7 +146,7 @@ def test_security_gate_fail_closed_engine_exception(tmp_path):
     engine = MultiScannerEngine()
     engine.register_scanner("crash", CrashingScanner())
 
-    scan_res = engine.scan(tmp_path, enabled_scanners=["crash"])
+    scan_res = engine.scan(tmp_path, enabled_scanners=["crash"], owned_target=True, authorized_by="ci-runner")
     assert scan_res.has_errors() is True
     assert len(scan_res.errors) >= 1
 
@@ -223,3 +223,41 @@ def test_security_gate_blocks_fallbacks_in_production():
     verdict_allowed = evaluator.evaluate(fallback_res, policy=default_policy)
     assert verdict_allowed.passed is True
     assert "Release APPROVED" in verdict_allowed.summary
+
+
+def test_scanner_engine_target_ownership_gate_and_audit(tmp_path):
+    import pytest
+    from nexcoder_security import TargetNotAuthorizedError
+
+    code_file = tmp_path / "app.py"
+    code_file.write_text("def clean(): return 1\n", encoding="utf-8")
+
+    engine = MultiScannerEngine()
+
+    # 1. Unmarked target is refused and logged in audit
+    with pytest.raises(TargetNotAuthorizedError, match="USAGE_POLICY.md"):
+        engine.scan(tmp_path, enabled_scanners=["bandit"], force_offline=True)
+
+    denied = engine.audit_log.query(event_type="target.authorization.denied")
+    assert len(denied) == 1
+    assert denied[0].resource == str(tmp_path.resolve())
+
+    # 2. Marked target passes, logs authorizer and timestamp, and redacts any secret in options
+    res = engine.scan(
+        tmp_path,
+        enabled_scanners=["bandit"],
+        force_offline=True,
+        owned_target=True,
+        authorized_by="security-reviewer",
+        options={"api_token": "secret_scanner_token_xyz987"},
+    )
+    assert res.metadata is not None
+    assert res.metadata.success is True
+
+    granted = engine.audit_log.query(event_type="target.authorization.granted")
+    assert len(granted) == 1
+    assert granted[0].actor == "security-reviewer"
+    assert granted[0].resource == str(tmp_path.resolve())
+    assert granted[0].details["authorized_by"] == "security-reviewer"
+    assert "authorized_at" in granted[0].details
+    assert "secret_scanner_token_xyz987" not in granted[0].model_dump_json()

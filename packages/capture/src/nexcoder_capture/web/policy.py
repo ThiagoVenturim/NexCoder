@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import re
 import urllib.robotparser
+from typing import Any
 from urllib.parse import urlparse
+
+from nexcoder_control.approval import (
+    TargetAuthorizationGate,
+    TargetAuthorizationRecord,
+)
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
 
 from nexcoder_capture.models import (
     CaptchaDetectedError,
@@ -31,9 +38,42 @@ CAPTCHA_SIGNATURES: list[re.Pattern[str]] = [
 class PolicyEnforcer:
     """Enforces safety, legal, and operational boundaries for web capture."""
 
-    def __init__(self, config: WebCaptureConfig) -> None:
+    def __init__(
+        self,
+        config: WebCaptureConfig,
+        target_gate: TargetAuthorizationGate | None = None,
+        audit_log: AppendOnlyAuditLog | None = None,
+    ) -> None:
         self.config = config
+        if target_gate is not None:
+            self.target_gate = target_gate
+            self.audit_log = audit_log if audit_log is not None else target_gate.audit_log
+        else:
+            self.audit_log = audit_log if audit_log is not None else AppendOnlyAuditLog()
+            self.target_gate = TargetAuthorizationGate(audit_log=self.audit_log)
         self._robots_parsers: dict[str, urllib.robotparser.RobotFileParser] = {}
+
+    def verify_target_authorization(
+        self,
+        url: str,
+        *,
+        owned_target: bool | None = None,
+        authorized_by: str | None = None,
+        approval_token: str | None = None,
+        mode: str = "web_capture",
+        metadata: dict[str, Any] | None = None,
+    ) -> TargetAuthorizationRecord:
+        """Verify target ownership or explicit authorization and record in audit log."""
+        effective_owned = owned_target if owned_target is not None else self.config.owned_target
+        effective_actor = authorized_by if authorized_by is not None else self.config.authorized_by
+        return self.target_gate.verify_target(
+            target=url,
+            mode=mode,
+            owned_target=effective_owned,
+            authorized_by=effective_actor,
+            approval_token=approval_token,
+            metadata=metadata,
+        )
 
     def register_robots_txt(self, base_url: str, robots_content: str) -> None:
         """Register robots.txt content for a given origin/base URL."""

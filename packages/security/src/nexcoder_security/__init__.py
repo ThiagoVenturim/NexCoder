@@ -1,5 +1,11 @@
 """nexcoder-security: Security scanners, specialist agents, and release gate for nexcoder."""
 
+from nexcoder_control.approval import (
+    TargetAuthorizationGate,
+    TargetAuthorizationRecord,
+    TargetNotAuthorizedError,
+)
+
 from nexcoder_security.gate import (
     GatePolicy,
     GateVerdict,
@@ -53,6 +59,9 @@ __all__ = [
     "SemgrepScanner",
     "Severity",
     "SyftScanner",
+    "TargetAuthorizationGate",
+    "TargetAuthorizationRecord",
+    "TargetNotAuthorizedError",
     "TrivyScanner",
     "generate_csp_header",
     "generate_security_md",

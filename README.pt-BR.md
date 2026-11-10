@@ -206,6 +206,6 @@ Os aprendizados, mecanismos de busca semantica e padroes de governanca desses pr
 
 ---
 
-## Licenca
+## Licenca e Politica de Uso
 
-Este projeto e distribuido sob os termos da [Licenca MIT](LICENSE).
+Este projeto e distribuido sob os termos da [Licenca MIT](LICENSE) e regido pela [Politica de Uso Etica](USAGE_POLICY.md). Utilize o `nexcoder` para proteger aplicacoes, contribuir com projetos de codigo aberto e executar testes ou varreduras somente em alvos proprios ou com autorizacao explicita.

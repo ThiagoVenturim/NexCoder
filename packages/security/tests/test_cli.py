@@ -15,7 +15,7 @@ def test_cli_scan_offline(tmp_path: Path, capsys):
     f = tmp_path / "app.py"
     f.write_text("eval('1+1')", encoding="utf-8")
 
-    rc = main(["scan", str(tmp_path), "--offline"])
+    rc = main(["scan", str(tmp_path), "--offline", "--owned-target", "--authorized-by", "alice"])
     assert rc == 0
     captured = capsys.readouterr()
     assert "Total findings:" in captured.out
@@ -26,7 +26,7 @@ def test_cli_scan_json_output(tmp_path: Path, capsys):
     f = tmp_path / "requirements.txt"
     f.write_text("requests==2.31.0\n", encoding="utf-8")
 
-    rc = main(["scan", str(tmp_path), "--offline", "--json"])
+    rc = main(["scan", str(tmp_path), "--offline", "--json", "--owned-target"])
     assert rc == 0
     captured = capsys.readouterr()
     data = json.loads(captured.out)
@@ -38,7 +38,7 @@ def test_cli_gate_block(tmp_path: Path, capsys):
     f = tmp_path / "vuln.py"
     f.write_text("import subprocess\nsubprocess.call('ls', shell=True)\n", encoding="utf-8")
 
-    rc = main(["gate", str(tmp_path), "--offline", "--policy", "default"])
+    rc = main(["gate", str(tmp_path), "--offline", "--policy", "default", "--owned-target"])
     assert rc == 1
     captured = capsys.readouterr()
     assert "Release BLOCKED" in captured.out
@@ -48,7 +48,7 @@ def test_cli_gate_pass(tmp_path: Path, capsys):
     f = tmp_path / "clean.py"
     f.write_text("def hello(): return 'world'\n", encoding="utf-8")
 
-    rc = main(["gate", str(tmp_path), "--offline", "--policy", "default"])
+    rc = main(["gate", str(tmp_path), "--offline", "--policy", "default", "--owned-target"])
     assert rc == 0
     captured = capsys.readouterr()
     assert "Release APPROVED" in captured.out
@@ -59,7 +59,7 @@ def test_cli_gate_require_sbom(tmp_path: Path, capsys):
     f.write_text("def hello(): return 'world'\n", encoding="utf-8")
 
     # 1. Without requirements/SBOM -> blocked by require_sbom
-    rc_fail = main(["gate", str(tmp_path), "--offline", "--require-sbom", "--policy", "default"])
+    rc_fail = main(["gate", str(tmp_path), "--offline", "--require-sbom", "--policy", "default", "--owned-target"])
     assert rc_fail == 1
     out_fail = capsys.readouterr().out
     assert "Release BLOCKED" in out_fail
@@ -67,7 +67,7 @@ def test_cli_gate_require_sbom(tmp_path: Path, capsys):
     # 2. Add requirements.txt so Syft generates valid SBOM -> passes
     req = tmp_path / "requirements.txt"
     req.write_text("pydantic==2.8.2\n", encoding="utf-8")
-    rc_pass = main(["gate", str(tmp_path), "--offline", "--require-sbom", "--policy", "default"])
+    rc_pass = main(["gate", str(tmp_path), "--offline", "--require-sbom", "--policy", "default", "--owned-target"])
     assert rc_pass == 0
     out_pass = capsys.readouterr().out
     assert "Release APPROVED" in out_pass
@@ -80,7 +80,7 @@ def test_cli_gate_production_policy(monkeypatch, tmp_path: Path, capsys):
     req.write_text("pydantic==2.8.2\n", encoding="utf-8")
 
     # 1. In production policy with fallbacks (e.g. offline scan), gate blocks release
-    rc_prod = main(["gate", str(tmp_path), "--offline", "--policy", "production"])
+    rc_prod = main(["gate", str(tmp_path), "--offline", "--policy", "production", "--owned-target"])
     assert rc_prod == 1
     out_prod = capsys.readouterr().out
     assert "Release BLOCKED" in out_prod
@@ -88,13 +88,13 @@ def test_cli_gate_production_policy(monkeypatch, tmp_path: Path, capsys):
 
     # 2. In CI environment, production policy is used by default
     monkeypatch.setenv("CI", "1")
-    rc_ci = main(["gate", str(tmp_path), "--offline"])
+    rc_ci = main(["gate", str(tmp_path), "--offline", "--owned-target"])
     assert rc_ci == 1
     out_ci = capsys.readouterr().out
     assert "Release BLOCKED" in out_ci
 
     # 3. Explicitly allowing fallbacks overrides production restriction
-    rc_allowed = main(["gate", str(tmp_path), "--offline", "--allow-fallbacks"])
+    rc_allowed = main(["gate", str(tmp_path), "--offline", "--allow-fallbacks", "--owned-target"])
     assert rc_allowed == 0
     out_allowed = capsys.readouterr().out
     assert "Release APPROVED" in out_allowed
@@ -104,7 +104,7 @@ def test_cli_sbom(tmp_path: Path, capsys):
     f = tmp_path / "requirements.txt"
     f.write_text("fastapi==0.111.0\n", encoding="utf-8")
 
-    rc = main(["sbom", str(tmp_path), "--offline"])
+    rc = main(["sbom", str(tmp_path), "--offline", "--owned-target"])
     assert rc == 0
     captured = capsys.readouterr()
     data = json.loads(captured.out)
@@ -117,3 +117,30 @@ def test_cli_init_app_security(tmp_path: Path, capsys):
     captured = capsys.readouterr()
     assert "SECURITY.md" in captured.out
     assert (tmp_path / "SECURITY.md").exists()
+
+
+def test_cli_refuses_unmarked_targets_and_audits(tmp_path: Path, capsys):
+    from nexcoder_control.metering.audit import AppendOnlyAuditLog
+
+    f = tmp_path / "clean.py"
+    f.write_text("def hello(): return 'world'\n", encoding="utf-8")
+
+    audit = AppendOnlyAuditLog()
+
+    rc_scan = main(["scan", str(tmp_path), "--offline"], audit_log=audit)
+    assert rc_scan == 1
+    err_scan = capsys.readouterr().err
+    assert "USAGE_POLICY.md" in err_scan
+
+    rc_gate = main(["gate", str(tmp_path), "--offline"], audit_log=audit)
+    assert rc_gate == 1
+    err_gate = capsys.readouterr().err
+    assert "USAGE_POLICY.md" in err_gate
+
+    rc_sbom = main(["sbom", str(tmp_path), "--offline"], audit_log=audit)
+    assert rc_sbom == 1
+    err_sbom = capsys.readouterr().err
+    assert "USAGE_POLICY.md" in err_sbom
+
+    denied = audit.query(event_type="target.authorization.denied")
+    assert len(denied) == 3

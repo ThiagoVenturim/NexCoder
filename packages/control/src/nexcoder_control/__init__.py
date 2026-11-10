@@ -9,6 +9,12 @@ from nexcoder_control.approval import (
     CLIMachine,
     MachineApprovalManager,
     MachineStatus,
+    TargetAuthorizationGate,
+    TargetAuthorizationRecord,
+    TargetNotAuthorizedError,
+    TargetOwnership,
+    normalize_target,
+    redact_secrets,
 )
 from nexcoder_control.auth import (
     AuthenticationError,
@@ -113,6 +119,10 @@ __all__ = [
     "OIDCAuthProvider",
     "OIDCConfig",
     "RateLimitExceededError",
+    "TargetAuthorizationGate",
+    "TargetAuthorizationRecord",
+    "TargetNotAuthorizedError",
+    "TargetOwnership",
     "TokenBucket",
     "TokenExpiredError",
     "ToolInvocationRecord",
@@ -121,5 +131,7 @@ __all__ = [
     "build_overview",
     "compute_event_hash",
     "create_control_router",
+    "normalize_target",
+    "redact_secrets",
     "render_html_panel",
 ]

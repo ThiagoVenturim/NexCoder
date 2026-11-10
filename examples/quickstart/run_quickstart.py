@@ -279,6 +279,8 @@ def run_quickstart(output_dir: Path | str | None = None) -> dict[str, Any]:
         sample_project_dir,
         enabled_scanners=["semgrep", "bandit"],
         force_offline=True,
+        owned_target=True,
+        authorized_by="quickstart-operator",
     )
 
     evaluator = SecurityGateEvaluator()

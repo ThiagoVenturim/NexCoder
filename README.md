@@ -208,6 +208,6 @@ The techniques, retrieval mechanisms, and governance patterns forged in these sy
 
 ---
 
-## License
+## License and Usage Policy
 
-This project is licensed under the terms of the [MIT License](LICENSE).
+This project is licensed under the terms of the [MIT License](LICENSE) and governed by our [Ethical Usage Policy](USAGE_POLICY.md). Use `nexcoder` to protect applications, contribute to open-source software, and test or scan only targets you own or are explicitly authorized to assess.

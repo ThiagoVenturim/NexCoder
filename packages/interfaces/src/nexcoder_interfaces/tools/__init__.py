@@ -144,6 +144,20 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
                 "path": {"type": "string", "default": ".", "description": "Target directory to scan."},
                 "policy": {"type": "string", "default": "default", "description": "Gate policy: default or strict."},
                 "force_offline": {"type": "boolean", "default": True, "description": "Run in offline mode."},
+                "owned_target": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Confirm target is owned or explicitly authorized per USAGE_POLICY.md.",
+                },
+                "authorized_by": {
+                    "type": "string",
+                    "default": "owner",
+                    "description": "Identity of the owner or authorizer recorded in the audit log.",
+                },
+                "approval_token": {
+                    "type": "string",
+                    "description": "Optional single-use control plane approval token.",
+                },
             },
         },
         handler=security_scan,

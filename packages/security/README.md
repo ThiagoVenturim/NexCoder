@@ -41,7 +41,7 @@ pip install nexcoder-security
 from nexcoder_security import MultiScannerEngine
 
 engine = MultiScannerEngine()
-result = engine.scan(".", force_offline=True)
+result = engine.scan(".", force_offline=True, owned_target=True, authorized_by="sec-engineer")
 
 print(f"Total findings: {result.total_findings()}")
 for finding in result.findings:
@@ -54,7 +54,7 @@ for finding in result.findings:
 from nexcoder_security import GatePolicy, MultiScannerEngine, SecurityGateEvaluator
 
 engine = MultiScannerEngine()
-scan_result = engine.scan(".", force_offline=True)
+scan_result = engine.scan(".", force_offline=True, owned_target=True, authorized_by="sec-engineer")
 
 policy = GatePolicy(max_critical=0, max_high=0)
 evaluator = SecurityGateEvaluator(default_policy=policy)
@@ -92,14 +92,14 @@ for patch in fix_report.patches:
 ### CLI Commands
 
 ```bash
-# Run scanners over a directory
-nexcoder-security scan ./src --offline
+# Run scanners over an owned directory
+nexcoder-security scan ./src --offline --owned-target --authorized-by sec-engineer
 
 # Evaluate the security release gate
-nexcoder-security gate . --max-critical 0 --max-high 0 --offline
+nexcoder-security gate . --max-critical 0 --max-high 0 --offline --owned-target
 
 # Generate CycloneDX SBOM
-nexcoder-security sbom . --format cyclonedx-json --offline
+nexcoder-security sbom . --format cyclonedx-json --offline --owned-target
 
 # Scaffold security baseline assets
 nexcoder-security init-app-security . --name "MyService" --email "security@example.com"

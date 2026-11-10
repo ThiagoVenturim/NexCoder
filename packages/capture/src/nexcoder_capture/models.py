@@ -112,6 +112,8 @@ class WebCaptureConfig(BaseModel):
     allowed_domains: list[str] = Field(default_factory=list)
     read_only: bool = True
     storage_state_path: str | None = None
+    owned_target: bool = False
+    authorized_by: str = "owner"
 
 
 class WebCaptureResult(BaseModel):
