@@ -25,7 +25,7 @@ All deliverables from Issue #3 are fully implemented and verified offline:
 - [x] Regulation packs: LGPD/GDPR, Brazilian fiscal law
 - [x] `nexcoder agents export --claude` exporter
 - [x] LangGraph pipeline engine: blocks, dry run, human approval gates, committee with quorum, limits
-- [x] Ready-made processes: `idea-to-prd`, `new-app`, `feature`, `bugfix`, `refactor`, `legacy-migration`, `documentation`, `security-audit`
+- [x] Ready-made processes: `idea-to-prd`, `new-app`, `feature`, `bugfix`, `refactor`, `legacy-migration`, `documentation`, `security-audit`, `security-review`
 - [x] 68/68 unit tests passing offline with zero external dependencies
 
 ## Installation

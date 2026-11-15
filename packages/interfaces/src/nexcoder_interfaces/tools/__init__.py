@@ -6,7 +6,7 @@ from nexcoder_interfaces.tools.base import unavailable_tool_handler
 from nexcoder_interfaces.tools.code import generate_docs, impact_analysis, search_code
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
 from nexcoder_interfaces.tools.planning import plan_sprints, sync_board
-from nexcoder_interfaces.tools.security import security_scan
+from nexcoder_interfaces.tools.security import security_review, security_scan
 from nexcoder_interfaces.tools.unavailable import (
     audit_log,
     capture_page,
@@ -161,6 +161,45 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
             },
         },
         handler=security_scan,
+        is_available=True,
+    ),
+    "security_review": ToolDefinition(
+        name="security_review",
+        description=(
+            "Run responsible-disclosure security review (prompt injection, SQLi, data leakage, general security)."
+        ),
+        module="security",
+        parameters={
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "default": ".", "description": "Target directory or file to review."},
+                "owned_target": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Confirm target is owned or explicitly authorized per USAGE_POLICY.md.",
+                },
+                "authorized_by": {
+                    "type": "string",
+                    "default": "owner",
+                    "description": "Identity of the owner or authorizer recorded in the audit log.",
+                },
+                "approval_token": {
+                    "type": "string",
+                    "description": "Optional single-use control plane approval token.",
+                },
+                "enable_runtime_monitor": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Enable optional runtime prompt/tool monitor.",
+                },
+                "oss_contribution_mode": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Enable OSS contribution responsible disclosure mode.",
+                },
+            },
+        },
+        handler=security_review,
         is_available=True,
     ),
     # Agents & Pipelines
@@ -346,6 +385,7 @@ __all__ = [
     "run_pipeline",
     "schedule_job",
     "search_code",
+    "security_review",
     "security_scan",
     "serve_model",
     "sync_board",

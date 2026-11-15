@@ -38,6 +38,7 @@ from nexcoder_agents.engine import (
 )
 from nexcoder_agents.engine.pipelines import (
     PipelineTemplate,
+    SecurityReviewBlock,
     build_pipeline,
     create_bugfix_pipeline,
     create_documentation_pipeline,
@@ -45,6 +46,7 @@ from nexcoder_agents.engine.pipelines import (
     create_legacy_migration_pipeline,
     create_refactor_pipeline,
     create_security_audit_pipeline,
+    create_security_review_pipeline,
     create_software_engineering_pipeline,
     get_pipeline_template,
     list_pipeline_templates,
@@ -108,6 +110,7 @@ __all__ = [
     "PracticesAudit",
     "PrioritizedAction",
     "PromptBlock",
+    "SecurityReviewBlock",
     "SkillCatalog",
     "SkillSpec",
     "SoftwareEngineeringAdvisor",
@@ -122,6 +125,7 @@ __all__ = [
     "create_legacy_migration_pipeline",
     "create_refactor_pipeline",
     "create_security_audit_pipeline",
+    "create_security_review_pipeline",
     "create_software_engineering_pipeline",
     "export_claude_package",
     "get_pipeline_template",

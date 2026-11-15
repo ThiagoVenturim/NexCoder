@@ -3,11 +3,13 @@ from __future__ import annotations
 from typing import Any
 
 from nexcoder_agents.engine.blocks.approval import HumanApprovalBlock
+from nexcoder_agents.engine.blocks.base import BaseBlock
 from nexcoder_agents.engine.blocks.committee import CommitteeBlock, CommitteeMember
 from nexcoder_agents.engine.blocks.guardrails import ExecutionLimits
 from nexcoder_agents.engine.blocks.prompt import PromptBlock
 from nexcoder_agents.engine.blocks.validator import ValidatorBlock
 from nexcoder_agents.engine.graph import PipelineBuilder
+from nexcoder_agents.engine.models import BlockResult, BlockStatus
 from nexcoder_agents.software_engineering import SoftwareEngineeringAuditBlock
 
 
@@ -442,3 +444,149 @@ def create_software_engineering_pipeline(
     if limits:
         builder.set_limits(limits)
     return builder
+
+
+class SecurityReviewBlock(BaseBlock):
+    """Pipeline block that executes an authorized security review with control-plane target gate and audit."""
+
+    def __init__(
+        self,
+        name: str = "security_review_scan",
+        target_gate: Any | None = None,
+        audit_log: Any | None = None,
+    ) -> None:
+        super().__init__(name=name, block_type="security_review")
+        self.target_gate = target_gate
+        self.audit_log = audit_log
+
+    def execute(
+        self,
+        state: dict[str, Any],
+        context: dict[str, Any] | None = None,
+    ) -> BlockResult:
+        inputs = state.get("inputs", {})
+        data = state.get("data", {})
+
+        target_path = data.get("target_path") or inputs.get("target_path")
+        if not target_path:
+            return BlockResult(
+                block_name=self.name,
+                status=BlockStatus.FAILURE,
+                error="Missing required 'target_path' for security review.",
+                message="Missing required 'target_path'.",
+            )
+
+        owned_target = bool(data.get("owned_target") or inputs.get("owned_target", False))
+        authorized_by = str(data.get("authorized_by") or inputs.get("authorized_by") or "owner")
+        approval_token = data.get("approval_token") or inputs.get("approval_token")
+        enable_monitor = bool(data.get("enable_runtime_monitor") or inputs.get("enable_runtime_monitor", False))
+        runtime_samples = data.get("runtime_samples") or inputs.get("runtime_samples")
+        oss_mode = bool(data.get("oss_contribution_mode") or inputs.get("oss_contribution_mode", False))
+        active_gate = data.get("target_gate") or inputs.get("target_gate") or self.target_gate
+        active_audit = data.get("audit_log") or inputs.get("audit_log") or self.audit_log
+
+        try:
+            from nexcoder_control.approval import TargetNotAuthorizedError
+            from nexcoder_security.review import SecurityReviewEngine
+
+            engine = SecurityReviewEngine(target_gate=active_gate, audit_log=active_audit)
+            report = engine.review(
+                target_path=str(target_path),
+                owned_target=owned_target,
+                authorized_by=authorized_by,
+                approval_token=approval_token,
+                enable_runtime_monitor=enable_monitor,
+                runtime_samples=runtime_samples,
+                oss_contribution_mode=oss_mode,
+            )
+        except TargetNotAuthorizedError as exc:
+            return BlockResult(
+                block_name=self.name,
+                status=BlockStatus.FAILURE,
+                error=str(exc),
+                message=f"Target authorization refused: {exc}",
+            )
+        except Exception as exc:
+            return BlockResult(
+                block_name=self.name,
+                status=BlockStatus.FAILURE,
+                error=str(exc),
+                message=f"Security review execution error: {exc}",
+            )
+
+        return BlockResult(
+            block_name=self.name,
+            status=BlockStatus.SUCCESS,
+            updates={
+                "security_review_report": report.model_dump(mode="json"),
+                "security_findings": [f.model_dump(mode="json") for f in report.findings],
+                "security_review_markdown": report.to_markdown(),
+                "passed_security_gate": report.passed_gate,
+                "disclosure_mode": report.disclosure_mode,
+                "exploit_published": report.exploit_published,
+            },
+            message=(
+                f"Security review completed on '{report.target_path}': "
+                f"{report.total_findings} findings (gate_passed={report.passed_gate})."
+            ),
+        )
+
+
+def create_security_review_pipeline(
+    name: str = "security-review",
+    approval_action: str = "approve_security_review",
+    limits: ExecutionLimits | None = None,
+    model: Any = None,
+    target_gate: Any | None = None,
+    audit_log: Any | None = None,
+) -> PipelineBuilder:
+    """Build a security review pipeline (prompt injection, SQLi, data leakage, general security, runtime monitor)."""
+    builder = PipelineBuilder(name)
+
+    val = ValidatorBlock(
+        name="security_review_validator",
+        required_keys=["target_path"],
+    )
+
+    review_block = SecurityReviewBlock(
+        name="security_review_scan",
+        target_gate=target_gate,
+        audit_log=audit_log,
+    )
+
+    summary = PromptBlock(
+        name="security_remediation_summary",
+        user_prompt_template=(
+            "You are a principal application security engineer practicing responsible disclosure.\n"
+            "Target: {target_path}\n"
+            "Findings: {security_findings}\n"
+            "Summarize the findings with file:line, severity, and concrete remediation steps without exploits."
+        ),
+        output_key="security_remediation_plan",
+        tier="large",
+        model=model,
+    )
+
+    committee = CommitteeBlock(
+        name="security_review_committee",
+        members=[
+            CommitteeMember(name="appsec_lead", perspective="Prompt Injection, SQLi, and Access Control", weight=1.5),
+            CommitteeMember(name="privacy_officer", perspective="Data Leakage and Responsible Disclosure", weight=1.2),
+        ],
+        target_key="security_remediation_plan",
+        quorum_threshold=0.6,
+        model=model,
+    )
+
+    gate = HumanApprovalBlock(
+        name="security_review_gate",
+        action_name=approval_action,
+        description="Approve responsible-disclosure security review report and remediation plan",
+        payload_keys=["target_path", "security_remediation_plan", "passed_security_gate"],
+    )
+
+    builder.add_sequence([val, review_block, summary, committee, gate])
+    if limits:
+        builder.set_limits(limits)
+    return builder
+

@@ -11,6 +11,7 @@ from nexcoder_agents.engine.pipelines.templates import (
     create_legacy_migration_pipeline,
     create_refactor_pipeline,
     create_security_audit_pipeline,
+    create_security_review_pipeline,
     create_software_engineering_pipeline,
 )
 
@@ -114,6 +115,16 @@ def _init_default_templates() -> None:
             category="engineering",
             required_inputs=["project_name", "architecture_goal"],
             factory=create_software_engineering_pipeline,
+        ),
+        PipelineTemplate(
+            name="security-review",
+            description=(
+                "Comprehensive security review: prompt injection, SQL injection, data leakage, "
+                "general application security, optional runtime monitor, target gate, and responsible disclosure."
+            ),
+            category="security",
+            required_inputs=["target_path"],
+            factory=create_security_review_pipeline,
         ),
     ]
 
