@@ -12,4 +12,12 @@ regexes = [
   '''abcdef1234567890abcdef123456''',
   '''fk_nonexistent_key_12345''',
   '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9''',
+  '''sk-live9876543210abcdef''',
+  '''sk-antigravity-secret-key-123''',
+  '''sk-secret-key-abcdef''',
+  '''sk-mytoken123456''',
+  '''sk-securekey12345''',
+  '''sk-testsecret12345''',
+  '''sk-proj-supersecretkey1234567890''',
+  '''sk-proj-supersecretapikey123456789''',
 ]

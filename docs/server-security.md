@@ -161,7 +161,7 @@ sql_dump = "INSERT INTO users (email, cpf) VALUES ('test@corp.com', '123.456.789
 masked_sql = masker.mask_sql_dump(sql_dump)
 
 # Mask structured JSON
-data = {"user": "bob", "email": "bob@example.com", "secret_key": "sk-1234567890abcdef"}
+data = {"user": "bob", "email": "bob@example.com", "secret_key": "vault_secret_token_placeholder"}
 masked_data = masker.mask_record(data)
 ```
 
