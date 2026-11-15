@@ -70,7 +70,12 @@ class SASTTriageAgent(BaseSecurityAgent):
                 adj_sev = "info"
                 fp_count += 1
                 actionable = False
-            elif "shell-true" in rule or "exec" in rule or "sqli" in rule:
+            elif (
+                "shell-true" in rule
+                or "exec" in rule
+                or "sqli" in rule
+                or rule.startswith(("prompt-injection.", "sql-injection.", "data-leakage.", "general-security."))
+            ):
                 verdict = TriageVerdict.TRUE_POSITIVE
                 reason = "Critical/High SAST finding confirmed with unsafe construct in active logic."
                 adj_sev = f.severity.value

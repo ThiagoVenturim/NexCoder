@@ -8,6 +8,7 @@ from nexcoder_agents.engine.pipelines.registry import (
     register_pipeline_template,
 )
 from nexcoder_agents.engine.pipelines.templates import (
+    SecurityReviewBlock,
     create_bugfix_pipeline,
     create_data_engineering_pipeline,
     create_documentation_pipeline,
@@ -16,11 +17,13 @@ from nexcoder_agents.engine.pipelines.templates import (
     create_quality_review_pipeline,
     create_refactor_pipeline,
     create_security_audit_pipeline,
+    create_security_review_pipeline,
     create_software_engineering_pipeline,
 )
 
 __all__ = [
     "PipelineTemplate",
+    "SecurityReviewBlock",
     "build_pipeline",
     "create_bugfix_pipeline",
     "create_data_engineering_pipeline",
@@ -30,6 +33,7 @@ __all__ = [
     "create_quality_review_pipeline",
     "create_refactor_pipeline",
     "create_security_audit_pipeline",
+    "create_security_review_pipeline",
     "create_software_engineering_pipeline",
     "get_pipeline_template",
     "list_pipeline_templates",

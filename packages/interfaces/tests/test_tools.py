@@ -17,6 +17,7 @@ from nexcoder_interfaces.tools import (
     run_pipeline,
     search_code,
     security_report,
+    security_review,
     security_scan,
     sync_board,
 )
@@ -132,6 +133,22 @@ def test_security_scan_refuses_unmarked_target(tmp_path: Path) -> None:
     events = audit.query(event_type="target.authorization.denied")
     assert len(events) == 1
     assert events[0].resource == str(tmp_path.resolve())
+
+
+def test_security_review_tool_offline(tmp_path: Path) -> None:
+    vuln_file = tmp_path / "vuln.py"
+    vuln_file.write_text('cursor.execute(f"SELECT * FROM accounts WHERE id = {user_id}")\n', encoding="utf-8")
+
+    rejected = security_review(path=str(vuln_file), owned_target=False)
+    assert rejected["status"] == "rejected"
+    assert rejected["authorized"] is False
+
+    ok = security_review(path=str(vuln_file), owned_target=True, authorized_by="sec-owner")
+    assert ok["status"] == "success"
+    assert ok["authorized"] is True
+    assert ok["exploit_published"] is False
+    assert ok["total_findings"] >= 1
+    assert ok["findings"][0]["rule_id"] == "sql-injection.concatenated-query"
 
 
 def test_run_agent_offline() -> None:
