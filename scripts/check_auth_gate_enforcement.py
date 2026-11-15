@@ -21,6 +21,7 @@ GATE_ALLOWED_PREFIXES = (
     "packages/security/src/nexcoder_security/agents/",
     "packages/control/src/nexcoder_control/approval/",
     "packages/control/src/nexcoder_control/auth/",
+    "packages/control/src/nexcoder_control/email/",
     "packages/core/src/nexcoder_core/reports.py",
     "packages/core/src/nexcoder_core/retrieval/embeddings.py",
     "packages/ideation/src/nexcoder_ideation/search/providers.py",

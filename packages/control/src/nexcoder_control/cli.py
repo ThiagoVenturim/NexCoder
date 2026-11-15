@@ -8,6 +8,7 @@ from rich.table import Table
 
 from nexcoder_control.approval.machines import MachineApprovalManager
 from nexcoder_control.approval.tokens import ApprovalTokenManager
+from nexcoder_control.email import EmailAttachment, EmailMessage, EmailService
 from nexcoder_control.keys.models import APIKeyCreate
 from nexcoder_control.keys.store import APIKeyService
 from nexcoder_control.metering.audit import AppendOnlyAuditLog
@@ -24,10 +25,12 @@ app = typer.Typer(
 keys_app = typer.Typer(name="keys", help="Manage API keys, USD caps, and scopes.")
 machines_app = typer.Typer(name="machines", help="Govern and approve CLI workstations.")
 audit_app = typer.Typer(name="audit", help="Query and verify append-only audit ledger.")
+email_app = typer.Typer(name="email", help="Manage email connectors, send messages, and view templates.")
 
 app.add_typer(keys_app)
 app.add_typer(machines_app)
 app.add_typer(audit_app)
+app.add_typer(email_app)
 
 console = Console()
 
@@ -175,6 +178,113 @@ def audit_verify() -> None:
     else:
         console.print(f"[bold red]INTEGRITY BREACH:[/bold red] {message}")
         raise typer.Exit(code=1)
+
+
+_email_service = EmailService(
+    audit_log=_audit_log,
+    token_manager=_token_mgr,
+)
+
+
+@email_app.command("status")
+def email_status() -> None:
+    """Display configured email providers and policy settings."""
+    configured_providers = _email_service.get_available_providers()
+    pref = _email_service.settings.get_preferred_provider()
+
+    table = Table(title="Email Dispatcher Status")
+    table.add_column("Property", style="cyan")
+    table.add_column("Value", style="green")
+
+    table.add_row("Operational", "Yes" if _email_service.is_configured() else "No (unconfigured)")
+    table.add_row("Configured Providers", ", ".join(configured_providers) if configured_providers else "None")
+    table.add_row("Preferred Provider", pref)
+    table.add_row("Require Approval", str(_email_service.settings.require_human_approval))
+    table.add_row("Max Recipients", str(_email_service.settings.max_recipients_per_send))
+    table.add_row("Gmail RPM Limit", str(_email_service.settings.rate_limits_rpm.get("gmail", 60)))
+    table.add_row("Outlook RPM Limit", str(_email_service.settings.rate_limits_rpm.get("outlook", 30)))
+    table.add_row("SMTP RPM Limit", str(_email_service.settings.rate_limits_rpm.get("smtp", 30)))
+
+    console.print(table)
+
+
+@email_app.command("templates")
+def email_templates() -> None:
+    """List available reusable email templates."""
+    templates = _email_service.template_manager.list_templates()
+    table = Table(title="Reusable Email Templates")
+    table.add_column("Template Name", style="cyan")
+    table.add_column("Description", style="white")
+    table.add_column("Subject Pattern", style="yellow")
+
+    for tpl in templates:
+        table.add_row(tpl.name, tpl.description, tpl.subject_template)
+
+    console.print(table)
+
+
+@email_app.command("send")
+def email_send(
+    to: str = typer.Option(..., "--to", "-t", help="Recipient email address"),
+    subject: str = typer.Option("Notification", "--subject", "-s", help="Email subject"),
+    body: str | None = typer.Option(None, "--body", "-b", help="Plain text message body"),
+    html: str | None = typer.Option(None, "--html", help="HTML message body"),
+    attachment: str | None = typer.Option(None, "--attachment", "-a", help="Path to attachment file"),
+    template: str | None = typer.Option(None, "--template", help="Name of template to render"),
+    provider: str | None = typer.Option(None, "--provider", "-p", help="Provider (gmail, outlook, smtp)"),
+    token: str | None = typer.Option(None, "--token", help="Human approval token"),
+    confirm: bool = typer.Option(False, "--confirm", "-y", help="Confirm send without approval token"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Simulate send without actual network dispatch"),
+) -> None:
+    """Send an email from user account with human approval and audit tracking."""
+    attachments = []
+    if attachment:
+        attachments.append(EmailAttachment(filename=attachment, file_path=attachment))
+
+    msg = EmailMessage(
+        subject=subject,
+        recipients=[to],
+        body_text=body,
+        body_html=html,
+        attachments=attachments,
+        template_name=template,
+    )
+
+    try:
+        res = _email_service.send_email(
+            message=msg,
+            provider=provider,
+            approval_token=token,
+            confirmed=confirm,
+            dry_run=dry_run,
+        )
+        if res.success:
+            console.print(
+                f"[green]Email dispatched successfully via {res.provider} (ID: {res.message_id}). "
+                f"Audit ID: {res.audit_event_id}[/green]"
+            )
+        else:
+            console.print(f"[yellow]Email not sent (status: {res.status}): {res.error_message}[/yellow]")
+    except Exception as exc:
+        console.print(f"[red]Email delivery failed: {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+
+@email_app.command("test")
+def email_test(
+    to: str = typer.Option(..., "--to", "-t", help="Recipient for test message"),
+    provider: str = typer.Option("gmail", "--provider", "-p", help="Provider to test (gmail, outlook, smtp)"),
+) -> None:
+    """Dispatch automated test email with an attachment."""
+    try:
+        res = _email_service.send_test_email(recipient=to, provider=provider, confirmed=True)
+        if res.success:
+            console.print(f"[green]Test email sent via {res.provider} (ID: {res.message_id})[/green]")
+        else:
+            console.print(f"[yellow]Test email failed (status: {res.status}): {res.error_message}[/yellow]")
+    except Exception as exc:
+        console.print(f"[red]Test failed: {exc}[/red]")
+        raise typer.Exit(code=1) from None
 
 
 def main() -> None:

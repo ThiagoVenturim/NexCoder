@@ -70,7 +70,7 @@ KNOWN_MODULES: dict[str, ModuleInfo] = {
         package_name="nexcoder_control",
         description="Control plane: keys, cost, budgets, policy enforcement, and audit.",
         available_in_develop=False,
-        tools=["check_budget", "audit_log"],
+        tools=["check_budget", "audit_log", "send_email"],
     ),
     "continuous-improvement": ModuleInfo(
         name="continuous-improvement",
