@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from nexcoder_agents.data_engineering import DataEngineeringPipelineBlock
 from nexcoder_agents.engine.blocks.approval import HumanApprovalBlock
 from nexcoder_agents.engine.blocks.base import BaseBlock
 from nexcoder_agents.engine.blocks.committee import CommitteeBlock, CommitteeMember
@@ -446,6 +447,79 @@ def create_software_engineering_pipeline(
     return builder
 
 
+def create_data_engineering_pipeline(
+    name: str = "data-engineering-pipeline",
+    approval_action: str = "approve_data_pipeline_deployment",
+    limits: ExecutionLimits | None = None,
+    model: Any = None,
+) -> PipelineBuilder:
+    """Build an end-to-end data engineering pipeline (ingestion, ELT/ETL, quality, modeling, observability)."""
+    builder = PipelineBuilder(name)
+
+    val = ValidatorBlock(
+        name="data_pipeline_validator",
+        required_keys=["pipeline_name", "pipeline_description"],
+    )
+
+    data_block = DataEngineeringPipelineBlock(
+        name="data_engineering_execution",
+        llm=model,
+    )
+
+    review = PromptBlock(
+        name="data_architecture_review",
+        user_prompt_template=(
+            "You are a principal data architect.\n"
+            "Pipeline: {pipeline_name}\n"
+            "Description: {pipeline_description}\n"
+            "Storage Modeling: {storage_modeling}\n"
+            "Silver Quality Report: {silver_quality_report}\n"
+            "Observability: {observability}\n"
+            "Synthesize an operational readiness summary covering storage selection, "
+            "schema contract enforcement, and observability SLAs."
+        ),
+        output_key="data_architecture_summary",
+        tier="medium",
+        model=model,
+    )
+
+    committee = CommitteeBlock(
+        name="data_governance_committee",
+        members=[
+            CommitteeMember(
+                name="data_architect",
+                perspective="Storage Modeling and Partition Hygiene",
+                weight=1.5,
+            ),
+            CommitteeMember(
+                name="data_quality_lead",
+                perspective="Schema Contracts and Observability SLAs",
+                weight=1.5,
+            ),
+            CommitteeMember(
+                name="finops_governor",
+                perspective="Compute Budget and Audit Trail Compliance",
+                weight=1.0,
+            ),
+        ],
+        target_key="data_architecture_summary",
+        quorum_threshold=0.6,
+        model=model,
+    )
+
+    gate = HumanApprovalBlock(
+        name="data_pipeline_gate",
+        action_name=approval_action,
+        description="Approve data pipeline DAGs, schema contracts, and medallion materialization",
+        payload_keys=["pipeline_name", "data_architecture_summary", "silver_quality_report"],
+    )
+
+    builder.add_sequence([val, data_block, review, committee, gate])
+    if limits:
+        builder.set_limits(limits)
+    return builder
+
+
 class SecurityReviewBlock(BaseBlock):
     """Pipeline block that executes an authorized security review with control-plane target gate and audit."""
 
@@ -589,4 +663,3 @@ def create_security_review_pipeline(
     if limits:
         builder.set_limits(limits)
     return builder
-
