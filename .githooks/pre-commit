@@ -9,3 +9,6 @@ python scripts/check_no_emoji.py $files || exit 1
 
 # shellcheck disable=SC2086
 python scripts/check_auth_gate_enforcement.py $files || exit 1
+
+# shellcheck disable=SC2086
+python scripts/check_injection_guard.py $files || exit 1
