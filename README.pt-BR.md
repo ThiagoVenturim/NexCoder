@@ -181,6 +181,7 @@ Guias detalhados estao disponiveis no diretorio [docs/](docs/):
 - **Ideacao, Planejamento e Agentes**:
   - [Ideacao e Comite](docs/ideation-and-jury.md): Esquadrao de pesquisa de mercado, matriz competitiva e votacao por quorum.
   - [Planejamento Agilico](docs/agentic-planning.md): Conversao de PRD, gestao de capacidade de sprint e sincronizacao idempotente de tarefas.
+  - [Calculadora de Custo de Produto](docs/cost-calculator.md): Estimativa de construcao, publicacao, manutencao (mes/ano) e licencas/marca.
   - [Catalogo de Agentes](docs/agents-catalog.md): Taxonomia de personas, esquema de metadados e pacotes por tecnologia.
   - [Pipelines](docs/pipelines.md): Orquestracao de fluxos LangGraph, blocos reutilizaveis e portais de aprovacao humana.
 
