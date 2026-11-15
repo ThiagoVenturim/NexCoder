@@ -184,6 +184,7 @@ Documentation guides are available in the [docs/](docs/) directory:
 - **Ideation, Planning & Agents**:
   - [Ideation and Jury](docs/ideation-and-jury.md): Research squad analysis, competitive matrices, and multi-persona jury quorum voting.
   - [Agentic Planning](docs/agentic-planning.md): PRD transformation, capacity planning, Git automation, and idempotent tracker synchronization.
+  - [VCS & Repository Management](docs/vcs-integrations.md): Unified provider layer for Azure DevOps, GitLab, Git, SVN, and TortoiseGit with token isolation and audit logs.
   - [Product Cost Calculator](docs/cost-calculator.md): Estimating build, publication, recurring maintenance (month/year), and IP/brand licensing.
   - [Agents Catalog](docs/agents-catalog.md): Agent taxonomy, frontmatter schema, sector coverage, and specialized technology packs.
   - [Pipelines](docs/pipelines.md): LangGraph workflow orchestration, reusable blocks, human approval gates, and dry-run guarantees.
