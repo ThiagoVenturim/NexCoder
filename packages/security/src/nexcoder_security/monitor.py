@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 from nexcoder_control.approval.target_gate import redact_secrets
 from nexcoder_control.metering.audit import AppendOnlyAuditLog
+from nexcoder_core import PromptInjectionBlockedError
 from pydantic import BaseModel, Field
 
 from nexcoder_security.models import Severity
@@ -28,15 +29,6 @@ class MonitorInspectionResult(BaseModel):
     target_type: Literal["prompt", "tool_call"]
     sanitized_text: str = ""
     violations: list[MonitorViolation] = Field(default_factory=list)
-
-
-class PromptInjectionBlockedError(PermissionError):
-    """Raised when RuntimeSecurityMonitor blocks a prompt or tool invocation."""
-
-    def __init__(self, reason: str, violations: list[MonitorViolation] | None = None) -> None:
-        super().__init__(reason)
-        self.reason = reason
-        self.violations = violations or []
 
 
 class RuntimeMonitorConfig(BaseModel):
