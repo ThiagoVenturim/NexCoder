@@ -133,6 +133,19 @@ print(result.observability.overall_healthy)
 print(result.to_markdown())
 ```
 
+### Open-Source Contribution Mode & Coordinated Vulnerability Disclosure
+
+```python
+from nexcoder_agents import OSSContributionAdvisor
+
+advisor = OSSContributionAdvisor()
+report = advisor.analyze_oss_project("examples/quickstart/sample_project", read_only=True)
+
+print(report.project_map.languages_breakdown)
+print(len(report.findings))
+print(report.to_markdown())
+```
+
 ## Origin
 
 A catalog of automation agents and personas distilled into a generic, vendor-agnostic architecture.

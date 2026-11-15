@@ -16,6 +16,7 @@ skills:
   - adr-and-engineering-docs
   - guided-refactoring
   - technical-planning
+  - oss-contribution
   - code-quality-review
   - database-modeling
 ---

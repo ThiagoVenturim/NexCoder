@@ -10,6 +10,7 @@ from nexcoder_agents.engine.pipelines.templates import (
     create_documentation_pipeline,
     create_feature_pipeline,
     create_legacy_migration_pipeline,
+    create_oss_contribution_pipeline,
     create_quality_review_pipeline,
     create_refactor_pipeline,
     create_security_audit_pipeline,
@@ -144,6 +145,16 @@ def _init_default_templates() -> None:
             category="data",
             required_inputs=["pipeline_name", "pipeline_description"],
             factory=create_data_engineering_pipeline,
+        ),
+        PipelineTemplate(
+            name="oss-contribution",
+            description=(
+                "Read-only open-source project analysis: RAG/GraphRAG mapping, static bug and security "
+                "detection, fix synthesis, coordinated disclosure routing, and contribution reporting."
+            ),
+            category="open-source",
+            required_inputs=["repo_path_or_url"],
+            factory=create_oss_contribution_pipeline,
         ),
         PipelineTemplate(
             name="security-review",

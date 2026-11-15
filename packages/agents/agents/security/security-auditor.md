@@ -12,6 +12,8 @@ skills:
   - sast-triage
   - owasp-asvs
   - cryptography-audit
+  - coordinated-disclosure
+  - oss-contribution
   - prompt-injection-defense
   - sql-injection-prevention
   - data-leakage-prevention
