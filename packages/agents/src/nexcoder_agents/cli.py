@@ -4,10 +4,13 @@ import argparse
 import sys
 from pathlib import Path
 
+from nexcoder_control.approval import TargetNotAuthorizedError
+
 from nexcoder_agents.catalog.registry import AgentCatalog
 from nexcoder_agents.catalog.skills import SkillCatalog
 from nexcoder_agents.engine.pipelines import get_pipeline_template, list_pipeline_templates
 from nexcoder_agents.export import export_claude_package
+from nexcoder_agents.quality import QualityReviewer
 from nexcoder_agents.software_engineering import SoftwareEngineeringAdvisor
 
 
@@ -65,6 +68,31 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-refactor",
         action="store_true",
         help="Skip applying safe test-backed refactoring in workspace copy.",
+    )
+
+    # quality-review subcommand
+    quality_parser = subparsers.add_parser(
+        "quality-review",
+        help="Run gated code quality and architecture detectors on an owned or authorized project.",
+    )
+    quality_parser.add_argument("project_dir", type=Path, help="Path to target project directory.")
+    quality_parser.add_argument(
+        "--owned-target",
+        action="store_true",
+        help="Confirm the target directory is owned by the operator.",
+    )
+    quality_parser.add_argument(
+        "--authorized-by",
+        type=str,
+        default="owner",
+        help="Actor authorizing the target review (default: owner).",
+    )
+    quality_parser.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="Optional path to write the Markdown quality report.",
     )
 
     return parser
@@ -149,6 +177,26 @@ def main(args: list[str] | None = None) -> int:
                 print(md)
             return 0
         except FileNotFoundError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+
+    if parsed.command == "quality-review":
+        try:
+            reviewer = QualityReviewer()
+            report = reviewer.review(
+                parsed.project_dir,
+                owned_target=parsed.owned_target,
+                authorized_by=parsed.authorized_by,
+            )
+            md = report.to_markdown()
+            if parsed.output:
+                parsed.output.parent.mkdir(parents=True, exist_ok=True)
+                parsed.output.write_text(md, encoding="utf-8")
+                print(f"Quality review report written to {parsed.output}")
+            else:
+                print(md)
+            return 0
+        except (TargetNotAuthorizedError, FileNotFoundError) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
 
