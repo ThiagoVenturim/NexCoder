@@ -101,11 +101,15 @@ class TargetNotAuthorizedError(ForbiddenError):
         detail = reason or (
             f"Target '{target}' is not marked as owned or explicitly authorized for mode '{mode}'. "
             "Per USAGE_POLICY.md, testing and scanning modes require the target to be marked as owned "
-            "(owned_target=True or registered in TargetAuthorizationGate) or accompanied by a valid approval token."
+            "(owned_target=True or registered in TargetAuthorizationGate) or accompanied by a valid approval token "
+            "or a valid signed authorization document."
         )
         super().__init__(message=detail, status_code=403)
         self.target = target
         self.mode = mode
+
+
+AuthorizationGateBlockedError = TargetNotAuthorizedError
 
 
 class TargetAuthorizationRecord(BaseModel):
@@ -127,11 +131,19 @@ class TargetAuthorizationGate:
         self,
         audit_log: AppendOnlyAuditLog | None = None,
         token_manager: ApprovalTokenManager | None = None,
+        trusted_public_keys: list[str] | set[str] | None = None,
     ) -> None:
         self.audit_log = audit_log if audit_log is not None else AppendOnlyAuditLog()
         self.token_manager = token_manager if token_manager is not None else ApprovalTokenManager()
         self._targets: dict[str, TargetAuthorizationRecord] = {}
         self._lock = threading.Lock()
+        self.trusted_public_keys: set[str] = set(trusted_public_keys or [])
+
+    def add_trusted_public_key(self, public_key: str) -> None:
+        """Register a trusted public key for signed document verification."""
+        clean = public_key.strip()
+        if clean:
+            self.trusted_public_keys.add(clean)
 
     def mark_owned_target(
         self,
@@ -213,6 +225,8 @@ class TargetAuthorizationGate:
         owned_target: bool = False,
         authorized_by: str | None = None,
         approval_token: str | None = None,
+        authorization_document: Any = None,
+        require_signed_document: bool = False,
         dry_run: bool = False,
         metadata: dict[str, Any] | None = None,
     ) -> TargetAuthorizationRecord:
@@ -226,7 +240,121 @@ class TargetAuthorizationGate:
         clean_actor = (authorized_by or "").strip()
         now = datetime.now(UTC)
 
-        # 1. Check approval token if supplied
+        # 1. Check signed authorization document if supplied
+        if authorization_document is not None:
+            from nexcoder_control.approval.signed_doc import verify_signed_document
+
+            try:
+                verified_doc = verify_signed_document(
+                    authorization_document,
+                    trusted_public_keys=self.trusted_public_keys,
+                    target=norm_target,
+                    action=mode,
+                    current_time=now,
+                )
+            except TargetNotAuthorizedError as exc:
+                actor_name = clean_actor or "unverified"
+                self.audit_log.record_event(
+                    event_type="target.authorization.denied",
+                    actor=actor_name,
+                    action=mode,
+                    resource=norm_target,
+                    severity="warning",
+                    details={
+                        "target": norm_target,
+                        "authorized_by": actor_name,
+                        "attempted_at": now.isoformat(),
+                        "mode": mode,
+                        "status": "denied",
+                        "reason": str(exc),
+                        "metadata": safe_meta,
+                    },
+                )
+                raise
+            except Exception as exc:
+                actor_name = clean_actor or "unverified"
+                reason_str = f"Authorization document validation failed: {exc}"
+                self.audit_log.record_event(
+                    event_type="target.authorization.denied",
+                    actor=actor_name,
+                    action=mode,
+                    resource=norm_target,
+                    severity="warning",
+                    details={
+                        "target": norm_target,
+                        "authorized_by": actor_name,
+                        "attempted_at": now.isoformat(),
+                        "mode": mode,
+                        "status": "denied",
+                        "reason": reason_str,
+                        "metadata": safe_meta,
+                    },
+                )
+                raise TargetNotAuthorizedError(target=norm_target, mode=mode, reason=reason_str) from exc
+
+            actor_name = clean_actor or verified_doc.authorized_by
+            doc_meta = {
+                **safe_meta,
+                "scope": verified_doc.scope,
+                "contact": verified_doc.contact,
+                "valid_until": verified_doc.valid_until.isoformat(),
+                "scope_hash": verified_doc.scope_hash,
+            }
+            record = TargetAuthorizationRecord(
+                target=norm_target,
+                authorized_by=actor_name,
+                ownership="authorized",
+                authorized_at=now,
+                mode=mode,
+                metadata=doc_meta,
+            )
+            self.audit_log.record_event(
+                event_type="target.authorization.granted",
+                actor=actor_name,
+                action=mode,
+                resource=norm_target,
+                severity="info",
+                details={
+                    "target": norm_target,
+                    "authorized_by": actor_name,
+                    "authorized_at": now.isoformat(),
+                    "ownership": "authorized",
+                    "mode": mode,
+                    "status": "authorized",
+                    "scope": verified_doc.scope,
+                    "valid_until": verified_doc.valid_until.isoformat(),
+                    "metadata": doc_meta,
+                },
+            )
+            return record
+
+        # 2. Check strict signed document requirement
+        if require_signed_document:
+            actor_name = clean_actor or "unverified"
+            refusal_reason = (
+                f"Target '{norm_target}' requires a valid signed authorization document for mode '{mode}'. "
+                "Default: deny. Never fail open."
+            )
+            self.audit_log.record_event(
+                event_type="target.authorization.denied",
+                actor=actor_name,
+                action=mode,
+                resource=norm_target,
+                severity="warning",
+                details={
+                    "target": norm_target,
+                    "authorized_by": clean_actor or None,
+                    "attempted_at": now.isoformat(),
+                    "owned_target": owned_target,
+                    "mode": mode,
+                    "status": "denied",
+                    "reason": refusal_reason,
+                    "metadata": safe_meta,
+                },
+            )
+            raise TargetNotAuthorizedError(target=norm_target, mode=mode, reason=refusal_reason)
+
+        # 3. Check approval token if supplied
         if approval_token is not None:
             try:
                 # Try matching normalized target first, then raw string target
