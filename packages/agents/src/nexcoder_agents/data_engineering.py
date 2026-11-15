@@ -952,20 +952,27 @@ class DataEngineeringAdvisor:
         else:
             # DBT SQL model + YAML schema contract represented as Python-verifiable bundle
             col_list = ",\n    ".join(c.name for c in contract.columns)
-            code = (
-                f"-- dbt model: models/silver/silver_{safe_slug}.sql\n"
-                f"-- Description: {description}\n"
+            template = (
+                "-- dbt model: models/silver/silver___slug__.sql\n"
+                "-- Description: __description__\n"
                 "WITH deduplicated AS (\n"
                 "    SELECT\n"
-                f"        {col_list},\n"
-                f"        ROW_NUMBER() OVER (PARTITION BY {pk_col} ORDER BY {contract.timestamp_column} DESC) AS _rn\n"
-                f"    FROM {{{{ source('bronze', 'bronze_{safe_slug}') }}}}\n"
-                f"    WHERE {pk_col} IS NOT NULL\n"
+                "        __col_list__,\n"
+                "        ROW_NUMBER() OVER (PARTITION BY __pk_col__ ORDER BY __ts_col__ DESC) AS _rn\n"
+                "    FROM {{ source('bronze', 'bronze___slug__') }}\n"
+                "    WHERE __pk_col__ IS NOT NULL\n"
                 ")\n"
                 "SELECT\n"
-                f"    {col_list}\n"
+                "    __col_list__\n"
                 "FROM deduplicated\n"
                 "WHERE _rn = 1;\n"
+            )
+            code = (
+                template.replace("__slug__", safe_slug)
+                .replace("__description__", description)
+                .replace("__col_list__", col_list)
+                .replace("__pk_col__", pk_col)
+                .replace("__ts_col__", contract.timestamp_column)
             )
             test_code = (
                 f"# dbt schema test specification for silver_{safe_slug}\n"

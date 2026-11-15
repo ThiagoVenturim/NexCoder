@@ -116,10 +116,13 @@ class HybridStore:
         elif self.dimensions:
             cur.execute("INSERT INTO meta(key, value) VALUES('dimensions', ?)", (str(self.dimensions),))
         if self._vec and self.dimensions:
-            cur.execute(
-                f"CREATE VIRTUAL TABLE IF NOT EXISTS chunks_vec USING vec0(embedding float[{self.dimensions}] "
-                "distance_metric=cosine)"
+            dims = int(self.dimensions)
+            ddl = (
+                "CREATE VIRTUAL TABLE IF NOT EXISTS chunks_vec USING vec0(embedding float["
+                + str(dims)
+                + "] distance_metric=cosine)"
             )
+            cur.execute(ddl)
         self.conn.commit()
 
     # Writes --------------------------------------------------------------
@@ -185,14 +188,6 @@ class HybridStore:
         and scored in memory using vectorized NumPy operations. For ultra-large repositories,
         partition indices or combine with external vector indexes.
         """
-        where_clauses = ["embedding IS NOT NULL"]
-        params: list[object] = []
-        if where:
-            for key, value in where.items():
-                safe_key = "".join(c for c in key if c.isalnum() or c == "_")
-                where_clauses.append(f"json_extract(metadata, '$.{safe_key}') = ?")
-                params.append(value)
-
         if self._vec and self.dimensions and not where:
             rows = self.conn.execute(
                 "SELECT c.*, v.distance FROM chunks_vec v JOIN chunks c ON c.rowid = v.rowid "
@@ -201,11 +196,18 @@ class HybridStore:
             ).fetchall()
             return [self._row(r, 1.0 - float(r["distance"])) for r in rows]
 
-        where_sql = " AND ".join(where_clauses)
-        rows = self.conn.execute(
-            f"SELECT * FROM chunks WHERE {where_sql}",  # noqa: S608
-            params,
-        ).fetchall()
+        if where:
+            query = (
+                "SELECT * FROM chunks WHERE embedding IS NOT NULL AND NOT EXISTS ("
+                "SELECT 1 FROM json_each(?) j WHERE json_extract(chunks.metadata, '$.' || j.key) != j.value "
+                "OR json_extract(chunks.metadata, '$.' || j.key) IS NULL"
+                ")"
+            )
+            rows = self.conn.execute(query, (json.dumps(where),)).fetchall()
+        else:
+            query = "SELECT * FROM chunks WHERE embedding IS NOT NULL"
+            rows = self.conn.execute(query).fetchall()
+
         if not rows:
             return []
         matrix = np.vstack([_unpack(r["embedding"]) for r in rows])
@@ -221,21 +223,22 @@ class HybridStore:
         match = fts_query(query)
         if not match:
             return []
-        where_clauses = ["chunks_fts MATCH ?"]
-        params: list[object] = [match]
         if where:
-            for key, value in where.items():
-                safe_key = "".join(c for c in key if c.isalnum() or c == "_")
-                where_clauses.append(f"json_extract(c.metadata, '$.{safe_key}') = ?")
-                params.append(value)
-
-        where_sql = " AND ".join(where_clauses)
-        params.append(k)
-        rows = self.conn.execute(
-            f"SELECT c.*, bm25(chunks_fts) AS rank FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "  # noqa: S608
-            f"WHERE {where_sql} ORDER BY rank LIMIT ?",
-            params,
-        ).fetchall()
+            query_sql = (
+                "SELECT c.*, bm25(chunks_fts) AS rank FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "
+                "WHERE chunks_fts MATCH ? AND NOT EXISTS ("
+                "SELECT 1 FROM json_each(?) j WHERE json_extract(c.metadata, '$.' || j.key) != j.value "
+                "OR json_extract(c.metadata, '$.' || j.key) IS NULL"
+                ") ORDER BY rank LIMIT ?"
+            )
+            params = (match, json.dumps(where), k)
+        else:
+            query_sql = (
+                "SELECT c.*, bm25(chunks_fts) AS rank FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "
+                "WHERE chunks_fts MATCH ? ORDER BY rank LIMIT ?"
+            )
+            params = (match, k)
+        rows = self.conn.execute(query_sql, params).fetchall()
         # bm25() is lower-is-better; flip the sign so higher is better like the other searches.
         return [self._row(r, -float(r["rank"])) for r in rows]
 
@@ -257,20 +260,18 @@ class HybridStore:
         """Return a mapping of chunk id to embedding vector for the requested chunk ids."""
         if not ids:
             return {}
-        placeholders = ",".join("?" for _ in ids)
-        rows = self.conn.execute(
-            f"SELECT id, embedding FROM chunks WHERE id IN ({placeholders}) AND embedding IS NOT NULL",  # noqa: S608
-            ids,
-        ).fetchall()
+        query = (
+            "SELECT id, embedding FROM chunks "
+            "WHERE id IN (SELECT value FROM json_each(?)) AND embedding IS NOT NULL"
+        )
+        rows = self.conn.execute(query, (json.dumps(ids),)).fetchall()
         return {r["id"]: _unpack(r["embedding"]).tolist() for r in rows if r["embedding"]}
 
     def delete_by_metadata(self, key: str, value: object) -> int:
         """Delete all chunks where metadata[key] == value. Returns count of deleted chunks."""
         safe_key = "".join(c for c in key if c.isalnum() or c == "_")
-        rows = self.conn.execute(
-            f"SELECT id FROM chunks WHERE json_extract(metadata, '$.{safe_key}') = ?",  # noqa: S608
-            (value,),
-        ).fetchall()
+        query = "SELECT id FROM chunks WHERE json_extract(metadata, '$.' || ?) = ?"
+        rows = self.conn.execute(query, (safe_key, value)).fetchall()
         ids = [r["id"] for r in rows]
         if ids:
             self.delete(ids)
@@ -279,9 +280,8 @@ class HybridStore:
     def get_metadata_values(self, key: str) -> dict[str, object]:
         """Return a mapping of chunk id to metadata[key] for chunks that have that metadata key."""
         safe_key = "".join(c for c in key if c.isalnum() or c == "_")
-        rows = self.conn.execute(
-            f"SELECT id, json_extract(metadata, '$.{safe_key}') AS val FROM chunks WHERE val IS NOT NULL"  # noqa: S608
-        ).fetchall()
+        query = "SELECT id, json_extract(metadata, '$.' || ?) AS val FROM chunks WHERE val IS NOT NULL"
+        rows = self.conn.execute(query, (safe_key,)).fetchall()
         return {r["id"]: r["val"] for r in rows}
 
     def close(self) -> None:
