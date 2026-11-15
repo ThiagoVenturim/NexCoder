@@ -89,6 +89,23 @@ def test_api_specialized_endpoints(tmp_path: Path) -> None:
     assert resp_agent.status_code == 200
     assert resp_agent.json()["status"] == "success"
 
+    # Productivity and Security NexDash reports
+    resp_rep_prod = client.post(
+        "/v1/reports/productivity",
+        json={"project": "nexcoder", "team": "core", "period": "2026-Q4", "transport": "offline"},
+    )
+    assert resp_rep_prod.status_code == 200
+    assert resp_rep_prod.json()["status"] == "success"
+    assert resp_rep_prod.json()["model_id"] == "dev_productivity"
+
+    resp_rep_sec = client.post(
+        "/v1/reports/security",
+        json={"project": "nexcoder", "period": "2026-Q4", "transport": "offline"},
+    )
+    assert resp_rep_sec.status_code == 200
+    assert resp_rep_sec.json()["status"] == "success"
+    assert resp_rep_sec.json()["model_id"] == "security_posture"
+
     # Pipeline approve with human approval token from control plane
     atm: ApprovalTokenManager = app.state.approval_token_manager
     _rec, raw_tok = atm.issue_token(action_name="release", target_resource="pipeline", approver="human-tester")
