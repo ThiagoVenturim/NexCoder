@@ -14,7 +14,7 @@ An open-source, modular platform for automated software development from idea to
 | :--- | :--- | :--- |
 | `nexcoder-core` | Available | Merged in `develop` |
 | `nexcoder-code-intel` | Available | PR [#33](https://github.com/ThiagoVenturim/nexcoder/pull/33) |
-| `nexcoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) |
+| `nexcoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) / [#105](https://github.com/ThiagoVenturim/nexcoder/issues/105) |
 | `nexcoder-planning` | Available | Issue [#4](https://github.com/ThiagoVenturim/nexcoder/issues/4) |
 | `nexcoder-ideation` | Available | Issue [#5](https://github.com/ThiagoVenturim/nexcoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/nexcoder/pull/29) |
 | `nexcoder-security` | Available | Issue [#7](https://github.com/ThiagoVenturim/nexcoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/nexcoder/pull/30) |
@@ -63,6 +63,7 @@ nexcoder/
    - Frontmatter-driven agent specification catalog (`agents/<sector>/<slug>.md`) covering 10 organizational sectors (direction, requirements, product, engineering, UI/UX, QA, security, data-AI, support, marketing).
    - Reusable LangGraph pipeline building blocks: `ValidatorBlock`, `ConditionBlock`, `PromptBlock`, and `HumanApprovalBlock`.
    - Safe execution guarantees: dry-run simulations, time-bounded approval tokens, tool execution caps, and committee quorum votes.
+   - ML/AI feature engineering: approach selection (rules, classical ML, LLM/RAG), 6 parameterized recipes (classification, extraction, RAG, recommendation, summarization, chatbot), MLOps/serving reuse, and control plane guardrails (Issue #105).
    - Export adapters for Claude Code subagents and tool manifests.
 
 4. **`nexcoder-planning`**: Agentic sprint planning and task synchronization.
