@@ -6,6 +6,11 @@ from pathlib import Path
 
 from nexcoder_agents.catalog.registry import AgentCatalog
 from nexcoder_agents.catalog.skills import SkillCatalog
+from nexcoder_agents.data_engineering import (
+    DataEngineeringAdvisor,
+    IngestionMode,
+    PipelineParadigm,
+)
 from nexcoder_agents.engine.pipelines import get_pipeline_template, list_pipeline_templates
 from nexcoder_agents.export import export_claude_package
 from nexcoder_agents.software_engineering import SoftwareEngineeringAdvisor
@@ -65,6 +70,50 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-refactor",
         action="store_true",
         help="Skip applying safe test-backed refactoring in workspace copy.",
+    )
+
+    # run-data-pipeline subcommand
+    data_parser = subparsers.add_parser(
+        "run-data-pipeline",
+        help="Generate and run an offline data engineering pipeline (ingest -> transform -> quality -> observe).",
+    )
+    data_parser.add_argument(
+        "description",
+        type=str,
+        help="Natural-language description of the data pipeline and analytical workload.",
+    )
+    data_parser.add_argument(
+        "--name",
+        "-n",
+        type=str,
+        default="commerce_orders_medallion",
+        help="Pipeline identifier (default: commerce_orders_medallion).",
+    )
+    data_parser.add_argument(
+        "--mode",
+        choices=["batch", "stream"],
+        default="batch",
+        help="Ingestion mode: batch or stream (default: batch).",
+    )
+    data_parser.add_argument(
+        "--paradigm",
+        choices=["elt", "etl"],
+        default="elt",
+        help="Transformation paradigm: elt or etl (default: elt).",
+    )
+    data_parser.add_argument(
+        "--workspace-dir",
+        "-w",
+        type=Path,
+        default=None,
+        help="Optional directory to materialize SQLite warehouse and generated Airflow/Dagster/dbt files.",
+    )
+    data_parser.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="Optional path to write the Markdown data pipeline execution report.",
     )
 
     return parser
@@ -151,6 +200,26 @@ def main(args: list[str] | None = None) -> int:
         except FileNotFoundError as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
+
+    if parsed.command == "run-data-pipeline":
+        advisor = DataEngineeringAdvisor()
+        mode = IngestionMode.STREAM if parsed.mode == "stream" else IngestionMode.BATCH
+        paradigm = PipelineParadigm.ETL if parsed.paradigm == "etl" else PipelineParadigm.ELT
+        result = advisor.run_pipeline_from_description(
+            description=parsed.description,
+            pipeline_name=parsed.name,
+            ingestion_mode=mode,
+            paradigm=paradigm,
+            workspace_dir=parsed.workspace_dir,
+        )
+        md = result.to_markdown()
+        if parsed.output:
+            parsed.output.parent.mkdir(parents=True, exist_ok=True)
+            parsed.output.write_text(md, encoding="utf-8")
+            print(f"Data engineering pipeline report written to {parsed.output}")
+        else:
+            print(md)
+        return 0
 
     return 0
 
