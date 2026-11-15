@@ -18,6 +18,16 @@ from nexcoder_security.gate import (
 )
 from nexcoder_security.review import SecurityReviewEngine
 from nexcoder_security.scanners import MultiScannerEngine, SyftScanner
+from nexcoder_security.server import (
+    DataMasker,
+    HardeningOptions,
+    NginxConfigGenerator,
+    ServerIsolationAuditor,
+    audit_server_action,
+    generate_bash_hardening_script,
+    generate_ps1_hardening_script,
+    validate_nginx_config_in_container,
+)
 
 
 def _add_target_auth_args(subparser: argparse.ArgumentParser) -> None:
@@ -125,6 +135,60 @@ def main(
         help="Enable OSS contribution responsible disclosure mode",
     )
     _add_target_auth_args(review_p)
+
+    # server
+    server_p = subparsers.add_parser(
+        "server",
+        help="Server exposure, Nginx reverse proxy, OS hardening, privatization, and PII masking",
+    )
+    server_subs = server_p.add_subparsers(dest="server_action", help="Server exposure operations")
+
+    # server nginx
+    nginx_p = server_subs.add_parser("nginx", help="Generate secure Nginx reverse proxy and TLS configuration")
+    nginx_p.add_argument("--profile", choices=["basic", "advanced"], default="basic", help="Configuration profile")
+    nginx_p.add_argument("--domain", default="localhost", help="Domain name / server_name")
+    nginx_p.add_argument("--upstream", default="127.0.0.1:8000", help="Upstream backend host:port")
+    nginx_p.add_argument("--no-tls", action="store_true", help="Disable TLS and serve plain HTTP")
+    nginx_p.add_argument("--output", help="Write generated config to file path")
+    nginx_p.add_argument(
+        "--validate-container",
+        action="store_true",
+        help="Validate generated config using nginx -t in container",
+    )
+    _add_target_auth_args(nginx_p)
+
+    # server hardening
+    hard_p = server_subs.add_parser("hardening", help="Generate idempotent server hardening scripts")
+    hard_p.add_argument("--profile", choices=["basic", "advanced"], default="basic", help="Hardening profile")
+    hard_p.add_argument("--os", choices=["linux", "windows"], default="linux", help="Target operating system")
+    hard_p.add_argument("--output-bash", help="Output path for generated bash script")
+    hard_p.add_argument("--output-ps1", help="Output path for generated powershell script")
+    _add_target_auth_args(hard_p)
+
+    # server isolate
+    iso_p = server_subs.add_parser("isolate", help="Audit and remediate unshielded port bindings in docker-compose")
+    iso_p.add_argument("path", default="docker-compose.yml", nargs="?", help="Path to compose file to audit")
+    iso_p.add_argument("--remediate", action="store_true", help="Remediate compose file in-place to 127.0.0.1 bindings")
+    _add_target_auth_args(iso_p)
+
+    # server mask
+    mask_p = server_subs.add_parser("mask", help="Mask PII and secrets in text, logs, SQL dumps, or JSON")
+    mask_p.add_argument("path", help="Path to file to mask")
+    mask_p.add_argument(
+        "--format",
+        choices=["text", "log", "json", "sql", "csv"],
+        default="text",
+        help="Content format",
+    )
+    mask_p.add_argument(
+        "--strategy",
+        choices=["placeholder", "redact", "hash"],
+        default="placeholder",
+        help="Masking strategy",
+    )
+    mask_p.add_argument("--salt", default="nexcoder-default-salt", help="Salt for hash masking")
+    mask_p.add_argument("--output", help="Write masked content to file path")
+    _add_target_auth_args(mask_p)
 
     args = parser.parse_args(argv)
 
@@ -266,6 +330,135 @@ def main(
                 print(f"  [{item.severity.upper()}] {item.location} - {item.title} ({item.rule_id})")
                 print(f"    Fix: {item.how_to_fix}")
         return 0
+
+    if args.command == "server":
+        if args.server_action == "nginx":
+            enable_tls = not args.no_tls
+            if args.profile == "advanced":
+                gen = NginxConfigGenerator.advanced(
+                    domain=args.domain,
+                    upstreams=[args.upstream],
+                )
+            else:
+                gen = NginxConfigGenerator.basic(
+                    upstream=args.upstream,
+                    domain=args.domain,
+                    enable_tls=enable_tls,
+                )
+            conf = gen.generate()
+
+            if args.validate_container:
+                val = validate_nginx_config_in_container(conf)
+                if not val.valid:
+                    print(f"Validation failed: {val.details}", file=sys.stderr)
+                    return 1
+                print(f"Nginx config validation: OK (container={val.executed_in_container})")
+
+            if args.output:
+                Path(args.output).write_text(conf, encoding="utf-8")
+                print(f"Nginx configuration written to: {args.output}")
+            else:
+                print(conf)
+
+            audit_server_action(
+                action="generate_nginx_config",
+                resource=args.domain,
+                details={"profile": args.profile, "upstream": args.upstream, "tls": enable_tls},
+                audit_log=active_gate.audit_log,
+                actor=args.authorized_by,
+            )
+            return 0
+
+        if args.server_action == "hardening":
+            opts = HardeningOptions(
+                profile=args.profile,
+                os_target=args.os,
+            )
+            bash_script = generate_bash_hardening_script(opts)
+            ps1_script = generate_ps1_hardening_script(opts)
+
+            if args.output_bash:
+                Path(args.output_bash).write_text(bash_script, encoding="utf-8")
+                print(f"Bash hardening script written to: {args.output_bash}")
+            if args.output_ps1:
+                Path(args.output_ps1).write_text(ps1_script, encoding="utf-8")
+                print(f"PowerShell hardening script written to: {args.output_ps1}")
+            if not args.output_bash and not args.output_ps1:
+                print(bash_script if args.os == "linux" else ps1_script)
+
+            audit_server_action(
+                action="generate_hardening_scripts",
+                resource=args.os,
+                details={"profile": args.profile, "target_os": args.os},
+                audit_log=active_gate.audit_log,
+                actor=args.authorized_by,
+            )
+            return 0
+
+        if args.server_action == "isolate":
+            target = Path(args.path)
+            if not target.exists():
+                print(f"File not found: {args.path}", file=sys.stderr)
+                return 1
+            content = target.read_text(encoding="utf-8")
+            auditor = ServerIsolationAuditor()
+            rep = auditor.audit_compose_text(content)
+
+            if rep.passed:
+                print(f"Isolation audit PASSED for {args.path} (0 violations)")
+            else:
+                print(f"Isolation audit FAILED for {args.path} ({rep.total_violations} violations):")
+                for v in rep.violations:
+                    print(f"  [{v.severity.upper()}] {v.target}: {v.message}")
+                    print(f"    Remediation: {v.remediation}")
+
+            if args.remediate and not rep.passed:
+                remediated = auditor.remediate_compose_text(content)
+                target.write_text(remediated, encoding="utf-8")
+                print(f"Remediated {args.path} with 127.0.0.1 bindings.")
+
+            audit_server_action(
+                action="audit_isolation",
+                resource=str(target),
+                details={"passed": rep.passed, "violations": rep.total_violations},
+                audit_log=active_gate.audit_log,
+                actor=args.authorized_by,
+            )
+            return 0 if rep.passed or args.remediate else 1
+
+        if args.server_action == "mask":
+            target = Path(args.path)
+            if not target.exists():
+                print(f"File not found: {args.path}", file=sys.stderr)
+                return 1
+            content = target.read_text(encoding="utf-8")
+            masker = DataMasker(strategy=args.strategy, salt=args.salt)
+
+            if args.format == "json":
+                masked = str(masker.mask_json(content))
+            elif args.format == "sql":
+                masked = masker.mask_sql_dump(content)
+            elif args.format == "csv":
+                masked = masker.mask_csv(content)
+            elif args.format == "log":
+                masked = masker.mask_log_file(content)
+            else:
+                masked = masker.mask_text(content)
+
+            if args.output:
+                Path(args.output).write_text(masked, encoding="utf-8")
+                print(f"Masked output written to: {args.output}")
+            else:
+                print(masked)
+
+            audit_server_action(
+                action="mask_data",
+                resource=str(target),
+                details={"strategy": args.strategy, "format": args.format},
+                audit_log=active_gate.audit_log,
+                actor=args.authorized_by,
+            )
+            return 0
 
     return 0
 
