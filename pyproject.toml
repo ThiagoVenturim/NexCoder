@@ -36,5 +36,6 @@ pythonpath = [
     "packages/interfaces/src",
     "packages/serving/src",
     "packages/continuous-improvement/src",
+    "packages/iac/src",
 ]
 addopts = "-q --import-mode=importlib"
