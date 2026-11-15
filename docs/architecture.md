@@ -133,6 +133,21 @@ The infrastructure-as-code and cloud provisioning engine:
 - **Governance & Audit**:
   - Mandatory plan preview and confirmation gates before execution; cryptographic tamper-evident audit logging via `nexcoder-control`.
 
+### 6. `nexcoder-mlops`
+
+The machine learning operations and fine-tuning engine:
+
+- **Dataset Curation**:
+  - Synthetic data generation, PII/secret anonymization via `nexcoder-serving`, quality cleaning, and SHA-256 version manifests.
+- **Fine-Tuning Engine**:
+  - Zero-dependency offline toy trainer for deterministic local test loops; script generator for production HuggingFace/PEFT (LoRA/QLoRA) and DeepSpeed.
+- **Evaluation & Experiment Tracking**:
+  - Exact match, token F1, perplexity, LLM-as-a-judge scoring, and Langfuse experiment tracing with circuit breaker protection.
+- **GPU Infrastructure & Costing**:
+  - VRAM estimation, cloud pricing across providers (RunPod, Lambda, AWS, GCP), Docker Compose and Kubernetes Job generation with strict credential isolation.
+- **Serving Integration**:
+  - Directly registers fine-tuned adapter checkpoints into `nexcoder-serving` vLLM or Ollama serving profiles.
+
 ---
 
 ## Data Flow: From Idea to Working Code

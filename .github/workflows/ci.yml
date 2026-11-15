@@ -31,6 +31,8 @@ jobs:
         run: python scripts/check_no_emoji.py
       - name: Auth gate enforcement
         run: python scripts/check_auth_gate_enforcement.py
+      - name: Injection guard
+        run: python scripts/check_injection_guard.py
       - name: Lint
         run: ruff check packages scripts
       - name: Tests

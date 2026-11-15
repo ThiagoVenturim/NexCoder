@@ -24,4 +24,6 @@ regexes = [
   '''sk-testsecret12345''',
   '''sk-proj-supersecretkey1234567890''',
   '''sk-proj-supersecretapikey123456789''',
+  '''hf_[a-zA-Z0-9]{34,}''',
+  '''sk-[a-zA-Z0-9]{32,}''',
 ]

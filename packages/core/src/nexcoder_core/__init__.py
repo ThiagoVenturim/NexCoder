@@ -15,6 +15,14 @@ from nexcoder_core.cache import SemanticCache
 from nexcoder_core.config import NexcoderConfig, load_config
 from nexcoder_core.llm.compression import compress_messages, compress_text
 from nexcoder_core.llm.context import ContextBudget, count_tokens
+from nexcoder_core.llm.firewall import (
+    FirewallConfig,
+    FirewalledChatModel,
+    FirewallInspectionResult,
+    FirewallViolation,
+    PromptFirewall,
+    PromptInjectionBlockedError,
+)
 from nexcoder_core.llm.memory import PinnedMemory
 from nexcoder_core.llm.registry import get_chat_model
 from nexcoder_core.llm.tool_loader import SelectiveToolLoader
@@ -46,6 +54,10 @@ from nexcoder_core.structured import OutOfContractError, call_structured
 
 __all__ = [
     "ContextBudget",
+    "FirewallConfig",
+    "FirewallInspectionResult",
+    "FirewallViolation",
+    "FirewalledChatModel",
     "LocalNexDashEngine",
     "NEXDASH_CSP",
     "NexDashAuthError",
@@ -67,6 +79,8 @@ __all__ = [
     "OutOfContractError",
     "PathOutsideSandboxError",
     "PinnedMemory",
+    "PromptFirewall",
+    "PromptInjectionBlockedError",
     "SelectiveToolLoader",
     "SemanticCache",
     "call_structured",

@@ -12,6 +12,7 @@ from nexcoder_control.approval import (
     sign_authorization_document,
     verify_signed_document,
 )
+from nexcoder_core import FirewalledChatModel, PromptFirewall
 
 from nexcoder_security.agents import (
     AppSecGeneralAgent,
@@ -144,6 +145,8 @@ __all__ = [
     "OSVScanner",
     "OutdatedDependencyItem",
     "PipAuditScanner",
+    "PromptFirewall",
+    "FirewalledChatModel",
     "PromptInjectionAgent",
     "PromptInjectionBlockedError",
     "PromptInjectionScanner",

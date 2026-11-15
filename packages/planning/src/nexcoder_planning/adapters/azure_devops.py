@@ -87,11 +87,12 @@ class AzureDevOpsAdapter(PlatformAdapter):
         client = self._get_client()
         # Query Wiql
         wiql_url = f"{self.api_url}/{self.organization}/{self.project}/_apis/wit/wiql?api-version=7.0"
-        wiql_query_text = (
-            "SELECT [System.Id], [System.Title], [System.Description], [System.State], [System.Tags] "  # noqa: S608
-            f"FROM WorkItems WHERE [System.TeamProject] = '{self.project}' "
-            f"AND [System.WorkItemType] = '{self.work_item_type}'"
+        safe_type = re.sub(r"[^\w\-.]", "", self.work_item_type)
+        wiql_base = (
+            "SELECT [System.Id], [System.Title], [System.Description], [System.State], [System.Tags] "
+            "FROM WorkItems WHERE [System.TeamProject] = @project AND [System.WorkItemType] = '__TYPE__'"
         )
+        wiql_query_text = wiql_base.replace("__TYPE__", safe_type)
         wiql_query = {"query": wiql_query_text}
         res = client.post(wiql_url, json=wiql_query, headers={"Content-Type": "application/json"})
         res.raise_for_status()
