@@ -24,8 +24,11 @@ Agentic planning engine for nexcoder: converts Product Requirement Documents (PR
   - Full cursor-based pagination for Projects v2 GraphQL API, overcoming 50/100 item limits.
   - Duplicate prevention when adding items to boards.
   - Milestone management and automated issue linking.
-  - Hidden tracking marker `<!-- nexcoder-id: <uuid> -->` ensuring idempotent syncing.
+  - Hidden tracking marker `<!-- nexcoder-id: <uuid> -->` ensuring idempotent syncing across GitHub, GitLab, Azure DevOps, and Redmine (`RedmineAdapter`).
   - Safe by default: `--dry-run` is enabled across all write operations.
+- **Developer Productivity Reports (`nexdash` Integration)**:
+  - Pulls PRs, review latency, lead time, and closed issues from GitHub, Azure DevOps, and Redmine (`collect_github_productivity`, `collect_azure_devops_productivity`, `collect_redmine_productivity`).
+  - Normalizes records into the `dev_productivity` semantic cube and requests rendered HTML dashboards from `nexdash` over MCP, REST, or offline mode (`generate_productivity_dashboard`).
 - **Git Automation Helpers**:
   - Standardized branch creation from integration bases (`develop`).
   - Conventional commit builder strictly validating types and enforcing zero emojis and no AI co-author trailers.

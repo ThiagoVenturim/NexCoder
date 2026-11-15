@@ -11,10 +11,12 @@ from nexcoder_interfaces.tools import (
     impact_analysis,
     judge_idea,
     plan_sprints,
+    productivity_report,
     research_idea,
     run_agent,
     run_pipeline,
     search_code,
+    security_report,
     security_review,
     security_scan,
     sync_board,
@@ -226,3 +228,30 @@ def test_unavailable_tools() -> None:
     gen_res = generate_tests("spec_v1")
     assert gen_res["status"] == "unavailable"
     assert gen_res["module"] == "capture"
+
+
+def test_productivity_and_security_reports_offline(tmp_path: Path) -> None:
+    prod_html = tmp_path / "prod.html"
+    prod_res = productivity_report(
+        project="nexcoder",
+        team="core-squad",
+        period="2026-Q4",
+        transport="offline",
+        output_html_path=str(prod_html),
+    )
+    assert prod_res["status"] == "success"
+    assert prod_res["model_id"] == "dev_productivity"
+    assert prod_html.is_file()
+    assert "window.NEXDASH_DATA=" in prod_res["html"]
+
+    sec_html = tmp_path / "sec.html"
+    sec_res = security_report(
+        project="nexcoder",
+        period="2026-Q4",
+        transport="offline",
+        output_html_path=str(sec_html),
+    )
+    assert sec_res["status"] == "success"
+    assert sec_res["model_id"] == "security_posture"
+    assert sec_html.is_file()
+    assert "window.NEXDASH_DATA=" in sec_res["html"]

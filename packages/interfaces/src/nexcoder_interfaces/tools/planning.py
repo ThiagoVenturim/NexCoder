@@ -115,3 +115,59 @@ def sync_board(
         "moved_count": summary.moved_count,
         "has_slippage": summary.replan_result is not None and summary.replan_result.alert is not None,
     }
+
+
+def productivity_report(
+    project: str = "nexcoder-platform",
+    team: str = "core-engineering",
+    period: str = "2026-Q4",
+    platforms: list[str] | None = None,
+    transport: str = "offline",
+    nexdash_url: str = "http://127.0.0.1:8080",
+    output_html_path: str | None = None,
+) -> dict[str, Any]:
+    """Pull dev productivity metrics (GitHub, Azure DevOps, Redmine) and build a NexDash dashboard."""
+    try:
+        from pathlib import Path
+
+        from nexcoder_core.reports import NexDashValidationError
+        from nexcoder_planning.reports import generate_productivity_dashboard
+    except ImportError as exc:
+        return {
+            "status": "error",
+            "message": f"Planning or reporting module not available: {exc}",
+        }
+
+    try:
+        metrics, bundle = generate_productivity_dashboard(
+            project=project,
+            team=team,
+            period=period,
+            platforms=platforms,
+            transport=transport,  # type: ignore[arg-type]
+            nexdash_url=nexdash_url,
+        )
+    except NexDashValidationError as exc:
+        return {
+            "status": "error",
+            "message": str(exc),
+        }
+
+    if output_html_path:
+        out_path = Path(output_html_path).resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(bundle.html, encoding="utf-8")
+
+    return {
+        "status": "success",
+        "model_id": bundle.model_id,
+        "transport": bundle.transport,
+        "dashboard_id": bundle.dashboard_id,
+        "title": bundle.title,
+        "subtitle": bundle.subtitle,
+        "metrics": metrics.model_dump(),
+        "kpis": [k.model_dump() for k in bundle.kpis],
+        "charts": [c.model_dump() for c in bundle.charts],
+        "csp_header": bundle.csp_header,
+        "html": bundle.html,
+    }

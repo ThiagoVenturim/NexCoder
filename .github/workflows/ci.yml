@@ -24,7 +24,15 @@ jobs:
           python -m pip install ruff pytest
           python -m pip install -e packages/core
           python -m pip install -e packages/control
-          for pkg in packages/*/; do [ "$pkg" = "packages/core/" ] || [ "$pkg" = "packages/control/" ] || python -m pip install -e "$pkg"; done
+          python -m pip install -e packages/code-intel
+          python -m pip install -e packages/planning
+          python -m pip install -e packages/agents
+          for pkg in packages/*/; do
+            case "$pkg" in
+              packages/core/|packages/control/|packages/code-intel/|packages/planning/|packages/agents/) ;;
+              *) python -m pip install -e "$pkg" ;;
+            esac
+          done
       - name: No emojis
         run: python scripts/check_no_emoji.py
       - name: Lint

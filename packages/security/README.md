@@ -31,6 +31,9 @@ Security scanners, specialist agents, and release gate for the nexcoder platform
 3. **Release Security Gate & Configuration**:
    - `security-gate`: Configurable release blocker preventing deployments with unresolved high or critical vulnerabilities.
    - `app_config`: Secure defaults scaffolding including Content Security Policy (CSP) headers, `SECURITY.md` responsible disclosure documentation, and deterministic dependency pinning.
+4. **Security Posture Dashboards (`nexdash` Integration)**:
+   - Converts multi-scanner findings, SBOM outdated dependencies, and release gate coverage into the `security_posture` semantic cube (`compute_security_metrics`, `generate_security_dashboard`).
+   - Communicates with `nexdash` via MCP, REST, or offline mode to produce CSP-hardened HTML dashboards.
 
 ## Installation
 

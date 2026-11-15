@@ -16,6 +16,8 @@ skills:
   - adr-and-engineering-docs
   - guided-refactoring
   - technical-planning
+  - code-quality-review
+  - database-modeling
 ---
 
 # Lead Architect
