@@ -5,7 +5,7 @@ import logging
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from nexcoder_core import NexcoderConfig, call_structured, get_chat_model
+from nexcoder_core import NexcoderConfig, PromptFirewall, call_structured, get_chat_model
 from pydantic import BaseModel
 
 from nexcoder_agents.engine.blocks.base import BaseBlock
@@ -27,6 +27,7 @@ class PromptBlock(BaseBlock):
         schema: type[BaseModel] | None = None,
         model: Any = None,
         config: NexcoderConfig | None = None,
+        firewall: PromptFirewall | None = None,
     ) -> None:
         super().__init__(name=name, block_type="prompt")
         self.tier = tier
@@ -36,6 +37,7 @@ class PromptBlock(BaseBlock):
         self.schema = schema
         self.model = model
         self.config = config
+        self.firewall = firewall or PromptFirewall.get_default()
 
     def _get_model(self) -> Any:
         if self.model is not None:
@@ -68,9 +70,19 @@ class PromptBlock(BaseBlock):
     async def aexecute(self, state: dict[str, Any], context: dict[str, Any] | None = None) -> BlockResult:
         data = state.get("data", {})
         rendered_sys, rendered_user = self._render_prompts(data)
+        external_data = data.get("external_data") or data.get("context_docs") or data.get("external_doc")
         model = self._get_model()
 
         try:
+            self.firewall.inspect_prompt(
+                rendered_user,
+                system_prompt=rendered_sys,
+                external_data=external_data,
+                actor=self.name,
+            )
+            if external_data is not None:
+                rendered_user = f"{rendered_user}\n\n{self.firewall.sanitize_external_data(external_data)}"
+
             if self.schema is not None:
                 combined_prompt = f"{rendered_sys}\n\n{rendered_user}" if rendered_sys else rendered_user
                 structured_res = await call_structured(
