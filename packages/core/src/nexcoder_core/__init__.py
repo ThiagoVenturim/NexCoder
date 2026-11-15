@@ -18,12 +18,51 @@ from nexcoder_core.llm.context import ContextBudget, count_tokens
 from nexcoder_core.llm.memory import PinnedMemory
 from nexcoder_core.llm.registry import get_chat_model
 from nexcoder_core.llm.tool_loader import SelectiveToolLoader
+from nexcoder_core.reports import (
+    NEXDASH_CSP,
+    LocalNexDashEngine,
+    NexDashAuthError,
+    NexDashClient,
+    NexDashComputedChart,
+    NexDashComputedKPI,
+    NexDashCubeSpec,
+    NexDashDashboardBundle,
+    NexDashDimensionSpec,
+    NexDashError,
+    NexDashMetricSpec,
+    NexDashMockMCPServer,
+    NexDashModelDescriptor,
+    NexDashPlanFilter,
+    NexDashQueryPlan,
+    NexDashTransportError,
+    NexDashValidationError,
+    create_nexdash_mock_transport,
+    render_nexdash_html,
+    safe_json_for_script,
+)
 from nexcoder_core.retrieval.fusion import mmr_select, rrf_fuse
 from nexcoder_core.sandbox import PathOutsideSandboxError, resolve_inside
 from nexcoder_core.structured import OutOfContractError, call_structured
 
 __all__ = [
     "ContextBudget",
+    "LocalNexDashEngine",
+    "NEXDASH_CSP",
+    "NexDashAuthError",
+    "NexDashClient",
+    "NexDashComputedChart",
+    "NexDashComputedKPI",
+    "NexDashCubeSpec",
+    "NexDashDashboardBundle",
+    "NexDashDimensionSpec",
+    "NexDashError",
+    "NexDashMetricSpec",
+    "NexDashMockMCPServer",
+    "NexDashModelDescriptor",
+    "NexDashPlanFilter",
+    "NexDashQueryPlan",
+    "NexDashTransportError",
+    "NexDashValidationError",
     "NexcoderConfig",
     "OutOfContractError",
     "PathOutsideSandboxError",
@@ -34,11 +73,14 @@ __all__ = [
     "compress_messages",
     "compress_text",
     "count_tokens",
+    "create_nexdash_mock_transport",
     "get_chat_model",
     "load_config",
     "mmr_select",
+    "render_nexdash_html",
     "resolve_inside",
     "rrf_fuse",
+    "safe_json_for_script",
 ]
 
 __version__ = "0.1.0"
