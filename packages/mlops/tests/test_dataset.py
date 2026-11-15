@@ -53,14 +53,15 @@ def test_synthetic_dataset_and_filtering(tmp_path: Path) -> None:
     assert len(builder.samples) == 10
 
     # Test anonymization
+    fake_key = "sk-" + ("a" * 32)
     builder.add_sample(
         instruction="Email me at user@example.com",
-        output="My api key is sk-1234567890abcdef1234567890abcdef",
+        output=f"My api key is {fake_key}",
     )
     builder.anonymize_samples()
     last = builder.samples[-1]
     assert "user@example.com" not in last.instruction
-    assert "sk-1234567890abcdef" not in last.output
+    assert fake_key not in last.output
 
     # Split
     train, val, test = builder.split(train_ratio=0.8, val_ratio=0.1)

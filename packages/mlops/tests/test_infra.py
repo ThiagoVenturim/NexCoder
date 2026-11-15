@@ -103,7 +103,8 @@ def test_infra_generator_and_secret_scanning(tmp_path: Path) -> None:
     clean_sample = "HF_TOKEN=your_token_here\n"
     assert scan_for_secrets(clean_sample) == []
 
-    leaked_sample = "HF_TOKEN=hf_abcdefghijklmnopqrstuvwxyz0123456789\n"
+    dummy_token = "hf_" + ("0" * 36)
+    leaked_sample = f"HF_TOKEN={dummy_token}\n"
     assert len(scan_for_secrets(leaked_sample)) > 0
 
     # Write artifacts to disk
