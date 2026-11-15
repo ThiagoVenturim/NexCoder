@@ -5,8 +5,8 @@ from nexcoder_interfaces.tools.agents import approve_step, run_agent, run_pipeli
 from nexcoder_interfaces.tools.base import unavailable_tool_handler
 from nexcoder_interfaces.tools.code import generate_docs, impact_analysis, search_code
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
-from nexcoder_interfaces.tools.planning import plan_sprints, sync_board
-from nexcoder_interfaces.tools.security import security_scan
+from nexcoder_interfaces.tools.planning import plan_sprints, productivity_report, sync_board
+from nexcoder_interfaces.tools.security import security_report, security_scan
 from nexcoder_interfaces.tools.unavailable import (
     audit_log,
     capture_page,
@@ -86,6 +86,31 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
         handler=sync_board,
         is_available=True,
     ),
+    "productivity_report": ToolDefinition(
+        name="productivity_report",
+        description="Build a developer productivity dashboard via NexDash (GitHub, Azure DevOps, Redmine).",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "project": {"type": "string", "default": "nexcoder-platform", "description": "Project identifier."},
+                "team": {"type": "string", "default": "core-engineering", "description": "Team name."},
+                "period": {"type": "string", "default": "2026-Q4", "description": "Reporting period."},
+                "platforms": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Platforms to query (github, azure_devops, redmine).",
+                },
+                "transport": {
+                    "type": "string",
+                    "default": "offline",
+                    "description": "NexDash transport (offline, mcp, rest).",
+                },
+            },
+        },
+        handler=productivity_report,
+        is_available=True,
+    ),
     # Code Intel
     "search_code": ToolDefinition(
         name="search_code",
@@ -161,6 +186,26 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
             },
         },
         handler=security_scan,
+        is_available=True,
+    ),
+    "security_report": ToolDefinition(
+        name="security_report",
+        description="Build a security posture and gate coverage dashboard via NexDash.",
+        module="security",
+        parameters={
+            "type": "object",
+            "properties": {
+                "project": {"type": "string", "default": "nexcoder-platform", "description": "Project identifier."},
+                "period": {"type": "string", "default": "2026-Q4", "description": "Reporting period."},
+                "policy": {"type": "string", "default": "default", "description": "Gate policy (default or strict)."},
+                "transport": {
+                    "type": "string",
+                    "default": "offline",
+                    "description": "NexDash transport (offline, mcp, rest).",
+                },
+            },
+        },
+        handler=security_report,
         is_available=True,
     ),
     # Agents & Pipelines
@@ -341,11 +386,13 @@ __all__ = [
     "impact_analysis",
     "judge_idea",
     "plan_sprints",
+    "productivity_report",
     "research_idea",
     "run_agent",
     "run_pipeline",
     "schedule_job",
     "search_code",
+    "security_report",
     "security_scan",
     "serve_model",
     "sync_board",

@@ -11,7 +11,8 @@ from nexcoder_interfaces.plugin.claude import export_claude_plugin, write_mcp_js
 from nexcoder_interfaces.tools.agents import run_agent, run_pipeline
 from nexcoder_interfaces.tools.code import generate_docs, search_code
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
-from nexcoder_interfaces.tools.planning import plan_sprints
+from nexcoder_interfaces.tools.planning import plan_sprints, productivity_report
+from nexcoder_interfaces.tools.security import security_report
 from nexcoder_interfaces.tools.unavailable import capture_page, generate_tests
 
 app = typer.Typer(
@@ -26,6 +27,13 @@ export_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(export_app, name="export")
+
+report_app = typer.Typer(
+    name="report",
+    help="Generate developer productivity and security posture dashboards via NexDash.",
+    no_args_is_help=True,
+)
+app.add_typer(report_app, name="report")
 
 
 @app.command(name="init")
@@ -166,6 +174,47 @@ def cmd_export_claude(
 ) -> None:
     """Export complete Claude Code workspace package (.mcp.json, agents, skills)."""
     result = export_claude_plugin(output_dir=output_dir, transport=transport, zip_output=zip_pkg)
+    print(json.dumps(result, indent=2))
+
+
+@report_app.command(name="productivity")
+def cmd_report_productivity(
+    project: str = typer.Option("nexcoder-platform", "--project", "-p", help="Target project name."),
+    team: str = typer.Option("core-engineering", "--team", "-t", help="Team identifier."),
+    period: str = typer.Option("2026-Q4", "--period", help="Reporting period."),
+    platforms: str = typer.Option("github,azure_devops,redmine", "--platforms", help="Comma-separated platforms."),
+    transport: str = typer.Option("offline", "--transport", help="NexDash transport (offline, mcp, rest)."),
+    out_html: Path | None = typer.Option(None, "--out", "-o", help="Optional path to save rendered HTML dashboard."),
+) -> None:
+    """Generate a developer productivity dashboard via NexDash."""
+    plat_list = [p.strip() for p in platforms.split(",") if p.strip()]
+    result = productivity_report(
+        project=project,
+        team=team,
+        period=period,
+        platforms=plat_list,
+        transport=transport,
+        output_html_path=str(out_html) if out_html else None,
+    )
+    print(json.dumps(result, indent=2))
+
+
+@report_app.command(name="security")
+def cmd_report_security(
+    project: str = typer.Option("nexcoder-platform", "--project", "-p", help="Target project name."),
+    period: str = typer.Option("2026-Q4", "--period", help="Reporting period."),
+    policy: str = typer.Option("default", "--policy", help="Gate policy preset (default or strict)."),
+    transport: str = typer.Option("offline", "--transport", help="NexDash transport (offline, mcp, rest)."),
+    out_html: Path | None = typer.Option(None, "--out", "-o", help="Optional path to save rendered HTML dashboard."),
+) -> None:
+    """Generate a security posture and gate coverage dashboard via NexDash."""
+    result = security_report(
+        project=project,
+        period=period,
+        policy=policy,
+        transport=transport,
+        output_html_path=str(out_html) if out_html else None,
+    )
     print(json.dumps(result, indent=2))
 
 
