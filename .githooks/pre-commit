@@ -6,3 +6,6 @@ files=$(git diff --cached --name-only --diff-filter=ACM)
 
 # shellcheck disable=SC2086
 python scripts/check_no_emoji.py $files
+
+# shellcheck disable=SC2086
+python scripts/check_injection_guard.py $files
