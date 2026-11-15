@@ -30,7 +30,8 @@ When a scan or review uncovers a security flaw in third-party or open-source sof
 
 `nexcoder` enforces this policy in code through `nexcoder-control` (`TargetAuthorizationGate`, `ApprovalTokenManager`, and `AppendOnlyAuditLog`):
 
-- Any mode that runs security scans or automated target checks requires the target to be marked as owned (`owned_target=True` or registered in `TargetAuthorizationGate`) or backed by an approval token.
+- Any mode that runs security scans or automated target checks requires the target to be marked as owned (`owned_target=True` or registered in `TargetAuthorizationGate`), backed by an approval token, or validated via a cryptographically signed authorization document (`AuthorizationDocument` / `--auth-doc`). Third-party targets strictly require a signed authorization document.
+- Default: DENY. Active scans and network checks outside the authorization gate are blocked by git pre-commit hooks and CI checks.
 - Every scan or test authorization — and every refusal — is recorded in the tamper-evident `AppendOnlyAuditLog` with the authorizing actor, UTC timestamp, target identifier, and execution mode.
 - Secrets, tokens, and credentials are redacted before any event is written to the audit log.
 - If a target is not marked as owned or authorized, `nexcoder` refuses execution and explains how to register authorization.
@@ -65,7 +66,8 @@ Falhas de seguranca encontradas em projetos de terceiros ou open source seguem d
 
 O `nexcoder` aplica esta politica diretamente no codigo reusando o plano de controle `nexcoder-control` (`TargetAuthorizationGate`, `ApprovalTokenManager` e `AppendOnlyAuditLog`):
 
-- Qualquer modo que execute testes ou varreduras exige o alvo marcado como proprio (`owned_target=True` ou registrado no `TargetAuthorizationGate`) ou uma ficha de aprovacao valida.
+- Qualquer modo que execute testes ou varreduras exige o alvo marcado como proprio (`owned_target=True` ou registrado no `TargetAuthorizationGate`), uma ficha de aprovacao valida ou um documento de autorizacao assinado e validado (`AuthorizationDocument` / `--auth-doc`). Alvos de terceiros exigem estritamente o documento assinado.
+- Default: NEGAR. Varreduras ativas e chamadas de rede fora do modulo do gate sao barradas via git hook pre-commit e checagem de CI.
 - O gate grava no log de auditoria encadeado (`AppendOnlyAuditLog`) quem autorizou, quando (timestamp UTC) e qual alvo foi avaliado.
 - Segredos, chaves e tokens sao ocultados antes de qualquer gravacao em log.
 - Sem a marca de alvo proprio ou autorizacao registrada, o `nexcoder` recusa a execucao e explica o motivo.

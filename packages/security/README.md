@@ -103,6 +103,9 @@ for patch in fix_report.patches:
 # Run scanners over an owned directory
 nexcoder-security scan ./src --offline --owned-target --authorized-by sec-engineer
 
+# Run scanners with a cryptographically signed authorization document
+nexcoder-security scan https://api.example.com --offline --auth-doc ./auth_doc.yaml
+
 # Evaluate the security release gate
 nexcoder-security gate . --max-critical 0 --max-high 0 --offline --owned-target
 

@@ -1,11 +1,14 @@
 #!/bin/sh
-# Blocks commits that introduce emoji characters in staged files.
+# Blocks commits that introduce emoji characters or bypass authorization gate in staged files.
 
 files=$(git diff --cached --name-only --diff-filter=ACM)
 [ -z "$files" ] && exit 0
 
 # shellcheck disable=SC2086
-python scripts/check_no_emoji.py $files
+python scripts/check_no_emoji.py $files || exit 1
 
 # shellcheck disable=SC2086
-python scripts/check_injection_guard.py $files
+python scripts/check_auth_gate_enforcement.py $files || exit 1
+
+# shellcheck disable=SC2086
+python scripts/check_injection_guard.py $files || exit 1
