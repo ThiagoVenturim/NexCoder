@@ -11,6 +11,9 @@ license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
   "nexcoder-core",
+  "nexcoder-code-intel>=0.1.0",
+  "nexcoder-control>=0.1.0",
+  "nexcoder-planning>=0.1.0",
   "pydantic>=2.7",
   "pyyaml>=6.0",
   "langchain-core>=0.3",

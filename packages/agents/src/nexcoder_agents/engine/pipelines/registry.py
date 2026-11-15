@@ -10,12 +10,18 @@ from nexcoder_agents.engine.pipelines.templates import (
     create_documentation_pipeline,
     create_feature_pipeline,
     create_legacy_migration_pipeline,
+    create_quality_review_pipeline,
     create_refactor_pipeline,
     create_security_audit_pipeline,
     create_software_engineering_pipeline,
 )
 
 _REGISTRY: dict[str, PipelineTemplate] = {}
+_ALIASES: dict[str, str] = {
+    "revisao-de-qualidade": "quality-review",
+    "revisao_de_qualidade": "quality-review",
+    "revisao de qualidade": "quality-review",
+}
 
 
 def register_pipeline_template(template: PipelineTemplate) -> None:
@@ -27,9 +33,10 @@ def get_pipeline_template(name: str) -> PipelineTemplate:
     """Retrieve a registered pipeline template by name."""
     if not _REGISTRY:
         _init_default_templates()
-    if name not in _REGISTRY:
+    resolved = _ALIASES.get(name, name)
+    if resolved not in _REGISTRY:
         raise KeyError(f"Pipeline template '{name}' not found. Available: {list(_REGISTRY.keys())}")
-    return _REGISTRY[name]
+    return _REGISTRY[resolved]
 
 
 def list_pipeline_templates(category: str | None = None) -> list[PipelineTemplate]:
@@ -115,6 +122,17 @@ def _init_default_templates() -> None:
             category="engineering",
             required_inputs=["project_name", "architecture_goal"],
             factory=create_software_engineering_pipeline,
+        ),
+        PipelineTemplate(
+            name="quality-review",
+            description=(
+                "Code quality and architecture review (revisao de qualidade): gated target check, "
+                "AST/CodeGraph detectors for duplication, wrappers, over-engineering, readability, "
+                "performance, SQL modeling, structure and branches, prioritized P1/P2/P3 report."
+            ),
+            category="quality",
+            required_inputs=["project_path"],
+            factory=create_quality_review_pipeline,
         ),
         PipelineTemplate(
             name="data-engineering-pipeline",

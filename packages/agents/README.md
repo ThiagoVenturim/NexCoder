@@ -101,6 +101,22 @@ print(report.architecture.recommended_pattern)
 print(report.to_markdown())
 ```
 
+### Code Quality Review (`QualityReviewer` and `quality-review` pipeline)
+
+```python
+from nexcoder_agents import QualityReviewer
+
+reviewer = QualityReviewer()
+report = reviewer.review(
+    "examples/quickstart/sample_project",
+    owned_target=True,
+    authorized_by="owner",
+)
+
+print(report.severity_counts())
+print(report.to_markdown())
+```
+
 ### Data Engineering Pipelines, Quality Contracts, Modeling, and Observability
 
 ```python
