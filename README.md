@@ -108,6 +108,16 @@ python examples/quickstart/run_quickstart.py
 
 See [examples/quickstart/README.md](examples/quickstart/README.md) for full details, expected output, and artifact descriptions.
 
+### Productivity and Security Dashboards via NexDash (Offline Demo)
+
+Generate developer productivity (GitHub, Azure DevOps, Redmine) and security posture dashboards through the `nexdash` MCP and REST reporting engine offline:
+
+```bash
+python examples/reports_nexdash/run_reports_demo.py
+```
+
+See [docs/reports-nexdash.md](docs/reports-nexdash.md) and [examples/reports_nexdash/README.md](examples/reports_nexdash/README.md) for the MCP/REST protocol and cube specifications.
+
 ### Basic Model Invocation
 
 ```python
