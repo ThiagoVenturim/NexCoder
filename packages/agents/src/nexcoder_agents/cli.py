@@ -13,6 +13,7 @@ from nexcoder_agents.data_engineering import (
 )
 from nexcoder_agents.engine.pipelines import get_pipeline_template, list_pipeline_templates
 from nexcoder_agents.export import export_claude_package
+from nexcoder_agents.oss_contribution import OSSContributionAdvisor
 from nexcoder_agents.software_engineering import SoftwareEngineeringAdvisor
 
 
@@ -114,6 +115,30 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Optional path to write the Markdown data pipeline execution report.",
+    )
+
+    # analyze-oss subcommand
+    oss_parser = subparsers.add_parser(
+        "analyze-oss",
+        help="Run read-only open-source project analysis, bug/security discovery, and contribution report.",
+    )
+    oss_parser.add_argument(
+        "target",
+        type=str,
+        help="Local path or repository URL of the target open-source project.",
+    )
+    oss_parser.add_argument(
+        "--local-checkout",
+        type=Path,
+        default=None,
+        help="Optional local directory when target is a repository URL.",
+    )
+    oss_parser.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="Optional path to write the Markdown OSS contribution report.",
     )
 
     return parser
@@ -220,6 +245,27 @@ def main(args: list[str] | None = None) -> int:
         else:
             print(md)
         return 0
+
+    if parsed.command == "analyze-oss":
+        try:
+            oss_advisor = OSSContributionAdvisor()
+            oss_report = oss_advisor.analyze_oss_project(
+                parsed.target,
+                local_checkout=parsed.local_checkout,
+                read_only=True,
+                dry_run=True,
+            )
+            md = oss_report.to_markdown()
+            if parsed.output:
+                parsed.output.parent.mkdir(parents=True, exist_ok=True)
+                parsed.output.write_text(md, encoding="utf-8")
+                print(f"OSS contribution report written to {parsed.output}")
+            else:
+                print(md)
+            return 0
+        except (FileNotFoundError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
 
     return 0
 

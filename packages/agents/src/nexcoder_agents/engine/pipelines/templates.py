@@ -9,6 +9,12 @@ from nexcoder_agents.engine.blocks.guardrails import ExecutionLimits
 from nexcoder_agents.engine.blocks.prompt import PromptBlock
 from nexcoder_agents.engine.blocks.validator import ValidatorBlock
 from nexcoder_agents.engine.graph import PipelineBuilder
+from nexcoder_agents.oss_contribution import (
+    OSSFixProposerBlock,
+    OSSProblemFinderBlock,
+    OSSProjectMapBlock,
+    OSSReportBuilderBlock,
+)
 from nexcoder_agents.software_engineering import SoftwareEngineeringAuditBlock
 
 
@@ -516,3 +522,62 @@ def create_data_engineering_pipeline(
     if limits:
         builder.set_limits(limits)
     return builder
+
+
+def create_oss_contribution_pipeline(
+    name: str = "oss-contribution",
+    approval_action: str = "approve_oss_upstream_contribution",
+    limits: ExecutionLimits | None = None,
+    model: Any = None,
+) -> PipelineBuilder:
+    """Build a 4-stage open-source contribution pipeline:
+    map_project -> find_problems -> propose_fixes -> build_report -> committee -> gate.
+    """
+    builder = PipelineBuilder(name)
+
+    val = ValidatorBlock(
+        name="oss_input_validator",
+        required_keys=["repo_path_or_url"],
+    )
+
+    map_block = OSSProjectMapBlock(name="map_project")
+    find_block = OSSProblemFinderBlock(name="find_problems")
+    fix_block = OSSFixProposerBlock(name="propose_fixes")
+    report_block = OSSReportBuilderBlock(name="build_report")
+
+    committee = CommitteeBlock(
+        name="oss_review_committee",
+        members=[
+            CommitteeMember(
+                name="lead_architect",
+                perspective="Code Quality, Minimal Diff, and CONTRIBUTING.md Adherence",
+                weight=1.5,
+            ),
+            CommitteeMember(
+                name="security_auditor",
+                perspective="Coordinated Vulnerability Disclosure and Zero Exploit Payloads",
+                weight=1.5,
+            ),
+            CommitteeMember(
+                name="qa_lead",
+                perspective="Static Verification and Non-Regression",
+                weight=1.0,
+            ),
+        ],
+        target_key="oss_report_markdown",
+        quorum_threshold=0.6,
+        model=model,
+    )
+
+    gate = HumanApprovalBlock(
+        name="oss_upstream_gate",
+        action_name=approval_action,
+        description="Authorize upstream OSS issue/PR submission and private security advisory routing",
+        payload_keys=["repo_path_or_url", "oss_report_markdown", "oss_upstream_actions"],
+    )
+
+    builder.add_sequence([val, map_block, find_block, fix_block, report_block, committee, gate])
+    if limits:
+        builder.set_limits(limits)
+    return builder
+
