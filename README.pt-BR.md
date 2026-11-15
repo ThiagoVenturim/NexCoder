@@ -175,6 +175,7 @@ Guias detalhados estao disponiveis no diretorio [docs/](docs/):
   - [Execucao Local: vLLM vs Ollama](docs/serving-vllm-vs-ollama.md): Dimensionamento de hardware, benchmarks de concorrencia e conteineres.
   - [Observabilidade com Langfuse](docs/observability-langfuse.md): Rastreamento de traces, controle de custos, disjuntor e metricas.
   - [Plano de Controle](docs/control-plane.md): Orcamento por chave de API, controle de taxas, auditoria e governanca humana.
+  - [Infraestrutura como Codigo (IaC)](docs/iac-provisioning.md): Provisionamento de servidores, VMs e nuvem, catalogo de referencia e isolamento de credenciais.
 
 - **Ideacao, Planejamento e Agentes**:
   - [Ideacao e Comite](docs/ideation-and-jury.md): Esquadrao de pesquisa de mercado, matriz competitiva e votacao por quorum.

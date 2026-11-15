@@ -120,6 +120,19 @@ The translation layer between product specifications and technical execution:
 - **Kanban Sync Loop**:
   - Detects active sprint slippage, updates board columns, and dynamically recommends scope deferrals to future milestones.
 
+### 5. `nexcoder-iac`
+
+The infrastructure-as-code and cloud provisioning engine:
+
+- **Multi-Target Generation**:
+  - Converts high-level descriptions or reference specs into Docker Compose (local), Ansible (dedicated servers/VMs), and Terraform/OpenTofu (AWS, GCP, Azure, DigitalOcean, Hetzner Cloud).
+- **Architecture Catalog**:
+  - Reference architectures: `simple_app`, `app_database`, `queue_worker`, `microservices`, and `ai_serving` across `starter`, `standard`, and `production` tiers.
+- **User Credential Isolation & Safety**:
+  - Cloud credentials strictly injected via local environment variables; automated secret scanner blocks hardcoded secrets.
+- **Governance & Audit**:
+  - Mandatory plan preview and confirmation gates before execution; cryptographic tamper-evident audit logging via `nexcoder-control`.
+
 ---
 
 ## Data Flow: From Idea to Working Code

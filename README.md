@@ -177,6 +177,7 @@ Documentation guides are available in the [docs/](docs/) directory:
   - [Serving: vLLM vs Ollama](docs/serving-vllm-vs-ollama.md): Hardware sizing, concurrency benchmarks, Docker setups, and local LLM serving.
   - [Observability with Langfuse](docs/observability-langfuse.md): Tracing, cost tracking, circuit breaker configuration, and evaluation metrics.
   - [Control Plane](docs/control-plane.md): API key budgeting, rate limiting, audit logging, and human-in-the-loop governance.
+  - [Infrastructure as Code (IaC)](docs/iac-provisioning.md): Multi-target server, VM, and cloud provisioning, reference catalog, and user credential isolation.
 
 - **Ideation, Planning & Agents**:
   - [Ideation and Jury](docs/ideation-and-jury.md): Research squad analysis, competitive matrices, and multi-persona jury quorum voting.
