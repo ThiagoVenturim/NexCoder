@@ -29,6 +29,8 @@ jobs:
           for pkg in packages/*/; do python -m pip install -e "$pkg"; done
       - name: No emojis
         run: python scripts/check_no_emoji.py
+      - name: Auth gate enforcement
+        run: python scripts/check_auth_gate_enforcement.py
       - name: Lint
         run: ruff check packages scripts
       - name: Tests

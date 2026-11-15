@@ -1,9 +1,16 @@
 """nexcoder-security: Security scanners, specialist agents, runtime monitor, and release gate for nexcoder."""
 
 from nexcoder_control.approval import (
+    AuthorizationDocument,
+    AuthorizationGateBlockedError,
     TargetAuthorizationGate,
     TargetAuthorizationRecord,
     TargetNotAuthorizedError,
+    generate_keypair,
+    is_local_or_owned_target,
+    load_authorization_document,
+    sign_authorization_document,
+    verify_signed_document,
 )
 
 from nexcoder_security.agents import (
@@ -18,6 +25,7 @@ from nexcoder_security.gate import (
     GatePolicy,
     GateVerdict,
     SecurityGateEvaluator,
+    gate_active_scan,
     generate_csp_header,
     generate_security_md,
     pin_dependencies,
@@ -78,6 +86,8 @@ from nexcoder_security.scanners import (
 
 __all__ = [
     "AppSecGeneralAgent",
+    "AuthorizationDocument",
+    "AuthorizationGateBlockedError",
     "BanditScanner",
     "BaseScanner",
     "DEFAULT_REVIEW_SCANNERS",
@@ -128,13 +138,19 @@ __all__ = [
     "build_security_nexdash_dataset",
     "build_synthetic_security_scans",
     "compute_security_metrics",
+    "gate_active_scan",
     "generate_csp_header",
+    "generate_keypair",
     "generate_security_dashboard",
     "generate_security_md",
+    "is_local_or_owned_target",
+    "load_authorization_document",
     "pin_dependencies",
     "run_security_review",
     "sanitize_for_responsible_disclosure",
     "scaffold_app_security",
+    "sign_authorization_document",
+    "verify_signed_document",
 ]
 
 __version__ = "0.1.0"

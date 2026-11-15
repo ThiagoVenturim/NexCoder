@@ -83,6 +83,8 @@ class MultiScannerEngine:
         owned_target: bool = False,
         authorized_by: str = "owner",
         approval_token: str | None = None,
+        authorization_document: Any = None,
+        require_signed_document: bool = False,
     ) -> ScanResult:
         self.target_gate.verify_target(
             target=target_path,
@@ -90,6 +92,8 @@ class MultiScannerEngine:
             owned_target=owned_target,
             authorized_by=authorized_by,
             approval_token=approval_token,
+            authorization_document=authorization_document,
+            require_signed_document=require_signed_document,
             metadata=options,
         )
         start_time = time.perf_counter()

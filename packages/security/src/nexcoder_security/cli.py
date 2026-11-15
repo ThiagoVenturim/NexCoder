@@ -37,6 +37,13 @@ def _add_target_auth_args(subparser: argparse.ArgumentParser) -> None:
         default=None,
         help="Single-use control plane approval token for target authorization",
     )
+    subparser.add_argument(
+        "--auth-doc",
+        "--authorization-document",
+        dest="auth_doc",
+        default=None,
+        help="Path or content of a signed authorization document (YAML/JSON)",
+    )
 
 
 def main(
@@ -137,6 +144,7 @@ def main(
                 owned_target=args.owned_target,
                 authorized_by=args.authorized_by,
                 approval_token=args.approval_token,
+                authorization_document=getattr(args, "auth_doc", None),
             )
         except TargetNotAuthorizedError as exc:
             print(f"Refused: {exc}", file=sys.stderr)
@@ -164,6 +172,7 @@ def main(
                 owned_target=args.owned_target,
                 authorized_by=args.authorized_by,
                 approval_token=args.approval_token,
+                authorization_document=getattr(args, "auth_doc", None),
             )
         except TargetNotAuthorizedError as exc:
             print(f"Refused: {exc}", file=sys.stderr)
@@ -209,6 +218,7 @@ def main(
                 owned_target=args.owned_target,
                 authorized_by=args.authorized_by,
                 approval_token=args.approval_token,
+                authorization_document=getattr(args, "auth_doc", None),
             )
         except TargetNotAuthorizedError as exc:
             print(f"Refused: {exc}", file=sys.stderr)
