@@ -29,6 +29,12 @@ Agentic planning engine for nexcoder: converts Product Requirement Documents (PR
 - **Developer Productivity Reports (`nexdash` Integration)**:
   - Pulls PRs, review latency, lead time, and closed issues from GitHub, Azure DevOps, and Redmine (`collect_github_productivity`, `collect_azure_devops_productivity`, `collect_redmine_productivity`).
   - Normalizes records into the `dev_productivity` semantic cube and requests rendered HTML dashboards from `nexdash` over MCP, REST, or offline mode (`generate_productivity_dashboard`).
+- **Product Cost Calculator (Build, Publish, Maintain, License, and Brand)**:
+  - Estimating product lifecycle costs: development (human team, hybrid, or AI-only), publication setup, recurring monthly/annual cloud operations, and trademark/IP protection.
+  - Three scenarios per estimate: Basic (MVP), Medium (Recommended), and High (Enterprise).
+  - Configurable YAML pricing catalog with real, transparent sources (no guessed prices).
+  - Integration with `nexcoder-control` metering (`CostTracker`) for actual AI token costs and `nexcoder-iac` (#95) cloud topologies.
+  - Automated client commercial proposal generation with milestone disbursement schedules.
 - **Git Automation Helpers**:
   - Standardized branch creation from integration bases (`develop`).
   - Conventional commit builder strictly validating types and enforcing zero emojis and no AI co-author trailers.
@@ -44,7 +50,8 @@ All deliverables from Issue #4 are fully implemented and verified offline:
 - [x] GitLab and Azure DevOps adapters
 - [x] Sync loop: issue and PR status to board, re-plan, slippage alerts
 - [x] Git helpers: branch, conventional commit strictly without emojis or co-author trailers, PR creation
-- [x] 54/54 unit tests passing offline with zero external dependencies
+- [x] Product cost calculator (build, publish, maintain, license, brand) with YAML pricing catalog, scenarios (basic, medium, high), control plane integration, and commercial proposal generation
+- [x] 65/65 unit tests passing offline with zero external dependencies
 
 ## Installation
 

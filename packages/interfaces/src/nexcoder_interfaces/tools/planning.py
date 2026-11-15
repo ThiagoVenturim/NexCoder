@@ -171,3 +171,93 @@ def productivity_report(
         "csp_header": bundle.csp_header,
         "html": bundle.html,
     }
+
+
+def estimate_product_cost(
+    project_name: str,
+    complexity: str = "medium",
+    feature_count: int = 10,
+    estimated_screens: int = 5,
+    estimated_endpoints: int = 12,
+    mode: str = "hybrid",
+    infra_target: str = "hetzner",
+    infra_tier: str = "standard",
+    domain_tld: str = "com_br",
+    trademark_jurisdiction: str = "inpi_br",
+    currency: str = "BRL",
+    exchange_rate: float = 5.50,
+    include_proposal: bool = False,
+    client_name: str = "Cliente",
+) -> dict[str, Any]:
+    """Estimate full product life-cycle costs (build, publish, maintain, license, and brand)."""
+    try:
+        from nexcoder_planning.cost import (
+            AISpec,
+            CommercialProposalGenerator,
+            CostScope,
+            Currency,
+            DevelopmentMode,
+            InfrastructureTarget,
+            InfrastructureTier,
+            LicenseBrandSpec,
+            ProductCostCalculator,
+            ProductCostInput,
+            ProviderSpec,
+            ScopeComplexity,
+            TeamSpec,
+        )
+    except ImportError as exc:
+        return {
+            "status": "error",
+            "message": f"Cost calculation module not available: {exc}",
+        }
+
+    scope = CostScope(
+        project_name=project_name,
+        complexity=ScopeComplexity(complexity),
+        feature_count=feature_count,
+        estimated_screens=estimated_screens,
+        estimated_endpoints=estimated_endpoints,
+    )
+    providers = ProviderSpec(
+        hosting_target=InfrastructureTarget(infra_target),
+        hosting_tier=InfrastructureTier(infra_tier),
+        domain_tld=domain_tld,
+    )
+    license_brand = LicenseBrandSpec(
+        trademark_jurisdiction=trademark_jurisdiction,
+    )
+    cost_input = ProductCostInput(
+        scope=scope,
+        mode=DevelopmentMode(mode),
+        team=TeamSpec(),
+        ai=AISpec(),
+        providers=providers,
+        license_brand=license_brand,
+        currency=Currency(currency),
+        exchange_rate_usd_to_brl=exchange_rate,
+    )
+
+    calculator = ProductCostCalculator()
+    report = calculator.calculate(cost_input)
+
+    resp: dict[str, Any] = {
+        "status": "success",
+        "project_name": report.project_name,
+        "currency": report.currency.value,
+        "exchange_rate_usd_to_brl": report.exchange_rate_usd_to_brl,
+        "development_mode": report.development_mode.value,
+        "recommended_scenario": report.recommended_scenario,
+        "scenarios": {k: v.model_dump() for k, v in report.scenarios.items()},
+        "pricing_sources": report.pricing_sources,
+        "summary_table": report.summary_table(),
+    }
+
+    if include_proposal:
+        resp["commercial_proposal"] = CommercialProposalGenerator.generate(
+            report=report,
+            client_name=client_name,
+        )
+
+    return resp
+

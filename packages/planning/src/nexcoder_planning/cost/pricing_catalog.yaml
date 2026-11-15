@@ -1,0 +1,246 @@
+version: "1.0"
+metadata:
+  description: "Standard reference pricing catalog for product cost estimation (build, publish, maintain, license, brand)"
+  default_currency: "BRL"
+  default_exchange_rate_usd_to_brl: 5.50
+  last_updated: "2026-11-15"
+
+categories:
+  infrastructure:
+    description: "Cloud compute, database, and networking infrastructure"
+    targets:
+      local_compose:
+        starter:
+          compute_monthly_usd: 0.0
+          database_monthly_usd: 0.0
+          networking_monthly_usd: 0.0
+          source: "Local Docker daemon"
+        standard:
+          compute_monthly_usd: 0.0
+          database_monthly_usd: 0.0
+          networking_monthly_usd: 0.0
+          source: "Local Docker daemon"
+        production:
+          compute_monthly_usd: 0.0
+          database_monthly_usd: 0.0
+          networking_monthly_usd: 0.0
+          source: "Local Docker daemon"
+      hetzner:
+        starter:
+          compute_monthly_usd: 4.50
+          database_monthly_usd: 0.0
+          networking_monthly_usd: 0.0
+          source: "Hetzner Cloud CX22 pricing 2026"
+        standard:
+          compute_monthly_usd: 14.00
+          database_monthly_usd: 8.00
+          networking_monthly_usd: 2.00
+          source: "Hetzner Cloud CPX31 + Volume pricing 2026"
+        production:
+          compute_monthly_usd: 32.00
+          database_monthly_usd: 18.00
+          networking_monthly_usd: 6.00
+          source: "Hetzner Cloud CPX41 + Dedicated DB pricing 2026"
+      digitalocean:
+        starter:
+          compute_monthly_usd: 6.00
+          database_monthly_usd: 15.00
+          networking_monthly_usd: 0.0
+          source: "DigitalOcean Basic Droplet 1GB + Managed DB 1GB 2026"
+        standard:
+          compute_monthly_usd: 24.00
+          database_monthly_usd: 30.00
+          networking_monthly_usd: 12.00
+          source: "DigitalOcean Droplet 4GB + Managed DB 2GB + LB 2026"
+        production:
+          compute_monthly_usd: 48.00
+          database_monthly_usd: 60.00
+          networking_monthly_usd: 12.00
+          source: "DigitalOcean Droplet 8GB + Managed DB 4GB HA 2026"
+      aws:
+        starter:
+          compute_monthly_usd: 10.50
+          database_monthly_usd: 18.00
+          networking_monthly_usd: 3.00
+          source: "AWS Pricing Calculator t4g.small + db.t4g.micro 2026"
+        standard:
+          compute_monthly_usd: 38.00
+          database_monthly_usd: 55.00
+          networking_monthly_usd: 25.00
+          source: "AWS Pricing Calculator t4g.medium + db.t4g.small + ALB 2026"
+        production:
+          compute_monthly_usd: 140.00
+          database_monthly_usd: 160.00
+          networking_monthly_usd: 35.00
+          source: "AWS Pricing Calculator Multi-AZ ECS + RDS Multi-AZ + ALB 2026"
+      gcp:
+        starter:
+          compute_monthly_usd: 9.00
+          database_monthly_usd: 15.00
+          networking_monthly_usd: 2.00
+          source: "Google Cloud Calculator e2-small + Cloud SQL db-f1-micro 2026"
+        standard:
+          compute_monthly_usd: 34.00
+          database_monthly_usd: 48.00
+          networking_monthly_usd: 20.00
+          source: "Google Cloud Calculator e2-medium + Cloud SQL db-g1-small 2026"
+        production:
+          compute_monthly_usd: 120.00
+          database_monthly_usd: 145.00
+          networking_monthly_usd: 30.00
+          source: "Google Cloud Calculator e2-standard-4 + Cloud SQL HA 2026"
+      vm:
+        starter:
+          compute_monthly_usd: 6.00
+          database_monthly_usd: 0.0
+          networking_monthly_usd: 1.00
+          source: "Generic VPS starter tier 2026"
+        standard:
+          compute_monthly_usd: 18.00
+          database_monthly_usd: 0.0
+          networking_monthly_usd: 2.00
+          source: "Generic VPS standard tier 2026"
+        production:
+          compute_monthly_usd: 48.00
+          database_monthly_usd: 0.0
+          networking_monthly_usd: 5.00
+          source: "Generic VPS high-memory tier 2026"
+
+  domains:
+    com_br:
+      initial_cost_brl: 40.00
+      annual_renewal_brl: 40.00
+      source: "Registro.br Tabela Oficial 2026"
+      notes: "Dominio nacional brasileiro .com.br mantido pelo NIC.br"
+    com:
+      initial_cost_usd: 14.00
+      annual_renewal_usd: 14.00
+      source: "Cloudflare Registrar / Namecheap 2026"
+      notes: "Dominio generico internacional de primeiro nivel (.com)"
+    io:
+      initial_cost_usd: 45.00
+      annual_renewal_usd: 45.00
+      source: "Cloudflare Registrar 2026"
+      notes: "Dominio de tecnologia (.io)"
+    ai:
+      initial_cost_usd: 75.00
+      annual_renewal_usd: 75.00
+      source: "Namecheap / Dynadot 2026"
+      notes: "Dominio de inteligencia artificial (.ai)"
+
+  trademark:
+    inpi_br:
+      application_fee_brl: 142.00
+      concession_first_decade_brl: 298.00
+      legal_assistance_basic_brl: 600.00
+      legal_assistance_pro_brl: 1500.00
+      source: "INPI Brasil Tabela de Retribuicoes 2026 (Codigos 389 e 372 com desconto legal ME/EPP/PF)"
+      notes: "Registro de marca no Instituto Nacional da Propriedade Industrial (Brasil). Validade de 10 anos."
+    uspto_us:
+      application_fee_usd: 250.00
+      concession_usd: 0.00
+      legal_assistance_basic_usd: 400.00
+      legal_assistance_pro_usd: 1200.00
+      source: "USPTO Fee Schedule 2026 (TEAS Standard Application)"
+      notes: "United States Patent and Trademark Office. Registro federal de marca nos EUA."
+    none:
+      application_fee_brl: 0.00
+      concession_first_decade_brl: 0.00
+      legal_assistance_basic_brl: 0.00
+      legal_assistance_pro_brl: 0.00
+      source: "Nenhum registro de marca solicitado"
+      notes: "Projeto sem protecao formal de marca"
+
+  email:
+    none:
+      monthly_cost_usd: 0.00
+      source: "Sem servico corporativo de e-mail"
+      notes: "Nenhum provedor de e-mail contratado"
+    ses:
+      monthly_cost_usd: 2.00
+      source: "Amazon Simple Email Service (SES) 2026"
+      notes: "Envio transacional de emails (ate 20 mil envios/mes)"
+    google_workspace:
+      monthly_cost_usd: 6.00
+      source: "Google Workspace Business Starter 2026 (por usuario/mes)"
+      notes: "Caixa postal corporativa com dominio personalizado"
+    proton:
+      monthly_cost_usd: 9.99
+      source: "Proton Business 2026"
+      notes: "Email profissional criptografado ponta-a-ponta"
+
+  cdn_security:
+    cloudflare_free:
+      monthly_cost_usd: 0.00
+      source: "Cloudflare Free Plan 2026"
+      notes: "DNS rapido, protecao DDoS essencial e certificado SSL automatico"
+    cloudflare_pro:
+      monthly_cost_usd: 20.00
+      source: "Cloudflare Pro Plan 2026"
+      notes: "WAF avancado, otimizacao de imagens e regras de cache"
+    cloudfront_waf:
+      monthly_cost_usd: 25.00
+      source: "AWS CloudFront + AWS WAF 2026"
+      notes: "Distribuicao de conteudo global com protecao WAF"
+
+  storage_backup:
+    local:
+      monthly_cost_usd: 0.00
+      source: "Armazenamento local no proprio servidor"
+      notes: "Sem custo adicional de nuvem para backups"
+    s3_standard:
+      monthly_cost_usd: 3.00
+      source: "AWS S3 Standard / Cloudflare R2 (ate 50GB + operacoes basicas) 2026"
+      notes: "Armazenamento de backups offsite e ativos estaticos"
+    s3_redundant:
+      monthly_cost_usd: 12.00
+      source: "AWS S3 Multi-Region Replication / Backblaze B2 redundante 2026"
+      notes: "Backups automatizados com replicacao geografica"
+
+  monitoring:
+    free_tier:
+      monthly_cost_usd: 0.00
+      source: "Sentry Developer Free + Langfuse Free OSS 2026"
+      notes: "Rastreamento de erros e telemetria LLM na cota gratuita"
+    standard_cloud:
+      monthly_cost_usd: 29.00
+      source: "Sentry Team ($26) + Langfuse Cloud Hobbyist ($3) 2026"
+      notes: "Monitoramento de performance APM e observabilidade de IA"
+    datadog_pro:
+      monthly_cost_usd: 65.00
+      source: "Datadog Pro Infrastructure + APM 2026"
+      notes: "Suite de observabilidade, metricas e alertas em tempo real"
+
+  labor_rates:
+    rates_brl_per_hour:
+      junior: 80.00
+      mid: 140.00
+      senior: 220.00
+      lead_architect: 260.00
+      qa_engineer: 130.00
+      devops_engineer: 180.00
+      average_developer: 160.00
+      source: "Pesquisa de Mercado de Desenvolvimento de Software Brasil 2026"
+    rates_usd_per_hour:
+      junior: 25.00
+      mid: 45.00
+      senior: 75.00
+      lead_architect: 95.00
+      qa_engineer: 40.00
+      devops_engineer: 65.00
+      average_developer: 55.00
+      source: "Global Software Engineering Hourly Rates Benchmark 2026"
+
+  ai_model_tiers:
+    small:
+      input_per_million_usd: 0.15
+      output_per_million_usd: 0.60
+      source: "PRICING_CATALOG nexcoder_core (Gemini Flash / Claude Haiku / Qwen)"
+    medium:
+      input_per_million_usd: 1.50
+      output_per_million_usd: 6.00
+      source: "PRICING_CATALOG nexcoder_core (GPT-4o mini / Sonnet standard)"
+    large:
+      input_per_million_usd: 5.00
+      output_per_million_usd: 15.00
+      source: "PRICING_CATALOG nexcoder_core (Frontier models / Claude 3.5 Sonnet / GPT-4o)"

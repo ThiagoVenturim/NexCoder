@@ -12,7 +12,7 @@ from nexcoder_interfaces.tools.agents import run_agent, run_pipeline
 from nexcoder_interfaces.tools.code import generate_docs, search_code
 from nexcoder_interfaces.tools.email import send_email
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
-from nexcoder_interfaces.tools.planning import plan_sprints, productivity_report
+from nexcoder_interfaces.tools.planning import estimate_product_cost, plan_sprints, productivity_report
 from nexcoder_interfaces.tools.security import security_report
 from nexcoder_interfaces.tools.unavailable import capture_page, generate_tests
 
@@ -205,6 +205,56 @@ def cmd_report_productivity(
         output_html_path=str(out_html) if out_html else None,
     )
     print(json.dumps(result, indent=2))
+
+
+@app.command(name="cost")
+def cmd_cost(
+    project: str = typer.Option("Novo Produto", "--project", "-p", help="Project name to estimate."),
+    complexity: str = typer.Option("medium", "--complexity", "-c", help="Complexity (low, medium, high, enterprise)."),
+    features: int = typer.Option(10, "--features", "-f", help="Estimated number of features."),
+    mode: str = typer.Option("hybrid", "--mode", "-m", help="Delivery mode: human_team, hybrid, or ai_only."),
+    infra: str = typer.Option("hetzner", "--infra", help="Infra target (hetzner, aws, digitalocean, vm, gcp)."),
+    tier: str = typer.Option("standard", "--tier", help="Infra tier (starter, standard, production)."),
+    domain: str = typer.Option("com_br", "--domain", help="Domain TLD (com_br, com, io, ai)."),
+    currency: str = typer.Option("BRL", "--currency", help="Valuation currency (BRL or USD)."),
+    proposal: bool = typer.Option(False, "--proposal", help="Generate client commercial proposal markdown."),
+    client: str = typer.Option("Cliente", "--client", help="Client name for commercial proposal."),
+    as_json: bool = typer.Option(False, "--json", help="Output raw JSON instead of formatted markdown table."),
+    out_file: Path | None = typer.Option(None, "--out", "-o", help="Optional file path to write results."),
+) -> None:
+    """Calculate comprehensive product lifecycle costs (build, publish, maintain mes/ano, licenca e marca)."""
+    result = estimate_product_cost(
+        project_name=project,
+        complexity=complexity,
+        feature_count=features,
+        mode=mode,
+        infra_target=infra,
+        infra_tier=tier,
+        domain_tld=domain,
+        currency=currency,
+        include_proposal=proposal,
+        client_name=client,
+    )
+
+    if as_json:
+        output_text = json.dumps(result, indent=2)
+    elif proposal and "commercial_proposal" in result:
+        output_text = result["commercial_proposal"]
+    else:
+        rec_sc = result.get("recommended_scenario", "medium")
+        output_text = (
+            f"# Estimativa de Custo de Produto: {project}\n\n"
+            f"**Modo**: {mode} | **Moeda**: {currency} | **Cenario Recomendado**: {rec_sc}\n\n"
+            f"{result.get('summary_table', '')}\n\n"
+            f"Fontes de Preco:\n" + "\n".join(f"- {s}" for s in result.get("pricing_sources", []))
+        )
+
+    if out_file:
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        out_file.write_text(output_text, encoding="utf-8")
+        print(f"Cost estimate written to {out_file}")
+    else:
+        print(output_text)
 
 
 @report_app.command(name="security")

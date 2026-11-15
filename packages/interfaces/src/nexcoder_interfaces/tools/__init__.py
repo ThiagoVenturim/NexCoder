@@ -6,7 +6,12 @@ from nexcoder_interfaces.tools.base import unavailable_tool_handler
 from nexcoder_interfaces.tools.code import generate_docs, impact_analysis, search_code
 from nexcoder_interfaces.tools.email import send_email
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
-from nexcoder_interfaces.tools.planning import plan_sprints, productivity_report, sync_board
+from nexcoder_interfaces.tools.planning import (
+    estimate_product_cost,
+    plan_sprints,
+    productivity_report,
+    sync_board,
+)
 from nexcoder_interfaces.tools.security import security_report, security_review, security_scan
 from nexcoder_interfaces.tools.unavailable import (
     audit_log,
@@ -110,6 +115,28 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
             },
         },
         handler=productivity_report,
+        is_available=True,
+    ),
+    "estimate_product_cost": ToolDefinition(
+        name="estimate_product_cost",
+        description="Estimate product lifecycle cost (build, publish, maintain mes/ano, licenca e marca).",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "project_name": {"type": "string", "description": "Product or project name."},
+                "complexity": {"type": "string", "default": "medium", "description": "Scope complexity tier."},
+                "feature_count": {"type": "integer", "default": 10, "description": "Number of product features."},
+                "mode": {"type": "string", "default": "hybrid", "description": "Delivery execution mode."},
+                "infra_target": {"type": "string", "default": "hetzner", "description": "Infra provider target."},
+                "infra_tier": {"type": "string", "default": "standard", "description": "Infra sizing tier."},
+                "domain_tld": {"type": "string", "default": "com_br", "description": "Domain TLD code."},
+                "currency": {"type": "string", "default": "BRL", "description": "Currency (BRL or USD)."},
+                "include_proposal": {"type": "boolean", "default": False, "description": "Generate proposal."},
+            },
+            "required": ["project_name"],
+        },
+        handler=estimate_product_cost,
         is_available=True,
     ),
     # Code Intel
