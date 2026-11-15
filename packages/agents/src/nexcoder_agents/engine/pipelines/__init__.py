@@ -9,6 +9,7 @@ from nexcoder_agents.engine.pipelines.registry import (
 )
 from nexcoder_agents.engine.pipelines.templates import (
     create_bugfix_pipeline,
+    create_data_engineering_pipeline,
     create_documentation_pipeline,
     create_feature_pipeline,
     create_legacy_migration_pipeline,
@@ -21,6 +22,7 @@ __all__ = [
     "PipelineTemplate",
     "build_pipeline",
     "create_bugfix_pipeline",
+    "create_data_engineering_pipeline",
     "create_documentation_pipeline",
     "create_feature_pipeline",
     "create_legacy_migration_pipeline",

@@ -6,6 +6,7 @@ from nexcoder_agents.engine.graph import PipelineGraph
 from nexcoder_agents.engine.pipelines.models import PipelineTemplate
 from nexcoder_agents.engine.pipelines.templates import (
     create_bugfix_pipeline,
+    create_data_engineering_pipeline,
     create_documentation_pipeline,
     create_feature_pipeline,
     create_legacy_migration_pipeline,
@@ -114,6 +115,16 @@ def _init_default_templates() -> None:
             category="engineering",
             required_inputs=["project_name", "architecture_goal"],
             factory=create_software_engineering_pipeline,
+        ),
+        PipelineTemplate(
+            name="data-engineering-pipeline",
+            description=(
+                "End-to-end data engineering: batch/stream ingestion, ELT/ETL transformation, "
+                "schema quality contracts, storage modeling, DAG generation, and observability."
+            ),
+            category="data",
+            required_inputs=["pipeline_name", "pipeline_description"],
+            factory=create_data_engineering_pipeline,
         ),
     ]
 
