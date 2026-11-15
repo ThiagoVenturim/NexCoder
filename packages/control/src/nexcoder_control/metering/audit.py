@@ -164,3 +164,79 @@ class AppendOnlyAuditLog:
             filtered = [e for e in filtered if e.timestamp >= since]
 
         return list(reversed(filtered[-limit:]))
+
+    def record_security_review(
+        self,
+        *,
+        actor: str,
+        target: str,
+        mode: str = "security_review",
+        findings_count: int = 0,
+        severity_counts: dict[str, int] | None = None,
+        passed_gate: bool = True,
+        disclosure_mode: str = "responsible",
+        details: dict[str, Any] | None = None,
+    ) -> AuditEvent:
+        """Record a completed security review in the audit log with secrets redacted."""
+        from nexcoder_control.approval.target_gate import redact_secrets
+
+        safe_details = redact_secrets(details or {})
+        safe_target = str(redact_secrets(target))
+        payload: dict[str, Any] = {
+            "target": safe_target,
+            "mode": mode,
+            "findings_count": findings_count,
+            "severity_counts": dict(severity_counts or {}),
+            "passed_gate": passed_gate,
+            "disclosure_mode": disclosure_mode,
+            "exploit_published": False,
+        }
+        if isinstance(safe_details, dict):
+            payload.update(safe_details)
+            payload["exploit_published"] = False
+
+        sev: AuditSeverity = "warning" if not passed_gate or findings_count > 0 else "info"
+        return self.record_event(
+            event_type="security.review.completed",
+            actor=actor.strip() or "security-reviewer",
+            action=mode,
+            resource=safe_target,
+            severity=sev,
+            details=payload,
+        )
+
+    def record_runtime_monitor_event(
+        self,
+        *,
+        actor: str = "runtime-monitor",
+        action: str,
+        resource: str,
+        blocked: bool,
+        rule_id: str,
+        reason: str,
+        severity: AuditSeverity = "warning",
+        details: dict[str, Any] | None = None,
+    ) -> AuditEvent:
+        """Record a runtime security monitor inspection or block event with secrets redacted."""
+        from nexcoder_control.approval.target_gate import redact_secrets
+
+        safe_details = redact_secrets(details or {})
+        safe_resource = str(redact_secrets(resource))
+        event_type = "security.monitor.blocked" if blocked else "security.monitor.inspected"
+        payload: dict[str, Any] = {
+            "blocked": blocked,
+            "rule_id": rule_id,
+            "reason": str(redact_secrets(reason)),
+        }
+        if isinstance(safe_details, dict):
+            payload.update(safe_details)
+
+        return self.record_event(
+            event_type=event_type,
+            actor=actor.strip() or "runtime-monitor",
+            action=action,
+            resource=safe_resource,
+            severity=severity,
+            details=payload,
+        )
+

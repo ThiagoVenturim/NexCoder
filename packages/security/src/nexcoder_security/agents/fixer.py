@@ -103,6 +103,25 @@ class SecurityFixerAgent(BaseSecurityAgent):
                         safety_notes="Ensure the environment variable is configured in deployment environment.",
                     )
                 )
+            elif f.remediation and (f.remediation.diff_patch or f.remediation.summary):
+                orig = snippet or f"# {f.rule_id}"
+                diff_text = f.remediation.diff_patch or (
+                    f"--- a/{loc_file}\n+++ b/{loc_file}\n"
+                    f"@@ -{loc_line},1 +{loc_line},1 @@\n-{orig}\n+# Fixed: {f.remediation.summary}\n"
+                )
+                patches.append(
+                    SurgicalPatch(
+                        finding_id=f.id,
+                        file_path=loc_file,
+                        line_start=loc_line,
+                        line_end=loc_line,
+                        original_code=orig,
+                        fixed_code=f.remediation.summary,
+                        diff_patch=diff_text,
+                        explanation=f.remediation.summary,
+                        safety_notes="Review generated remediation patch against unit and security tests.",
+                    )
+                )
 
         return FixerResult(
             total_findings_considered=len(findings),

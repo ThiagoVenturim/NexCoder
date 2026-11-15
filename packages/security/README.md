@@ -22,6 +22,11 @@ Security scanners, specialist agents, and release gate for the nexcoder platform
    - `sec-secrets`: Exposed credential analysis, cryptographic entropy calculation, and immediate revocation/rotation playbooks.
    - `sec-asvs`: Full compliance audit against OWASP ASVS v4.0 (L1-L3), OWASP Web Top 10, and OWASP LLM Top 10.
    - `sec-fixer`: Generation of surgical unified diff patches to remediate detected vulnerabilities.
+   - `sec-prompt-injection`: Audits LLM prompts, system/user role separation, external data boundaries, and unvalidated tool calls.
+   - `sec-sql-injection`: Detects SQL queries assembled with string concatenation/formatting and unsafe ORM raw statements.
+   - `sec-data-leakage`: Detects secrets, tokens, and PII leaked in logs, HTTP responses, HAR captures, reports, state dumps, and unconfigured egress.
+   - `sec-appsec-general`: Audits unauthenticated routes, fail-open auth, wildcard CORS with credentials, non-constant-time token comparisons (`==`), path traversal, SSRF, and `shell=True` commands.
+   - `RuntimeSecurityMonitor`: Optional runtime monitor that inspects prompts and tool calls and blocks prompt injection and dangerous tool arguments.
 
 3. **Release Security Gate & Configuration**:
    - `security-gate`: Configurable release blocker preventing deployments with unresolved high or critical vulnerabilities.
@@ -103,6 +108,9 @@ nexcoder-security sbom . --format cyclonedx-json --offline --owned-target
 
 # Scaffold security baseline assets
 nexcoder-security init-app-security . --name "MyService" --email "security@example.com"
+
+# Run responsible-disclosure security review (prompt injection, SQLi, data leakage, general security)
+nexcoder-security review ./src --owned-target --authorized-by sec-engineer --enable-monitor
 ```
 
 ## Origin
