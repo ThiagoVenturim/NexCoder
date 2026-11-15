@@ -31,9 +31,16 @@ Security scanners, specialist agents, and release gate for the nexcoder platform
 3. **Release Security Gate & Configuration**:
    - `security-gate`: Configurable release blocker preventing deployments with unresolved high or critical vulnerabilities.
    - `app_config`: Secure defaults scaffolding including Content Security Policy (CSP) headers, `SECURITY.md` responsible disclosure documentation, and deterministic dependency pinning.
+
 4. **Security Posture Dashboards (`nexdash` Integration)**:
    - Converts multi-scanner findings, SBOM outdated dependencies, and release gate coverage into the `security_posture` semantic cube (`compute_security_metrics`, `generate_security_dashboard`).
    - Communicates with `nexdash` via MCP, REST, or offline mode to produce CSP-hardened HTML dashboards.
+
+5. **Server Exposure, Hardening & Data Masking**:
+   - `server nginx`: Hardened Nginx reverse proxy configuration generator with TLS 1.2/1.3, Let's Encrypt support, gzip compression, rate limiting zones, HSTS/CSP security headers, and syntax/container validation.
+   - `server hardening`: Idempotent OS hardening scripts in Bash (`.sh`) and PowerShell (`.ps1`) covering firewall (ufw/nftables/netsh), passwordless SSH, fail2ban, unattended upgrades, non-root service accounts, and kernel sysctl parameters.
+   - `server isolate`: Privatization engine auditing and remediating unshielded port mappings (binding internal databases and caches strictly to `127.0.0.1`).
+   - `server mask`: PII and secret anonymizer for text logs, SQL database dumps, structured JSON records, and CSV files supporting placeholder, redact, and salted hash strategies.
 
 ## Installation
 
@@ -117,6 +124,18 @@ nexcoder-security init-app-security . --name "MyService" --email "security@examp
 
 # Run responsible-disclosure security review (prompt injection, SQLi, data leakage, general security)
 nexcoder-security review ./src --owned-target --authorized-by sec-engineer --enable-monitor
+
+# Generate Nginx reverse proxy and TLS configuration
+nexcoder-security server nginx --domain app.example.com --upstream 127.0.0.1:8000 --output nginx.conf --owned-target
+
+# Generate idempotent OS hardening scripts (Bash and PowerShell)
+nexcoder-security server hardening --profile basic --output-bash hardening.sh --output-ps1 hardening.ps1 --owned-target
+
+# Audit and remediate Docker Compose port exposure
+nexcoder-security server isolate ./docker-compose.yml --remediate --owned-target
+
+# Mask PII in SQL database dump
+nexcoder-security server mask ./backup.sql --format sql --strategy placeholder --output ./backup_masked.sql --owned-target
 ```
 
 ## Origin
