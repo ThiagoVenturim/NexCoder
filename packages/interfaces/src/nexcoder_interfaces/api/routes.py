@@ -72,6 +72,21 @@ class SecurityScanRequest(BaseModel):
     approval_token: str | None = None
 
 
+class ProductivityReportRequest(BaseModel):
+    project: str = "nexcoder-platform"
+    team: str = "core-engineering"
+    period: str = "2026-Q4"
+    platforms: list[str] | None = None
+    transport: str = "offline"
+
+
+class SecurityReportRequest(BaseModel):
+    project: str = "nexcoder-platform"
+    period: str = "2026-Q4"
+    policy: str = "default"
+    transport: str = "offline"
+
+
 class AgentRunRequest(BaseModel):
     agent_name: str
     task: str
@@ -224,6 +239,27 @@ def endpoint_security_scan(req: SecurityScanRequest) -> dict[str, Any]:
         owned_target=req.owned_target,
         authorized_by=req.authorized_by,
         approval_token=req.approval_token,
+    )
+
+
+@router.post("/v1/reports/productivity")
+def endpoint_reports_productivity(req: ProductivityReportRequest) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["productivity_report"].handler(
+        project=req.project,
+        team=req.team,
+        period=req.period,
+        platforms=req.platforms,
+        transport=req.transport,
+    )
+
+
+@router.post("/v1/reports/security")
+def endpoint_reports_security(req: SecurityReportRequest) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["security_report"].handler(
+        project=req.project,
+        period=req.period,
+        policy=req.policy,
+        transport=req.transport,
     )
 
 

@@ -15,6 +15,7 @@ from nexcoder_agents.oss_contribution import (
     OSSProjectMapBlock,
     OSSReportBuilderBlock,
 )
+from nexcoder_agents.quality.review import QualityReviewBlock
 from nexcoder_agents.software_engineering import SoftwareEngineeringAuditBlock
 
 
@@ -446,6 +447,75 @@ def create_software_engineering_pipeline(
     )
 
     builder.add_sequence([val, audit_block, opinion, committee, gate])
+    if limits:
+        builder.set_limits(limits)
+    return builder
+
+
+def create_quality_review_pipeline(
+    name: str = "quality-review",
+    approval_action: str = "approve_quality_remediation",
+    limits: ExecutionLimits | None = None,
+    model: Any = None,
+    target_gate: Any = None,
+    audit_log: Any = None,
+    thresholds: Any = None,
+) -> PipelineBuilder:
+    """Build a gated code quality and architecture review pipeline."""
+    builder = PipelineBuilder(name)
+
+    val = ValidatorBlock(
+        name="quality_validator",
+        required_keys=["project_path"],
+    )
+
+    review_block = QualityReviewBlock(
+        name="quality_review",
+        target_gate=target_gate,
+        audit_log=audit_log,
+        thresholds=thresholds,
+    )
+
+    remediation = PromptBlock(
+        name="quality_remediation_plan",
+        user_prompt_template=(
+            "You are a code quality reviewer and software architect.\n"
+            "Target: {project_path}\n"
+            "Prioritized Findings:\n{quality_findings_summary}\n"
+            "Synthesize a minimal, safe refactoring plan ordered from P1 to P3."
+        ),
+        output_key="quality_remediation_plan",
+        tier="medium",
+        model=model,
+    )
+
+    committee = CommitteeBlock(
+        name="quality_committee",
+        members=[
+            CommitteeMember(
+                name="quality_juror",
+                perspective="Simplicity, Duplication Removal, and Readability",
+                weight=1.5,
+            ),
+            CommitteeMember(
+                name="architect_juror",
+                perspective="Clean Boundaries, Data Modeling, and Over-Engineering Prevention",
+                weight=1.2,
+            ),
+        ],
+        target_key="quality_remediation_plan",
+        quorum_threshold=0.6,
+        model=model,
+    )
+
+    gate = HumanApprovalBlock(
+        name="quality_gate",
+        action_name=approval_action,
+        description="Approve prioritized code quality report and refactoring plan",
+        payload_keys=["project_path", "quality_severity_counts", "quality_remediation_plan"],
+    )
+
+    builder.add_sequence([val, review_block, remediation, committee, gate])
     if limits:
         builder.set_limits(limits)
     return builder

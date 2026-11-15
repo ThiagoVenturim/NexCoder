@@ -28,7 +28,7 @@ KNOWN_MODULES: dict[str, ModuleInfo] = {
         package_name="nexcoder_planning",
         description="Agentic sprint planning, backlog breakdown, and board synchronization.",
         available_in_develop=True,
-        tools=["plan_sprints", "sync_board"],
+        tools=["plan_sprints", "sync_board", "productivity_report"],
     ),
     "code": ModuleInfo(
         name="code",
@@ -42,7 +42,7 @@ KNOWN_MODULES: dict[str, ModuleInfo] = {
         package_name="nexcoder_security",
         description="Security scanning engine, specialist security agents, and release gate.",
         available_in_develop=True,
-        tools=["security_scan"],
+        tools=["security_scan", "security_report"],
     ),
     "agents": ModuleInfo(
         name="agents",

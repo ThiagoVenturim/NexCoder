@@ -1,4 +1,4 @@
-"""Platform adapters for issue trackers (GitHub, GitLab, Azure DevOps)."""
+"""Platform adapters for issue trackers (GitHub, GitLab, Azure DevOps, Redmine)."""
 
 from nexcoder_planning.adapters.azure_devops import AzureDevOpsAdapter
 from nexcoder_planning.adapters.base import (
@@ -15,6 +15,7 @@ from nexcoder_planning.adapters.base import (
 )
 from nexcoder_planning.adapters.github import GitHubAdapter
 from nexcoder_planning.adapters.gitlab import GitLabAdapter
+from nexcoder_planning.adapters.redmine import RedmineAdapter
 
 __all__ = [
     "AzureDevOpsAdapter",
@@ -25,6 +26,7 @@ __all__ = [
     "ProjectV2Info",
     "ProjectV2Item",
     "ProjectV2ItemResult",
+    "RedmineAdapter",
     "RemoteIssue",
     "RemoteMilestone",
     "SyncSummary",

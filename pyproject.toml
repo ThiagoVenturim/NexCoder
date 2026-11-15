@@ -24,6 +24,7 @@ testpaths = ["packages", "examples"]
 pythonpath = [
     ".",
     "examples/quickstart",
+    "examples/reports_nexdash",
     "packages/core/src",
     "packages/code-intel/src",
     "packages/planning/src",

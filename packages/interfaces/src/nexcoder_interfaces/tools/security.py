@@ -69,3 +69,57 @@ def security_scan(
             for f in scan_result.findings
         ],
     }
+
+
+def security_report(
+    project: str = "nexcoder-platform",
+    period: str = "2026-Q4",
+    policy: str = "default",
+    transport: str = "offline",
+    nexdash_url: str = "http://127.0.0.1:8080",
+    output_html_path: str | None = None,
+) -> dict[str, Any]:
+    """Convert security scanner findings and gate coverage into a NexDash security posture dashboard."""
+    try:
+        from nexcoder_core.reports import NexDashValidationError
+        from nexcoder_security.gate import GatePolicy
+        from nexcoder_security.reports import generate_security_dashboard
+    except ImportError as exc:
+        return {
+            "status": "error",
+            "message": f"Security reporting module not available: {exc}",
+        }
+
+    gate_policy = GatePolicy.production(require_sbom=True) if policy == "strict" else GatePolicy(require_sbom=True)
+    try:
+        metrics, bundle = generate_security_dashboard(
+            project=project,
+            period=period,
+            policy=gate_policy,
+            transport=transport,  # type: ignore[arg-type]
+            nexdash_url=nexdash_url,
+        )
+    except NexDashValidationError as exc:
+        return {
+            "status": "error",
+            "message": str(exc),
+        }
+
+    if output_html_path:
+        out_path = Path(output_html_path).resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(bundle.html, encoding="utf-8")
+
+    return {
+        "status": "success",
+        "model_id": bundle.model_id,
+        "transport": bundle.transport,
+        "dashboard_id": bundle.dashboard_id,
+        "title": bundle.title,
+        "subtitle": bundle.subtitle,
+        "metrics": metrics.model_dump(),
+        "kpis": [k.model_dump() for k in bundle.kpis],
+        "charts": [c.model_dump() for c in bundle.charts],
+        "csp_header": bundle.csp_header,
+        "html": bundle.html,
+    }
