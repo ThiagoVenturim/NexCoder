@@ -71,6 +71,60 @@ def security_scan(
     }
 
 
+def security_review(
+    path: str = ".",
+    owned_target: bool = False,
+    authorized_by: str = "owner",
+    approval_token: str | None = None,
+    enable_runtime_monitor: bool = False,
+    oss_contribution_mode: bool = False,
+    audit_log: Any | None = None,
+    target_gate: Any | None = None,
+) -> dict[str, Any]:
+    """Execute responsible-disclosure security review (prompt injection, SQLi, data leakage, general security)."""
+    try:
+        from nexcoder_control.approval import TargetNotAuthorizedError
+        from nexcoder_security.review import SecurityReviewEngine
+    except ImportError as exc:
+        return {
+            "status": "error",
+            "message": f"Security package not available: {exc}",
+        }
+
+    target = Path(path).resolve()
+    engine = SecurityReviewEngine(target_gate=target_gate, audit_log=audit_log)
+    try:
+        report = engine.review(
+            target_path=target,
+            owned_target=owned_target,
+            authorized_by=authorized_by,
+            approval_token=approval_token,
+            enable_runtime_monitor=enable_runtime_monitor,
+            oss_contribution_mode=oss_contribution_mode,
+        )
+    except TargetNotAuthorizedError as exc:
+        return {
+            "status": "rejected",
+            "authorized": False,
+            "target_path": str(target),
+            "reason": str(exc),
+        }
+
+    return {
+        "status": "success",
+        "authorized": True,
+        "authorized_by": report.authorized_by,
+        "target_path": report.target_path,
+        "disclosure_mode": report.disclosure_mode,
+        "exploit_published": report.exploit_published,
+        "total_findings": report.total_findings,
+        "passed_gate": report.passed_gate,
+        "severity_counts": report.severity_counts,
+        "category_counts": report.category_counts,
+        "findings": [item.model_dump(mode="json") for item in report.findings],
+    }
+
+
 def security_report(
     project: str = "nexcoder-platform",
     period: str = "2026-Q4",

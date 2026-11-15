@@ -16,6 +16,7 @@ from nexcoder_security.gate import (
     SecurityGateEvaluator,
     scaffold_app_security,
 )
+from nexcoder_security.review import SecurityReviewEngine
 from nexcoder_security.scanners import MultiScannerEngine, SyftScanner
 
 
@@ -101,6 +102,22 @@ def main(
     init_p.add_argument("path", default=".", nargs="?", help="Target project directory")
     init_p.add_argument("--name", default="Application", help="Project name")
     init_p.add_argument("--email", default="security@example.com", help="Responsible disclosure contact email")
+
+    # review
+    review_p = subparsers.add_parser(
+        "review",
+        help="Run comprehensive security review (prompt injection, SQLi, data leakage, general security)",
+    )
+    review_p.add_argument("path", default=".", nargs="?", help="Target path to review")
+    review_p.add_argument("--json", action="store_true", help="Output JSON report")
+    review_p.add_argument("--markdown", action="store_true", help="Output Markdown report")
+    review_p.add_argument("--enable-monitor", action="store_true", help="Enable optional runtime security monitor")
+    review_p.add_argument(
+        "--oss-mode",
+        action="store_true",
+        help="Enable OSS contribution responsible disclosure mode",
+    )
+    _add_target_auth_args(review_p)
 
     args = parser.parse_args(argv)
 
@@ -210,6 +227,34 @@ def main(
         print("Generated security assets:")
         print(f"  SECURITY.md: {assets['security_md']}")
         print(f"  CSP Header: {assets['csp_header']}")
+        return 0
+
+    if args.command == "review":
+        review_engine = SecurityReviewEngine(target_gate=active_gate, audit_log=active_gate.audit_log)
+        try:
+            report = review_engine.review(
+                target_path=args.path,
+                owned_target=args.owned_target,
+                authorized_by=args.authorized_by,
+                approval_token=args.approval_token,
+                enable_runtime_monitor=args.enable_monitor,
+                oss_contribution_mode=args.oss_mode,
+            )
+        except TargetNotAuthorizedError as exc:
+            print(f"Refused: {exc}", file=sys.stderr)
+            return 1
+
+        if args.json:
+            print(report.model_dump_json(indent=2))
+        elif args.markdown:
+            print(report.to_markdown())
+        else:
+            print(f"Security Review: {report.target_path}")
+            print(f"Total findings: {report.total_findings}")
+            print(f"Disclosure mode: {report.disclosure_mode} (exploit_published={report.exploit_published})")
+            for item in report.findings:
+                print(f"  [{item.severity.upper()}] {item.location} - {item.title} ({item.rule_id})")
+                print(f"    Fix: {item.how_to_fix}")
         return 0
 
     return 0

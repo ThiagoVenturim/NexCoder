@@ -14,6 +14,7 @@ from nexcoder_agents.engine.pipelines.templates import (
     create_quality_review_pipeline,
     create_refactor_pipeline,
     create_security_audit_pipeline,
+    create_security_review_pipeline,
     create_software_engineering_pipeline,
 )
 
@@ -154,6 +155,16 @@ def _init_default_templates() -> None:
             category="open-source",
             required_inputs=["repo_path_or_url"],
             factory=create_oss_contribution_pipeline,
+        ),
+        PipelineTemplate(
+            name="security-review",
+            description=(
+                "Comprehensive security review: prompt injection, SQL injection, data leakage, "
+                "general application security, optional runtime monitor, target gate, and responsible disclosure."
+            ),
+            category="security",
+            required_inputs=["target_path"],
+            factory=create_security_review_pipeline,
         ),
     ]
 

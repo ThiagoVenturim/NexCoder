@@ -72,6 +72,10 @@ class FindingCategory(enum.StrEnum):
     IAC = "iac"
     THREAT = "threat"
     COMPLIANCE = "compliance"
+    PROMPT_INJECTION = "prompt_injection"
+    SQL_INJECTION = "sql_injection"
+    DATA_LEAKAGE = "data_leakage"
+    AUTH_SECURITY = "auth_security"
 
 
 class Location(BaseModel):
@@ -81,6 +85,11 @@ class Location(BaseModel):
     column_start: int | None = None
     column_end: int | None = None
     snippet: str | None = None
+
+    def format_ref(self) -> str:
+        """Return 'file_path:line' format for clear reporting."""
+        line = self.line_start if self.line_start is not None else 1
+        return f"{self.file_path}:{line}"
 
 
 class Remediation(BaseModel):
@@ -105,6 +114,20 @@ class Finding(BaseModel):
     raw_data: dict[str, Any] = Field(default_factory=dict)
     is_suppressed: bool = False
     suppression_reason: str | None = None
+
+    @property
+    def location_ref(self) -> str:
+        """Return 'file:line' string for this finding."""
+        if self.location is not None:
+            return self.location.format_ref()
+        return "general:1"
+
+    @property
+    def how_to_fix(self) -> str:
+        """Return actionable remediation guidance for this finding."""
+        if self.remediation and self.remediation.summary:
+            return self.remediation.summary
+        return "Apply secure coding controls and input validation for this construct."
 
 
 class ScanMetadata(BaseModel):
