@@ -164,6 +164,7 @@ def get_chat_model(
     config: NexcoderConfig | None = None,
     temperature: float | None = None,
     tracing: bool = True,
+    firewall: bool = True,
 ) -> Any:
     """Return the chat model configured for a tier.
 
@@ -172,6 +173,7 @@ def get_chat_model(
         config: configuration to use; defaults to the nearest ``nexcoder.yaml``.
         temperature: override the spec temperature for this call site.
         tracing: attach Langfuse and usage-metering callbacks.
+        firewall: wrap model with PromptFirewall to block prompt injections.
     """
     cfg = config or load_config()
     spec = cfg.model_for(tier)
@@ -179,4 +181,9 @@ def get_chat_model(
         spec = spec.model_copy(update={"temperature": temperature})
     callbacks = default_callbacks(cfg, tier=tier, model=spec.model) if tracing else None
     logger.debug("chat model for tier=%s provider=%s model=%s", tier, spec.provider, spec.model)
-    return build_chat_model(spec, callbacks=callbacks)
+    model = build_chat_model(spec, callbacks=callbacks)
+    if firewall:
+        from nexcoder_core.llm.firewall import FirewalledChatModel
+
+        return FirewalledChatModel(model)
+    return model

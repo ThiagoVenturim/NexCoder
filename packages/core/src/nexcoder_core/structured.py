@@ -115,6 +115,10 @@ async def call_structured(
 
         llm = get_chat_model("medium")
 
+    from nexcoder_core.llm.firewall import PromptFirewall
+
+    PromptFirewall.get_default().inspect_prompt(prompt, actor=context)
+
     base_prompt = prompt + (_schema_hint(schema) if include_schema else "")
     current = base_prompt
     reason, raw = "", ""
