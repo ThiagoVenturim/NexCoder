@@ -46,6 +46,23 @@ class PlanningSyncRequest(BaseModel):
     prd_text: str | None = None
 
 
+class PlanningCostRequest(BaseModel):
+    project_name: str
+    complexity: str = "medium"
+    feature_count: int = 10
+    estimated_screens: int = 5
+    estimated_endpoints: int = 12
+    mode: str = "hybrid"
+    infra_target: str = "hetzner"
+    infra_tier: str = "standard"
+    domain_tld: str = "com_br"
+    trademark_jurisdiction: str = "inpi_br"
+    currency: str = "BRL"
+    exchange_rate: float = 5.50
+    include_proposal: bool = False
+    client_name: str = "Cliente"
+
+
 class CodeSearchRequest(BaseModel):
     query: str
     path: str = "."
@@ -201,6 +218,26 @@ def endpoint_planning_sync(req: PlanningSyncRequest) -> dict[str, Any]:
         repo=req.repo,
         dry_run=req.dry_run,
         prd_text=req.prd_text,
+    )
+
+
+@router.post("/v1/planning/cost")
+def endpoint_planning_cost(req: PlanningCostRequest) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["estimate_product_cost"].handler(
+        project_name=req.project_name,
+        complexity=req.complexity,
+        feature_count=req.feature_count,
+        estimated_screens=req.estimated_screens,
+        estimated_endpoints=req.estimated_endpoints,
+        mode=req.mode,
+        infra_target=req.infra_target,
+        infra_tier=req.infra_tier,
+        domain_tld=req.domain_tld,
+        trademark_jurisdiction=req.trademark_jurisdiction,
+        currency=req.currency,
+        exchange_rate=req.exchange_rate,
+        include_proposal=req.include_proposal,
+        client_name=req.client_name,
     )
 
 
