@@ -22,17 +22,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install ruff pytest
-          python -m pip install -e packages/core
-          python -m pip install -e packages/control
-          python -m pip install -e packages/code-intel
-          python -m pip install -e packages/planning
-          python -m pip install -e packages/agents
-          for pkg in packages/*/; do
-            case "$pkg" in
-              packages/core/|packages/control/|packages/code-intel/|packages/planning/|packages/agents/) ;;
-              *) python -m pip install -e "$pkg" ;;
-            esac
-          done
+          # Two passes so inter-package order never matters: first install every
+          # local package without dependency resolution, then install third-party
+          # deps (all local packages are already present by then).
+          for pkg in packages/*/; do python -m pip install -e "$pkg" --no-deps; done
+          for pkg in packages/*/; do python -m pip install -e "$pkg"; done
       - name: No emojis
         run: python scripts/check_no_emoji.py
       - name: Lint
