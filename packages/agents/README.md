@@ -117,6 +117,22 @@ print(report.severity_counts())
 print(report.to_markdown())
 ```
 
+### Data Engineering Pipelines, Quality Contracts, Modeling, and Observability
+
+```python
+from nexcoder_agents import DataEngineeringAdvisor
+
+advisor = DataEngineeringAdvisor()
+result = advisor.run_pipeline_from_description(
+    "Ingest e-commerce order events, enforce Silver schema contracts, and aggregate Gold revenue."
+)
+
+print(result.storage_modeling.recommended_primary)
+print(result.silver_quality_report.quality_score)
+print(result.observability.overall_healthy)
+print(result.to_markdown())
+```
+
 ## Origin
 
 A catalog of automation agents and personas distilled into a generic, vendor-agnostic architecture.

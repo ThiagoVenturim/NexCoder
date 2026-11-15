@@ -11,6 +11,8 @@ skills:
   - etl-pipeline-design
   - dimensional-modeling
   - query-optimization
+  - data-quality-contracts
+  - data-observability
 ---
 
 # Data Engineer
