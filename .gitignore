@@ -24,6 +24,7 @@ fabrica.local.yaml
 *.db
 captures/
 langfuse-data/
+outputs/
 
 # Editors and OS
 .vscode/
