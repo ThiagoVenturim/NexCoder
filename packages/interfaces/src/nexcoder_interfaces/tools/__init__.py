@@ -4,6 +4,7 @@ from nexcoder_interfaces.registry import ToolDefinition
 from nexcoder_interfaces.tools.agents import approve_step, run_agent, run_pipeline
 from nexcoder_interfaces.tools.base import unavailable_tool_handler
 from nexcoder_interfaces.tools.code import generate_docs, impact_analysis, search_code
+from nexcoder_interfaces.tools.email import send_email
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
 from nexcoder_interfaces.tools.planning import plan_sprints, productivity_report, sync_board
 from nexcoder_interfaces.tools.security import security_report, security_review, security_scan
@@ -410,6 +411,46 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
         handler=trigger_improvement,
         is_available=False,
     ),
+    "send_email": ToolDefinition(
+        name="send_email",
+        description="Send an email report or proposal from user account with human approval and audit logging.",
+        module="control",
+        parameters={
+            "type": "object",
+            "properties": {
+                "recipients": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of recipient emails.",
+                },
+                "subject": {"type": "string", "description": "Email subject line."},
+                "body_text": {"type": "string", "description": "Plain text message content."},
+                "body_html": {"type": "string", "description": "HTML message content."},
+                "attachments": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Optional file attachments.",
+                },
+                "template_name": {"type": "string", "description": "Name of reusable template."},
+                "template_vars": {"type": "object", "description": "Template variables."},
+                "provider": {"type": "string", "description": "Provider (gmail, outlook, smtp)."},
+                "approval_token": {"type": "string", "description": "Human approval token secret."},
+                "confirmed": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Explicit human confirmation flag.",
+                },
+                "dry_run": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Simulate send without actual network dispatch.",
+                },
+            },
+            "required": ["recipients", "subject"],
+        },
+        handler=send_email,
+        is_available=True,
+    ),
 }
 
 __all__ = [
@@ -434,6 +475,7 @@ __all__ = [
     "security_report",
     "security_review",
     "security_scan",
+    "send_email",
     "serve_model",
     "sync_board",
     "trigger_improvement",

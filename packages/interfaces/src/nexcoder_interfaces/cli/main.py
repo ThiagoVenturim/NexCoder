@@ -10,6 +10,7 @@ from nexcoder_interfaces.mcp.server import MCPServer
 from nexcoder_interfaces.plugin.claude import export_claude_plugin, write_mcp_json
 from nexcoder_interfaces.tools.agents import run_agent, run_pipeline
 from nexcoder_interfaces.tools.code import generate_docs, search_code
+from nexcoder_interfaces.tools.email import send_email
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
 from nexcoder_interfaces.tools.planning import plan_sprints, productivity_report
 from nexcoder_interfaces.tools.security import security_report
@@ -34,6 +35,13 @@ report_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(report_app, name="report")
+
+email_app = typer.Typer(
+    name="email",
+    help="Dispatch emails and reports via Gmail, Outlook, or SMTP with human confirmation.",
+    no_args_is_help=True,
+)
+app.add_typer(email_app, name="email")
 
 
 @app.command(name="init")
@@ -216,6 +224,69 @@ def cmd_report_security(
         output_html_path=str(out_html) if out_html else None,
     )
     print(json.dumps(result, indent=2))
+
+
+@email_app.command(name="send")
+def cmd_email_send(
+    to: str = typer.Option(..., "--to", "-t", help="Recipient email address."),
+    subject: str = typer.Option("Notification", "--subject", "-s", help="Email subject line."),
+    body: str | None = typer.Option(None, "--body", "-b", help="Plain text message body."),
+    html: str | None = typer.Option(None, "--html", help="HTML message body."),
+    attachment: str | None = typer.Option(None, "--attachment", "-a", help="Path to file attachment."),
+    template: str | None = typer.Option(None, "--template", help="Reusable template name."),
+    provider: str | None = typer.Option(None, "--provider", "-p", help="Provider (gmail, outlook, smtp)."),
+    token: str | None = typer.Option(None, "--token", help="Human approval token."),
+    confirm: bool = typer.Option(False, "--confirm", "-y", help="Explicit human confirmation."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Dry run simulation mode."),
+) -> None:
+    """Send an email from user account with human approval and audit logging."""
+    att_list = None
+    if attachment:
+        att_list = [{"filename": Path(attachment).name, "file_path": attachment}]
+
+    res = send_email(
+        recipients=[to],
+        subject=subject,
+        body_text=body,
+        body_html=html,
+        attachments=att_list,
+        template_name=template,
+        provider=provider,
+        approval_token=token,
+        confirmed=confirm,
+        dry_run=dry_run,
+    )
+    print(json.dumps(res, indent=2))
+
+
+@email_app.command(name="test")
+def cmd_email_test(
+    to: str = typer.Option(..., "--to", "-t", help="Recipient email address."),
+    provider: str = typer.Option("gmail", "--provider", "-p", help="Provider to test (gmail, outlook, smtp)."),
+) -> None:
+    """Send an automated test email with an attachment."""
+    from nexcoder_control.email import EmailService
+
+    service = EmailService()
+    res = service.send_test_email(recipient=to, provider=provider, confirmed=True)
+    print(json.dumps(res.model_dump(), indent=2, default=str))
+
+
+@email_app.command(name="templates")
+def cmd_email_templates() -> None:
+    """List available reusable email templates."""
+    from nexcoder_control.email import EmailTemplateManager
+
+    mgr = EmailTemplateManager()
+    templates = [
+        {
+            "name": t.name,
+            "description": t.description,
+            "subject": t.subject_template,
+        }
+        for t in mgr.list_templates()
+    ]
+    print(json.dumps(templates, indent=2))
 
 
 @app.command(name="serve")

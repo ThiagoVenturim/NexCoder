@@ -17,7 +17,7 @@ O `nexcoder` orquestra o ciclo completo de entrega de software: intake de ideias
 | `nexcoder-ideation` | Disponivel | Issue [#5](https://github.com/ThiagoVenturim/nexcoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/nexcoder/pull/29) |
 | `nexcoder-security` | Disponivel | Issue [#7](https://github.com/ThiagoVenturim/nexcoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/nexcoder/pull/30) |
 | `nexcoder-capture` | Disponivel | Issue [#6](https://github.com/ThiagoVenturim/nexcoder/issues/6), PR [#38](https://github.com/ThiagoVenturim/nexcoder/pull/38) |
-| `nexcoder-control` | Disponivel | Issue [#9](https://github.com/ThiagoVenturim/nexcoder/issues/9) |
+| `nexcoder-control` | Disponivel | Issue [#9](https://github.com/ThiagoVenturim/nexcoder/issues/9) / [#101](https://github.com/ThiagoVenturim/nexcoder/issues/101) |
 | `nexcoder-interfaces` | Disponivel | Issue [#10](https://github.com/ThiagoVenturim/nexcoder/issues/10) |
 | `nexcoder-serving` | Disponivel | Issue [#11](https://github.com/ThiagoVenturim/nexcoder/issues/11) |
 | `nexcoder-continuous-improvement` | Disponivel | Issue [#8](https://github.com/ThiagoVenturim/nexcoder/issues/8) |

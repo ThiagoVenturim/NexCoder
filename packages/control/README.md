@@ -30,6 +30,14 @@ Control plane for nexcoder: authentication, API keys, rate limits, per-tool mete
 5. **Web Panel and Status API**:
    - Lightweight FastAPI metrics router and self-contained HTML/CSS operational dashboard with zero external dependencies and 100% offline capability.
 
+6. **Email Dispatch & Delivery Governance**:
+   - Multi-provider connectors: Google Gmail (REST API / OAuth2), Microsoft Outlook / Microsoft 365 (Graph API / OAuth2), and generic SMTP fallback.
+   - Mandatory human approval tokens preventing automated bulk distribution.
+   - Tamper-evident append-only audit ledger tracking every email attempt, approval, dispatch, and failure.
+   - Built-in platform rate limiting (Gmail, Microsoft Graph, SMTP).
+   - Reusable templates (reports, proposals, alerts) with HTML formatting and attachments.
+   - Safe unconfigured state ("sem credencial, desliga sem quebrar").
+
 ## Installation
 
 ```bash
@@ -116,6 +124,40 @@ audit.record_event(
 
 is_valid, message = audit.verify_integrity()
 print(f"Audit log status: {message}")
+```
+
+### Email Dispatch with Human Approval and Audit
+
+```python
+from nexcoder_control.email import (
+    EmailAttachment,
+    EmailMessage,
+    EmailService,
+)
+
+service = EmailService()
+
+message = EmailMessage(
+    subject="Automated Sprint Report",
+    recipients=["lead@example.com"],
+    template_name="report_delivery",
+    template_vars={
+        "project_name": "NexCoder",
+        "report_type": "Productivity & Quality",
+        "period": "Sprint 1",
+        "summary": "All sprint deliverables and test suites passed.",
+        "metrics_summary": "676 tests passing.",
+        "recipient_name": "Lead Engineer",
+        "sender_name": "NexCoder Reporter",
+    },
+    attachments=[
+        EmailAttachment(filename="report.pdf", content=b"%PDF-1.4 sample", content_type="application/pdf"),
+    ],
+)
+
+# Explicit confirmation or supply single-use human approval token
+result = service.send_email(message, confirmed=True)
+print(f"Dispatched via {result.provider}, ID: {result.message_id}, Audit Event: {result.audit_event_id}")
 ```
 
 ## Origin
