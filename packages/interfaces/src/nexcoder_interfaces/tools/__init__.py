@@ -6,6 +6,12 @@ from nexcoder_interfaces.tools.base import unavailable_tool_handler
 from nexcoder_interfaces.tools.code import generate_docs, impact_analysis, search_code
 from nexcoder_interfaces.tools.email import send_email
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
+from nexcoder_interfaces.tools.marketing import (
+    assemble_marketing_video,
+    generate_marketing_campaign,
+    publish_social_post,
+    schedule_marketing_calendar,
+)
 from nexcoder_interfaces.tools.planning import (
     estimate_product_cost,
     plan_sprints,
@@ -478,26 +484,120 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
         handler=send_email,
         is_available=True,
     ),
+    "generate_marketing_campaign": ToolDefinition(
+        name="generate_marketing_campaign",
+        description="Generate ad copy with A/B variations, social posts, video script/subtitles, and calendar drafts.",
+        module="marketing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "feature_summary": {"type": "string", "description": "Product feature summary or release notes."},
+                "product_name": {"type": "string", "default": "NexCoder", "description": "Product or tool name."},
+                "output_dir": {"type": "string", "description": "Optional output directory to save drafts."},
+                "audience": {
+                    "type": "string",
+                    "default": "developers",
+                    "description": "Target audience (developers, engineering_leaders, founders).",
+                },
+                "video_duration": {
+                    "type": "number",
+                    "default": 30.0,
+                    "description": "Target video duration in seconds.",
+                },
+            },
+            "required": ["feature_summary"],
+        },
+        handler=generate_marketing_campaign,
+        is_available=True,
+    ),
+    "assemble_marketing_video": ToolDefinition(
+        name="assemble_marketing_video",
+        description="Produce promotional video storyboard, subtitles, Piper TTS audio, and FFmpeg scripts.",
+        module="marketing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "feature_summary": {"type": "string", "description": "Feature summary to promote in video."},
+                "product_name": {"type": "string", "default": "NexCoder", "description": "Product name."},
+                "output_dir": {"type": "string", "description": "Optional output directory."},
+                "duration": {"type": "number", "default": 30.0, "description": "Video duration in seconds."},
+                "aspect_ratio": {
+                    "type": "string",
+                    "default": "9:16",
+                    "description": "Aspect ratio ('9:16' or '16:9').",
+                },
+            },
+            "required": ["feature_summary"],
+        },
+        handler=assemble_marketing_video,
+        is_available=True,
+    ),
+    "schedule_marketing_calendar": ToolDefinition(
+        name="schedule_marketing_calendar",
+        description="Suggest optimal posting cadence and convert marketing milestones into Nextor Kanban tasks.",
+        module="marketing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "feature_summary": {"type": "string", "description": "Feature summary."},
+                "product_name": {"type": "string", "default": "NexCoder", "description": "Product name."},
+            },
+            "required": ["feature_summary"],
+        },
+        handler=schedule_marketing_calendar,
+        is_available=True,
+    ),
+    "publish_social_post": ToolDefinition(
+        name="publish_social_post",
+        description="Publish social post to official API with mandatory human approval token.",
+        module="marketing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "platform": {"type": "string", "description": "Target platform (linkedin, instagram, tiktok)."},
+                "content_text": {"type": "string", "description": "Text content of post."},
+                "approval_token": {"type": "string", "description": "Valid single-use human approval token."},
+                "confirmed": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Explicit human confirmation flag.",
+                },
+                "dry_run": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "Dry run simulation without network mutation.",
+                },
+                "media_path": {"type": "string", "description": "Optional media attachment path."},
+            },
+            "required": ["platform", "content_text", "approval_token"],
+        },
+        handler=publish_social_post,
+        is_available=True,
+    ),
 }
 
 __all__ = [
     "TOOL_DEFINITIONS",
     "ToolDefinition",
     "approve_step",
+    "assemble_marketing_video",
     "audit_log",
     "capture_page",
     "check_budget",
     "evaluate_rag",
     "generate_docs",
+    "generate_marketing_campaign",
     "generate_tests",
     "impact_analysis",
     "judge_idea",
     "plan_sprints",
     "productivity_report",
+    "publish_social_post",
     "research_idea",
     "run_agent",
     "run_pipeline",
     "schedule_job",
+    "schedule_marketing_calendar",
     "search_code",
     "security_report",
     "security_review",
