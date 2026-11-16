@@ -12,7 +12,7 @@ O `nexcoder` orquestra o ciclo completo de entrega de software: intake de ideias
 | :--- | :--- | :--- |
 | `nexcoder-core` | Disponivel | Incorporado em `develop` |
 | `nexcoder-code-intel` | Disponivel | PR [#33](https://github.com/ThiagoVenturim/nexcoder/pull/33) |
-| `nexcoder-agents` | Disponivel | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) |
+| `nexcoder-agents` | Disponivel | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) / [#85](https://github.com/ThiagoVenturim/nexcoder/issues/85) |
 | `nexcoder-planning` | Disponivel | Issue [#4](https://github.com/ThiagoVenturim/nexcoder/issues/4) |
 | `nexcoder-ideation` | Disponivel | Issue [#5](https://github.com/ThiagoVenturim/nexcoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/nexcoder/pull/29) |
 | `nexcoder-security` | Disponivel | Issue [#7](https://github.com/ThiagoVenturim/nexcoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/nexcoder/pull/30) |
@@ -183,6 +183,7 @@ Guias detalhados estao disponiveis no diretorio [docs/](docs/):
   - [Ideacao e Comite](docs/ideation-and-jury.md): Esquadrao de pesquisa de mercado, matriz competitiva e votacao por quorum.
   - [Planejamento Agilico](docs/agentic-planning.md): Conversao de PRD, gestao de capacidade de sprint e sincronizacao idempotente de tarefas.
   - [Calculadora de Custo de Produto](docs/cost-calculator.md): Estimativa de construcao, publicacao, manutencao (mes/ano) e licencas/marca.
+  - [Marketing e Divulgacao](docs/marketing.md): Copy de anuncios com testes A/B, posts para redes sociais (LinkedIn, Instagram, TikTok), montagem de video aberta (Piper TTS, FFmpeg), calendario integrado ao Nextor e publicacao segura com aprovacao humana.
   - [Catalogo de Agentes](docs/agents-catalog.md): Taxonomia de personas, esquema de metadados e pacotes por tecnologia.
   - [Pipelines](docs/pipelines.md): Orquestracao de fluxos LangGraph, blocos reutilizaveis e portais de aprovacao humana.
 
