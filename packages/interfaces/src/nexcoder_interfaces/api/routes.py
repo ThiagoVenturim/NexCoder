@@ -104,6 +104,20 @@ class SecurityReportRequest(BaseModel):
     transport: str = "offline"
 
 
+class SecurityCampaignRunRequest(BaseModel):
+    target: str = "."
+    test_types: list[str] | None = None
+    agent_count: int = 3
+    allowed_scope: list[str] | None = None
+    max_cost_usd: float = 5.0
+    max_duration_seconds: float = 120.0
+    owned_target: bool = False
+    authorized_by: str = "owner"
+    authorization_document: Any | None = None
+    require_signed_document: bool = False
+    dry_run: bool = True
+
+
 class AgentRunRequest(BaseModel):
     agent_name: str
     task: str
@@ -298,6 +312,69 @@ def endpoint_reports_security(req: SecurityReportRequest) -> dict[str, Any]:
         policy=req.policy,
         transport=req.transport,
     )
+
+
+@router.post("/v1/security/campaigns/run")
+def endpoint_security_campaigns_run(req: SecurityCampaignRunRequest) -> dict[str, Any]:
+    """Trigger an orchestrated security and quality test campaign."""
+    res = TOOL_DEFINITIONS["run_security_test_campaign"].handler(
+        target=req.target,
+        test_types=req.test_types,
+        agent_count=req.agent_count,
+        allowed_scope=req.allowed_scope,
+        max_cost_usd=req.max_cost_usd,
+        max_duration_seconds=req.max_duration_seconds,
+        owned_target=req.owned_target,
+        authorized_by=req.authorized_by,
+        authorization_document=req.authorization_document,
+        require_signed_document=req.require_signed_document,
+        dry_run=req.dry_run,
+    )
+    if res.get("status") == "rejected":
+        raise HTTPException(status_code=403, detail=res.get("reason", "Target authorization denied"))
+    return res
+
+
+@router.get("/v1/security/campaigns")
+def endpoint_security_campaigns_list(limit: int = 50) -> dict[str, Any]:
+    """List historical and active testing campaigns."""
+    from nexcoder_security.campaign import get_global_registry
+
+    registry = get_global_registry()
+    return {"campaigns": registry.list_campaigns(limit=limit)}
+
+
+@router.get("/v1/security/campaigns/{campaign_id}")
+def endpoint_security_campaigns_get(campaign_id: str) -> dict[str, Any]:
+    """Retrieve detailed campaign status and findings."""
+    res = TOOL_DEFINITIONS["get_security_test_campaign"].handler(campaign_id=campaign_id)
+    if res.get("status") == "not_found":
+        raise HTTPException(status_code=404, detail=f"Campaign '{campaign_id}' not found")
+    return res
+
+
+@router.get("/v1/security/campaigns/{campaign_id}/report")
+def endpoint_security_campaigns_report(
+    campaign_id: str,
+    format: str = Query(default="json"),
+) -> Any:
+    """Retrieve exported campaign report (json, markdown, html)."""
+    res = TOOL_DEFINITIONS["export_security_test_report"].handler(campaign_id=campaign_id, format=format)
+    if res.get("status") == "not_found":
+        raise HTTPException(status_code=404, detail=f"Campaign '{campaign_id}' not found")
+    if res.get("status") == "error":
+        raise HTTPException(status_code=400, detail=res.get("message", "Export error"))
+
+    content = res.get("content", "")
+    if format.lower() in ("html", "htm"):
+        from fastapi.responses import HTMLResponse
+
+        return HTMLResponse(content=content)
+    if format.lower() in ("markdown", "md"):
+        from fastapi.responses import PlainTextResponse
+
+        return PlainTextResponse(content=content, media_type="text/markdown")
+    return res
 
 
 @router.post("/v1/agents/run")
