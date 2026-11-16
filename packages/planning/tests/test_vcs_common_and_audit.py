@@ -17,9 +17,9 @@ class DummyProvider(RepoManagementProvider):
 
 def test_secure_token_comparison():
     # Test constant-time token comparison against timing attacks
-    secret = "secret-token-12345"
-    assert RepoManagementProvider.secure_compare(secret, "secret-token-12345") is True
-    assert RepoManagementProvider.secure_compare(secret, "secret-token-wrong") is False
+    secret = "dummy-token-for-testing"
+    assert RepoManagementProvider.secure_compare(secret, "dummy-token-for-testing") is True
+    assert RepoManagementProvider.secure_compare(secret, "dummy-token-wrong") is False
     assert RepoManagementProvider.secure_compare(secret, "") is False
     assert RepoManagementProvider.secure_compare(secret, None) is False  # type: ignore[arg-type]
 
@@ -49,10 +49,10 @@ def test_audit_logger_redaction():
         resource_id="101",
         success=True,
         details={
-            "token": "sensitive-gl-token",
-            "private_token": "secret-pat",
+            "token": "dummy-token-val",
+            "private_token": "dummy-pat-val",
             "title": "Bug in login",
-            "nested": {"password": "topsecret", "note": "safe-note"},
+            "nested": {"password": "dummy-password-val", "note": "safe-note"},
         },
     )
 

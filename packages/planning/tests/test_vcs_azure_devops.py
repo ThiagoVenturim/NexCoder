@@ -247,7 +247,7 @@ def ado_provider():
     return AzureDevOpsProvider(
         organization="myorg",
         project="myproj",
-        pat="mock-ado-pat-xyz",
+        pat="mock-ado-pat-placeholder",
         repository_id="repo-uuid-1",
         client=client,
     )

@@ -6,8 +6,9 @@ import pytest
 from nexcoder_planning.vcs import GitProvider, TortoiseGitProvider
 
 
-def test_git_provider_with_runner():
+def test_git_provider_with_runner(tmp_path):
     commands_executed = []
+    repo_dir = tmp_path / "repo"
 
     def mock_runner(cmd, **kwargs):
         commands_executed.append(cmd)
@@ -41,10 +42,10 @@ def test_git_provider_with_runner():
             )
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
-    provider = GitProvider(working_dir="/fake/repo", cmd_runner=mock_runner)
+    provider = GitProvider(working_dir=repo_dir, cmd_runner=mock_runner)
 
     # Init
-    assert provider.init("/fake/repo") is True
+    assert provider.init(repo_dir) is True
 
     # Checkout
     assert provider.checkout("main") is True
@@ -71,8 +72,8 @@ def test_git_provider_with_runner():
     assert diff.deletions == 1
 
 
-def test_git_provider_rejections():
-    provider = GitProvider(working_dir="/fake/repo")
+def test_git_provider_rejections(tmp_path):
+    provider = GitProvider(working_dir=tmp_path)
 
     # Rejection of emojis in commit message
     with pytest.raises(ValueError, match="contains emoji characters"):

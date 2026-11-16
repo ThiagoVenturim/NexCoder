@@ -12,7 +12,7 @@ def mock_gitlab_handler(request: httpx.Request) -> httpx.Response:
 
     # Auth check
     token = request.headers.get("PRIVATE-TOKEN")
-    assert token == "mock-gl-token-123", "Expected correct PRIVATE-TOKEN header"
+    assert token == "mock-gl-token-placeholder", "Expected correct PRIVATE-TOKEN header"
 
     # Project GET
     if url_str.endswith("/projects/999"):
@@ -230,7 +230,7 @@ def gitlab_provider():
     client = httpx.Client(transport=transport)
     return GitLabProvider(
         project_id=999,
-        token="mock-gl-token-123",
+        token="mock-gl-token-placeholder",
         client=client,
     )
 

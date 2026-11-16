@@ -119,6 +119,8 @@ The translation layer between product specifications and technical execution:
   - Embeds unique tracking markers into descriptions to guarantee re-running sync loops will update rather than duplicate issues.
 - **Kanban Sync Loop**:
   - Detects active sprint slippage, updates board columns, and dynamically recommends scope deferrals to future milestones.
+- **Tool Contribution Attribution**:
+  - Clean tool identification in PR bodies and CONTRIBUTORS for private repositories without AI co-author trailers or client data leakage ([attribution.md](attribution.md)).
 
 ### 5. `nexcoder-iac`
 
