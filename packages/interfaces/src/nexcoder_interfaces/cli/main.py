@@ -43,6 +43,13 @@ email_app = typer.Typer(
 )
 app.add_typer(email_app, name="email")
 
+vcs_app = typer.Typer(
+    name="vcs",
+    help="VCS and repository management operations (Azure DevOps, GitLab, Git, SVN, TortoiseGit).",
+    no_args_is_help=True,
+)
+app.add_typer(vcs_app, name="vcs")
+
 
 @app.command(name="init")
 def cmd_init(
@@ -375,6 +382,172 @@ def cmd_serve(
             cors_origins=origins,
         )
         uvicorn.run(fastapi_app, host=host, port=port)
+
+
+@vcs_app.command(name="repos")
+def cmd_vcs_repos(
+    provider: str = typer.Option("gitlab", "--provider", "-p", help="Provider (azure_devops, gitlab, git)."),
+    project_or_org: str = typer.Option("", "--org", help="Organization or Project ID."),
+    project: str = typer.Option("", "--project", help="Project name (for Azure DevOps)."),
+) -> None:
+    """List remote or local repositories."""
+    from nexcoder_interfaces.tools.vcs import vcs_list_repositories
+
+    result = vcs_list_repositories(provider=provider, project_or_org=project_or_org, project=project)
+    if result.get("status") == "success":
+        typer.echo(f"Repositories ({result.get('count', 0)}):")
+        for repo in result.get("repositories", []):
+            typer.echo(f"  - {repo.get('name')} ({repo.get('id')}) -> {repo.get('web_url')}")
+    else:
+        typer.echo(f"Error: {result.get('message')}", err=True)
+        raise typer.Exit(code=1)
+
+
+@vcs_app.command(name="issues")
+def cmd_vcs_issues(
+    provider: str = typer.Option("gitlab", "--provider", "-p", help="Provider (azure_devops, gitlab)."),
+    action: str = typer.Option("list", "--action", "-a", help="Action (list, get, create)."),
+    project_or_org: str = typer.Option("", "--org", help="Organization or Project ID."),
+    project: str = typer.Option("", "--project", help="Project name."),
+    issue_id: str = typer.Option("", "--id", help="Issue ID (for get action)."),
+    title: str = typer.Option("", "--title", "-t", help="Issue title (for create action)."),
+    body: str = typer.Option("", "--body", "-b", help="Issue description/body."),
+) -> None:
+    """Manage issues on Azure DevOps or GitLab."""
+    from nexcoder_interfaces.tools.vcs import vcs_manage_issue
+
+    result = vcs_manage_issue(
+        provider=provider,
+        action=action,
+        project_or_org=project_or_org,
+        project=project,
+        issue_id=issue_id,
+        title=title,
+        body=body,
+    )
+    if result.get("status") == "success":
+        if action == "list":
+            typer.echo(f"Issues ({result.get('count', 0)}):")
+            for item in result.get("issues", []):
+                typer.echo(f"  #{item.get('number')} [{item.get('state')}] {item.get('title')}")
+        else:
+            typer.echo(f"Success: {result.get('issue')}")
+    else:
+        typer.echo(f"Error: {result.get('message')}", err=True)
+        raise typer.Exit(code=1)
+
+
+@vcs_app.command(name="prs")
+def cmd_vcs_prs(
+    provider: str = typer.Option("gitlab", "--provider", "-p", help="Provider (azure_devops, gitlab)."),
+    action: str = typer.Option("list", "--action", "-a", help="Action (list, get, create, merge)."),
+    project_or_org: str = typer.Option("", "--org", help="Organization or Project ID."),
+    project: str = typer.Option("", "--project", help="Project name."),
+    pr_id: str = typer.Option("", "--id", help="Pull request ID."),
+    title: str = typer.Option("", "--title", "-t", help="PR title."),
+    body: str = typer.Option("", "--body", "-b", help="PR description."),
+    source_branch: str = typer.Option("", "--source", "-s", help="Source branch."),
+    target_branch: str = typer.Option("develop", "--target", help="Target branch."),
+) -> None:
+    """Manage pull requests or merge requests."""
+    from nexcoder_interfaces.tools.vcs import vcs_manage_pull_request
+
+    result = vcs_manage_pull_request(
+        provider=provider,
+        action=action,
+        project_or_org=project_or_org,
+        project=project,
+        pr_id=pr_id,
+        title=title,
+        body=body,
+        source_branch=source_branch,
+        target_branch=target_branch,
+    )
+    if result.get("status") == "success":
+        if action == "list":
+            typer.echo(f"Pull Requests ({result.get('count', 0)}):")
+            for item in result.get("pull_requests", []):
+                pr_num = item.get("number")
+                pr_st = item.get("state")
+                pr_title = item.get("title")
+                src = item.get("source_branch")
+                tgt = item.get("target_branch")
+                typer.echo(f"  #{pr_num} [{pr_st}] {pr_title} ({src} -> {tgt})")
+        else:
+            typer.echo(f"Success: {result.get('pull_request')}")
+    else:
+        typer.echo(f"Error: {result.get('message')}", err=True)
+        raise typer.Exit(code=1)
+
+
+@vcs_app.command(name="svn")
+def cmd_vcs_svn(
+    action: str = typer.Option("status", "--action", "-a", help="Action (status, diff, log, checkout, commit)."),
+    repo_url: str = typer.Option("", "--url", help="Repository URL."),
+    dest_path: str = typer.Option(".", "--dest", "-d", help="Working copy directory."),
+    message: str = typer.Option("", "--msg", "-m", help="Commit message."),
+    revision: str = typer.Option("HEAD", "--rev", help="Revision number."),
+) -> None:
+    """Run SVN operations via the svn CLI."""
+    from nexcoder_interfaces.tools.vcs import vcs_svn_operation
+
+    result = vcs_svn_operation(
+        action=action,
+        repo_url=repo_url,
+        dest_path=dest_path,
+        message=message,
+        revision=revision,
+    )
+    if result.get("status") == "success":
+        typer.echo(f"SVN {action} completed successfully.")
+        typer.echo(result)
+    else:
+        typer.echo(f"Error: {result.get('message')}", err=True)
+        raise typer.Exit(code=1)
+
+
+@vcs_app.command(name="tortoise")
+def cmd_vcs_tortoise(
+    command: str = typer.Option(
+        "commit",
+        "--command",
+        "-c",
+        help="TortoiseGit command (commit, log, diff, push, pull, status).",
+    ),
+    path: str = typer.Option(".", "--path", "-p", help="Target working tree path."),
+) -> None:
+    """Generate or launch Windows TortoiseGit command shortcut."""
+    from nexcoder_planning.vcs import TortoiseGitProvider
+
+    prov = TortoiseGitProvider(working_dir=path)
+    cmd_line = prov.get_gui_shortcut_command(command=command, path=path)
+    installed = prov.is_tortoisegit_installed()
+    typer.echo(f"TortoiseGit Installed: {installed}")
+    typer.echo(f"Command line: {cmd_line}")
+
+
+@vcs_app.command(name="audit")
+def cmd_vcs_audit(
+    provider: str = typer.Option("", "--provider", "-p", help="Filter by provider."),
+    limit: int = typer.Option(20, "--limit", "-l", help="Number of records to show."),
+) -> None:
+    """View repository and VCS audit logs."""
+    from nexcoder_interfaces.tools.vcs import vcs_audit_records
+
+    result = vcs_audit_records(provider=provider or None, limit=limit)
+    if result.get("status") == "success":
+        typer.echo(f"Audit Records ({result.get('count', 0)}):")
+        for rec in result.get("records", []):
+            ts = rec.get("timestamp")
+            p = rec.get("provider")
+            a = rec.get("action")
+            rt = rec.get("resource_type")
+            rid = rec.get("resource_id")
+            s = rec.get("success")
+            typer.echo(f"  [{ts}] {p} - {a} on {rt}:{rid} (success={s})")
+    else:
+        typer.echo(f"Error: {result.get('message')}", err=True)
+        raise typer.Exit(code=1)
 
 
 def main() -> None:

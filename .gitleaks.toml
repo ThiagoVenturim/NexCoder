@@ -28,4 +28,6 @@ regexes = [
   '''sk-proj-1234567890abcdef12345''',
   '''hf_[a-zA-Z0-9]{34,}''',
   '''sk-[a-zA-Z0-9]{32,}''',
+  '''mock-ado-pat-placeholder''',
+  '''mock-gl-token-placeholder''',
 ]
