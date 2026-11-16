@@ -9,6 +9,7 @@ from nexcoder_agents.engine.pipelines.registry import (
 )
 from nexcoder_agents.engine.pipelines.templates import (
     SecurityReviewBlock,
+    create_ai_feature_pipeline,
     create_bugfix_pipeline,
     create_data_engineering_pipeline,
     create_documentation_pipeline,
@@ -26,6 +27,7 @@ __all__ = [
     "PipelineTemplate",
     "SecurityReviewBlock",
     "build_pipeline",
+    "create_ai_feature_pipeline",
     "create_bugfix_pipeline",
     "create_data_engineering_pipeline",
     "create_documentation_pipeline",
