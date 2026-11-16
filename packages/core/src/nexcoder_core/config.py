@@ -80,6 +80,25 @@ class StorageSpec(BaseModel):
     dsn_env: str = "NEXCODER_POSTGRES_DSN"
 
 
+class AttributionSpec(BaseModel):
+    """Configuration for tool contribution attribution in target repositories (Issue #76).
+
+    When targeting private repositories, NexCoder identifies itself as a tool contributor:
+    including an attribution line in the PR body, an optional clean commit note (never an AI co-author trailer),
+    and an entry in CONTRIBUTORS or README if enabled.
+    """
+
+    enabled: bool = True
+    target_private_only: bool = True
+    tool_name: str = "NexCoder"
+    url: str = "https://github.com/ThiagoVenturim/NexCoder"
+    pr_text: str = "Tool attribution: {tool_name} ({url})"
+    commit_text: str = "Tool contribution: {tool_name} ({url})"
+    update_contributors: bool = True
+    contributors_file: str = "CONTRIBUTORS.md"
+    contributors_entry: str = "- {tool_name} - Automated Engineering Platform ({url})"
+
+
 class NexcoderConfig(BaseModel):
     preset: str = "hybrid"
     tiers: dict[str, ModelSpec] = Field(default_factory=dict)
@@ -88,6 +107,7 @@ class NexcoderConfig(BaseModel):
     langfuse: LangfuseSpec = Field(default_factory=LangfuseSpec)
     budget: BudgetSpec = Field(default_factory=BudgetSpec)
     storage: StorageSpec = Field(default_factory=StorageSpec)
+    attribution: AttributionSpec = Field(default_factory=AttributionSpec)
     project_root: str = "."
 
     def model_for(self, tier: str) -> ModelSpec:
@@ -126,5 +146,18 @@ def load_config(path: str | Path | None = None) -> NexcoderConfig:
 
     if os.environ.get("NEXCODER_PRESET"):
         data["preset"] = os.environ["NEXCODER_PRESET"]
+
+    if os.environ.get("NEXCODER_ATTRIBUTION_ENABLED") is not None:
+        data.setdefault("attribution", {})
+        val = os.environ["NEXCODER_ATTRIBUTION_ENABLED"].strip().lower()
+        data["attribution"]["enabled"] = val in ("1", "true", "yes", "on")
+
+    if os.environ.get("NEXCODER_ATTRIBUTION_URL"):
+        data.setdefault("attribution", {})
+        data["attribution"]["url"] = os.environ["NEXCODER_ATTRIBUTION_URL"].strip()
+
+    if os.environ.get("NEXCODER_ATTRIBUTION_TEXT"):
+        data.setdefault("attribution", {})
+        data["attribution"]["pr_text"] = os.environ["NEXCODER_ATTRIBUTION_TEXT"].strip()
 
     return NexcoderConfig.model_validate(data)

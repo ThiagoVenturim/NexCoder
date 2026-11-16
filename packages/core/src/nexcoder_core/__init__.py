@@ -12,7 +12,7 @@ Main entry points:
 """
 
 from nexcoder_core.cache import SemanticCache
-from nexcoder_core.config import NexcoderConfig, load_config
+from nexcoder_core.config import AttributionSpec, NexcoderConfig, load_config
 from nexcoder_core.llm.compression import compress_messages, compress_text
 from nexcoder_core.llm.context import ContextBudget, count_tokens
 from nexcoder_core.llm.firewall import (
@@ -53,6 +53,7 @@ from nexcoder_core.sandbox import PathOutsideSandboxError, resolve_inside
 from nexcoder_core.structured import OutOfContractError, call_structured
 
 __all__ = [
+    "AttributionSpec",
     "ContextBudget",
     "FirewallConfig",
     "FirewallInspectionResult",
