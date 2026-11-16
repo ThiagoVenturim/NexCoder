@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import re
 import subprocess
+from typing import Any
 
 import httpx
 from pydantic import BaseModel
@@ -140,6 +141,8 @@ def build_conventional_commit(
     issue_numbers: list[int] | None = None,
     issue_action: str = "Refs",
     body: str | None = None,
+    attribution: Any | None = None,
+    is_private_repo: bool = False,
 ) -> str:
     """Construct a clean conventional commit message with zero emojis and no co-author trailers."""
     type_normalized = type_.strip().lower()
@@ -171,12 +174,32 @@ def build_conventional_commit(
 
     validate_no_emoji(header, "Commit header")
 
-    if not body or not body.strip():
+    clean_body = strip_co_author_trailers(body.strip()) if body and body.strip() else ""
+
+    # Handle tool contribution attribution (Issue #76)
+    attr_line = ""
+    if attribution is False:
+        attr_line = ""
+    elif isinstance(attribution, str):
+        attr_line = attribution.strip()
+        validate_no_emoji(attr_line, "Commit attribution")
+    elif attribution is not None or is_private_repo:
+        from nexcoder_planning.attribution import render_commit_attribution
+
+        attr_cfg = attribution if hasattr(attribution, "enabled") else None
+        effective_private = is_private_repo or (attribution is True) or (attr_cfg is not None)
+        attr_line = render_commit_attribution(
+            config=attr_cfg,
+            is_private_repo=effective_private,
+        )
+
+    if attr_line:
+        clean_body = f"{clean_body}\n\n{attr_line}".strip() if clean_body else attr_line
+
+    if not clean_body:
         return header
 
-    clean_body = strip_co_author_trailers(body.strip())
     validate_no_emoji(clean_body, "Commit body")
-
     return f"{header}\n\n{clean_body}"
 
 
@@ -283,8 +306,14 @@ def build_pull_request_body(
     issue_action: str = "Refs",
     milestone: str | None = None,
     verification_steps: list[str] | None = None,
+    attribution: Any | None = None,
+    is_private_repo: bool = False,
 ) -> str:
-    """Build a standard, clean pull request body without emojis, supporting Refs, Closes, or Fixes."""
+    """Build a standard, clean pull request body without emojis, supporting Refs, Closes, or Fixes.
+
+    When targeting private repositories or when attribution is enabled, adds a tool attribution
+    section linking to the NexCoder platform (Issue #76).
+    """
     validate_no_emoji(summary, "PR summary")
 
     if issue_action not in ALLOWED_ISSUE_ACTIONS:
@@ -312,6 +341,26 @@ def build_pull_request_body(
         steps_text = "\n".join(f"- [x] {step.strip()}" for step in verification_steps if step.strip())
         sections.append(f"## Verification\n{steps_text}")
 
+    # Handle tool contribution attribution (Issue #76)
+    attr_line = ""
+    if attribution is False:
+        attr_line = ""
+    elif isinstance(attribution, str):
+        attr_line = attribution.strip()
+        validate_no_emoji(attr_line, "PR attribution")
+    elif attribution is not None or is_private_repo:
+        from nexcoder_planning.attribution import render_pr_attribution
+
+        attr_cfg = attribution if hasattr(attribution, "enabled") else None
+        effective_private = is_private_repo or (attribution is True) or (attr_cfg is not None)
+        attr_line = render_pr_attribution(
+            config=attr_cfg,
+            is_private_repo=effective_private,
+        )
+
+    if attr_line:
+        sections.append(f"## Tool Attribution\n{attr_line.strip()}")
+
     body = "\n\n".join(sections)
     validate_no_emoji(body, "Pull request body")
     return strip_co_author_trailers(body)
@@ -327,11 +376,29 @@ def create_pull_request(
     api_url: str = "https://api.github.com",
     client: httpx.Client | None = None,
     dry_run: bool = True,
+    attribution: Any | None = None,
+    is_private_repo: bool = False,
 ) -> PRResult:
     """Create a pull request on GitHub or return a dry-run preview."""
     validate_no_emoji(title, "PR title")
-    validate_no_emoji(body, "PR body")
-    sanitized_body = strip_co_author_trailers(body)
+    effective_body = body
+
+    # If attribution requested and not already present in body, append it
+    if attribution is not False and (attribution is not None or is_private_repo):
+        if "## Tool Attribution" not in effective_body:
+            from nexcoder_planning.attribution import render_pr_attribution
+
+            attr_cfg = attribution if hasattr(attribution, "enabled") else None
+            effective_private = is_private_repo or (attribution is True) or (attr_cfg is not None)
+            attr_line = render_pr_attribution(
+                config=attr_cfg,
+                is_private_repo=effective_private,
+            )
+            if attr_line:
+                effective_body = f"{effective_body.rstrip()}\n\n## Tool Attribution\n{attr_line}\n"
+
+    validate_no_emoji(effective_body, "PR body")
+    sanitized_body = strip_co_author_trailers(effective_body)
 
     if dry_run:
         return PRResult(

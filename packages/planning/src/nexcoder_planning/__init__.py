@@ -18,6 +18,14 @@ from nexcoder_planning.adapters import (
     RemoteMilestone,
     SyncSummary,
 )
+from nexcoder_planning.attribution import (
+    AttributionConfig,
+    AttributionSpec,
+    render_commit_attribution,
+    render_pr_attribution,
+    update_target_contributors,
+    validate_no_client_data_leakage,
+)
 from nexcoder_planning.capacity import (
     CapacityCalculator,
     CapacityReport,
@@ -95,6 +103,8 @@ from nexcoder_planning.sync import (
 __all__ = [
     "AISpec",
     "AcceptanceCriterion",
+    "AttributionConfig",
+    "AttributionSpec",
     "AuthorThroughput",
     "AzureDevOpsAdapter",
     "BoardColumn",
@@ -164,7 +174,11 @@ __all__ = [
     "execute_commit",
     "extract_ai_spec_from_tracker",
     "generate_productivity_dashboard",
+    "render_commit_attribution",
+    "render_pr_attribution",
     "strip_co_author_trailers",
+    "update_target_contributors",
+    "validate_no_client_data_leakage",
     "validate_no_emoji",
 ]
 
