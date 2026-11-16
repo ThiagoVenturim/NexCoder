@@ -133,7 +133,7 @@ def test_guardrails_sensitive_data_detection(tmp_path: Path) -> None:
         owned_target=True,
         data_samples=[
             {"text": "Normal user ticket", "label": "bug"},
-            {"text": "Config api_key='sk-proj-1234567890abcdef12345'", "label": "security"},
+            {"text": "Config api_key='sk-proj-supersecretkey1234567890'", "label": "security"},
         ],
     )
 
