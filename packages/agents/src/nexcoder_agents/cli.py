@@ -15,6 +15,7 @@ from nexcoder_agents.data_engineering import (
 )
 from nexcoder_agents.engine.pipelines import get_pipeline_template, list_pipeline_templates
 from nexcoder_agents.export import export_claude_package
+from nexcoder_agents.marketing import MarketingOrchestrator, TargetAudience
 from nexcoder_agents.oss_contribution import OSSContributionAdvisor
 from nexcoder_agents.quality import QualityReviewer
 from nexcoder_agents.software_engineering import SoftwareEngineeringAdvisor
@@ -169,6 +170,45 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the Markdown OSS contribution report.",
     )
 
+    # marketing-campaign subcommand
+    mkt_parser = subparsers.add_parser(
+        "marketing-campaign",
+        help="Generate ad copy, social posts, video script/storyboard/subtitles, and calendar drafts.",
+    )
+    mkt_parser.add_argument(
+        "feature",
+        type=str,
+        help="Summary or description of the product feature to promote.",
+    )
+    mkt_parser.add_argument(
+        "--product-name",
+        "-p",
+        type=str,
+        default="NexCoder",
+        help="Product name (default: NexCoder).",
+    )
+    mkt_parser.add_argument(
+        "--output-dir",
+        "-o",
+        type=Path,
+        default=None,
+        help="Optional directory to save all marketing drafts.",
+    )
+    mkt_parser.add_argument(
+        "--audience",
+        "-a",
+        choices=["developers", "engineering_leaders", "tech_founders", "enterprise_architects"],
+        default="developers",
+        help="Target audience for copy generation.",
+    )
+    mkt_parser.add_argument(
+        "--duration",
+        "-d",
+        type=float,
+        default=30.0,
+        help="Target video duration in seconds (default: 30.0).",
+    )
+
     return parser
 
 
@@ -314,6 +354,32 @@ def main(args: list[str] | None = None) -> int:
         except (FileNotFoundError, ValueError) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
+
+    if parsed.command == "marketing-campaign":
+        orchestrator = MarketingOrchestrator()
+        aud_map = {
+            "developers": TargetAudience.DEVELOPERS,
+            "engineering_leaders": TargetAudience.ENGINEERING_LEADERS,
+            "tech_founders": TargetAudience.TECH_FOUNDERS,
+            "enterprise_architects": TargetAudience.ENTERPRISE_ARCHITECTS,
+        }
+        bundle = orchestrator.generate_campaign(
+            product_name=parsed.product_name,
+            feature_summary=parsed.feature,
+            output_dir=parsed.output_dir,
+            audience=aud_map.get(parsed.audience, TargetAudience.DEVELOPERS),
+            video_duration_seconds=parsed.duration,
+        )
+        print("Marketing campaign generated successfully.")
+        print(f"Draft directory: {bundle.draft_directory}")
+        print(f"Ads generated: {len(bundle.ads)} channels")
+        print("Social posts: LinkedIn, Instagram carousel, TikTok video script")
+        print("Video artifacts: Storyboard, SRT, VTT, narration WAV, assembly scripts")
+        print(
+            f"Calendar: {len(bundle.calendar.schedule)} posts scheduled, "
+            f"{len(bundle.calendar.nextor_tasks)} Nextor tasks"
+        )
+        return 0
 
     return 0
 
