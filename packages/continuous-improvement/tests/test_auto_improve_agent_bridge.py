@@ -28,7 +28,7 @@ def test_agent_bridge_detects_emojis(tmp_path: Path) -> None:
 def test_agent_bridge_detects_internal_patterns(tmp_path: Path) -> None:
     bridge = NexLinkDevAgentBridge(repo_dir=tmp_path)
     leaked_file = tmp_path / "internal.py"
-    leaked_file.write_text("import os\nHOST = 'internal-host'\n", encoding="utf-8")
+    leaked_file.write_text("HOST = 'internal-host-example'\n", encoding="utf-8")
 
     hits = bridge._check_internal_leak([str(leaked_file)])
     assert len(hits) == 1
