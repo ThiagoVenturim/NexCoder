@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import shlex
 import shutil
 import struct
 import subprocess
@@ -298,10 +299,12 @@ class FFmpegCompositor:
         output_path: Path,
     ) -> tuple[str, str]:
         cmd = self.build_command(script, audio_path, subtitles_path, output_path)
-        sh_cmd = " \\\n  ".join(f'"{c}"' if " " in c or "=" in c else c for c in cmd)
+        # Scene text comes from user or agent input, so every argument is quoted literally:
+        # shlex.quote for bash, single quotes (with '' escaping) plus the call operator for PowerShell.
+        sh_cmd = " \\\n  ".join(shlex.quote(c) for c in cmd)
         sh_script = f"#!/usr/bin/env bash\nset -euo pipefail\n\n# NexCoder Marketing Video Assembly\n{sh_cmd}\n"
 
-        ps1_cmd = " `\n  ".join(f'"{c}"' if " " in c or "=" in c else c for c in cmd)
+        ps1_cmd = "& " + " `\n  ".join("'" + c.replace("'", "''") + "'" for c in cmd)
         ps1_script = f"# NexCoder Marketing Video Assembly\n{ps1_cmd}\n"
 
         return sh_script, ps1_script

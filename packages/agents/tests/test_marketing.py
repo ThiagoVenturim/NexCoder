@@ -195,6 +195,23 @@ class TestVideoProduction:
         assert artifact.mp4_video_path is not None
         assert out_mp4.exists()
 
+    def test_ffmpeg_scripts_quote_untrusted_text(self, tmp_path: Path) -> None:
+        import shlex
+
+        script = VideoScriptGenerator().generate_script("Evil$(touch pwned)`id`", "Promo $(rm -rf ~) feature")
+        audio_path = tmp_path / "audio.wav"
+        sub_path = tmp_path / "sub.srt"
+        out_mp4 = tmp_path / "out.mp4"
+        compositor = FFmpegCompositor(ffmpeg_binary="ffmpeg")
+        cmd = compositor.build_command(script, audio_path, sub_path, out_mp4)
+        sh_script, ps1_script = compositor.render_assembly_scripts(script, audio_path, sub_path, out_mp4)
+
+        sh_body = sh_script.split("# NexCoder Marketing Video Assembly\n", 1)[1].replace(" \\\n  ", " ")
+        assert shlex.split(sh_body) == cmd
+        for line in ps1_script.splitlines()[1:]:
+            arg = line.strip().removeprefix("& ").removesuffix(" `")
+            assert arg.startswith("'") and arg.endswith("'")
+
 
 class TestContentCalendar:
     def test_generate_calendar_and_nextor_tasks(self) -> None:
