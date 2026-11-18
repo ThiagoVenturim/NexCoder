@@ -17,6 +17,7 @@ regexes = [
   '''fk_nonexistent_key_12345''',
   '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9''',
   '''sk-1234567890abcdef''',
+  '''sk-123456789012345678901234''',
   '''sk-live9876543210abcdef''',
   '''sk-antigravity-secret-key-123''',
   '''sk-secret-key-abcdef''',
