@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typer
 
+from nexcoder_continuous_improvement.auto_improve.loop import AutoImproveLoop
 from nexcoder_continuous_improvement.scheduler.cron import CronJob, CronScheduler
 
 app = typer.Typer(help="nexcoder continuous improvement management CLI")
@@ -19,6 +20,13 @@ def run_due(
     scheduler.register_job(CronJob(name="competitor_diff", schedule="@daily", task_type="research"))
     scheduler.register_job(CronJob(name="observability_monitor", schedule="@hourly", task_type="observability"))
     scheduler.register_job(CronJob(name="security_scan", schedule="@daily", task_type="security"))
+    scheduler.register_job(CronJob(name="auto_improve", schedule="@daily", task_type="auto_improve"))
+
+    # Register handler for continuous auto-improvement
+    scheduler.register_handler(
+        "auto_improve",
+        lambda job: AutoImproveLoop(max_daily_merges=job.parameters.get("max_daily", 5)).run_cycle(dry_run=dry_run),
+    )
 
     due = scheduler.get_due_jobs()
     typer.echo(f"Found {len(due)} due jobs.")

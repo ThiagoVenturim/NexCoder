@@ -6,6 +6,11 @@ from pathlib import Path
 
 from nexcoder_control.approval import TargetNotAuthorizedError
 
+from nexcoder_agents.ai_engineering import (
+    AIFeatureAdvisor,
+    AIFeatureRequest,
+    RecipeType,
+)
 from nexcoder_agents.catalog.registry import AgentCatalog
 from nexcoder_agents.catalog.skills import SkillCatalog
 from nexcoder_agents.data_engineering import (
@@ -169,6 +174,94 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write the Markdown OSS contribution report.",
     )
 
+    # implement-ai-feature subcommand
+    ai_parser = subparsers.add_parser(
+        "implement-ai-feature",
+        help="Scaffold an end-to-end ML/AI feature in an authorized target project.",
+    )
+    ai_parser.add_argument("project_dir", type=Path, help="Path to target project directory.")
+    ai_parser.add_argument(
+        "--name",
+        "-n",
+        type=str,
+        default="sample_classifier",
+        help="Feature identifier name (default: sample_classifier).",
+    )
+    ai_parser.add_argument(
+        "--recipe",
+        "-r",
+        choices=["classification", "extraction", "rag", "recommendation", "summarization", "chatbot"],
+        default="classification",
+        help="Ready-made recipe type.",
+    )
+    ai_parser.add_argument(
+        "--description",
+        "-d",
+        type=str,
+        default="Automated AI feature implemented by NexCoder",
+        help="Natural language description of the feature capability.",
+    )
+    ai_parser.add_argument(
+        "--latency-budget-ms",
+        type=int,
+        default=500,
+        help="Inference latency target in milliseconds (default: 500).",
+    )
+    ai_parser.add_argument(
+        "--monthly-budget-usd",
+        type=float,
+        default=100.0,
+        help="Monthly cost ceiling in USD (default: 100.0).",
+    )
+    ai_parser.add_argument(
+        "--owned-target",
+        action="store_true",
+        default=True,
+        help="Confirm operator ownership of target project.",
+    )
+    ai_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Skip writing generated files to disk.",
+    )
+    ai_parser.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="Optional path to write the Markdown summary report.",
+    )
+
+    # evaluate-ml-approach subcommand
+    approach_parser = subparsers.add_parser(
+        "evaluate-ml-approach",
+        help="Evaluate whether a feature requires rules, classical ML, or LLM/RAG.",
+    )
+    approach_parser.add_argument(
+        "description",
+        type=str,
+        help="Description of feature workload.",
+    )
+    approach_parser.add_argument(
+        "--recipe",
+        "-r",
+        choices=["classification", "extraction", "rag", "recommendation", "summarization", "chatbot"],
+        default="classification",
+        help="Recipe type (default: classification).",
+    )
+    approach_parser.add_argument(
+        "--latency-budget-ms",
+        type=int,
+        default=500,
+        help="Maximum allowed latency in milliseconds.",
+    )
+    approach_parser.add_argument(
+        "--sample-count",
+        type=int,
+        default=0,
+        help="Count of available training samples.",
+    )
+
     return parser
 
 
@@ -314,6 +407,55 @@ def main(args: list[str] | None = None) -> int:
         except (FileNotFoundError, ValueError) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
+
+    if parsed.command == "implement-ai-feature":
+        try:
+            advisor = AIFeatureAdvisor()
+            req = AIFeatureRequest(
+                project_dir=str(parsed.project_dir),
+                feature_name=parsed.name,
+                recipe=RecipeType(parsed.recipe),
+                description=parsed.description,
+                latency_budget_ms=parsed.latency_budget_ms,
+                monthly_budget_usd=parsed.monthly_budget_usd,
+                owned_target=parsed.owned_target,
+            )
+            res = advisor.implement_feature(req, write_to_disk=not parsed.dry_run, run_eval=True)
+            output_lines = [
+                f"# AI Feature Implementation: {res.feature_name}",
+                f"- **Recipe**: {res.recipe.value}",
+                f"- **Approach**: {res.approach_decision.approach.value}",
+                f"- **Model**: {res.approach_decision.recommended_model}",
+                f"- **Files Generated**: {len(res.generated_files)}",
+                f"- **Audit Event ID**: {res.audit_event_id}",
+                f"- **Evaluation Passed**: {res.evaluation.passed if res.evaluation else 'N/A'}",
+            ]
+            summary_text = "\n".join(output_lines)
+            if parsed.output:
+                parsed.output.parent.mkdir(parents=True, exist_ok=True)
+                parsed.output.write_text(summary_text, encoding="utf-8")
+                print(f"AI feature report written to {parsed.output}")
+            else:
+                print(summary_text)
+            return 0
+        except (TargetNotAuthorizedError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+
+    if parsed.command == "evaluate-ml-approach":
+        advisor = AIFeatureAdvisor()
+        decision = advisor.evaluate_approach(
+            description=parsed.description,
+            recipe=RecipeType(parsed.recipe),
+            latency_budget_ms=parsed.latency_budget_ms,
+            sample_count=parsed.sample_count,
+        )
+        print(f"Recommended Approach: {decision.approach.value}")
+        print(f"Model: {decision.recommended_model} ({decision.model_openness.value})")
+        print(f"Rationale: {decision.rationale}")
+        print(f"Estimated Cost: ${decision.estimated_cost_usd_per_1k_calls:.4f}/1k calls")
+        print(f"Estimated Latency: ~{decision.estimated_latency_ms}ms")
+        return 0
 
     return 0
 
