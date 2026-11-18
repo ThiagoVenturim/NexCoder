@@ -315,7 +315,7 @@ def get_security_test_campaign(campaign_id: str) -> dict[str, Any]:
     }
 
 
-def export_security_test_report(
+def export_security_campaign_report(
     campaign_id: str,
     format: str = "json",
     output_path: str | None = None,

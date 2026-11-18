@@ -21,7 +21,7 @@ class TestCampaignInterfaces:
 
         assert "run_security_test_campaign" in tool_names
         assert "get_security_test_campaign" in tool_names
-        assert "export_security_test_report" in tool_names
+        assert "export_security_campaign_report" in tool_names
 
         # Call run_security_test_campaign (unauthorized)
         req_unauth = JSONRPCRequest(
@@ -78,12 +78,12 @@ class TestCampaignInterfaces:
         res_get_data = json.loads(resp_get.result["content"][0]["text"])
         assert res_get_data.get("status") == "success"
 
-        # Call export_security_test_report
+        # Call export_security_campaign_report
         req_exp = JSONRPCRequest(
             id=4,
             method="tools/call",
             params={
-                "name": "export_security_test_report",
+                "name": "export_security_campaign_report",
                 "arguments": {"campaign_id": camp_id, "format": "markdown"},
             },
         )
