@@ -30,4 +30,7 @@ regexes = [
   '''sk-[a-zA-Z0-9]{32,}''',
   '''mock-ado-pat-placeholder''',
   '''mock-gl-token-placeholder''',
+  '''ghp_1{36}''',
+  '''ghp_123456789012345678901234567890123456''',
+  '''postgres://admin:topsecretpw@localhost:5432/mydb''',
 ]
