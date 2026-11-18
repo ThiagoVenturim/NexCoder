@@ -482,13 +482,16 @@ def cmd_campaign_export(
     output: Path | None = typer.Option(None, "--output", "-o", help="Destination file path."),
 ) -> None:
     """Export campaign report to markdown, HTML, or JSON."""
-    out_str = str(output.resolve()) if output else None
-    res = export_security_campaign_report(campaign_id, format=format, output_path=out_str)
+    res = export_security_campaign_report(campaign_id, format=format)
     if res.get("status") != "success":
         print(f"Export failed: {res.get('message')}")
         raise typer.Exit(code=1)
-    if out_str:
-        print(f"Report exported to: {res.get('output_path')}")
+    if output:
+        # The operator chose this path on the command line, so it is not sandboxed like agent input.
+        out_path = output.resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(res.get("content", ""), encoding="utf-8")
+        print(f"Report exported to: {out_path}")
     else:
         print(res.get("content"))
 

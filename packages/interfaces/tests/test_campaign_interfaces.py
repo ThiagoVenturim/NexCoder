@@ -180,3 +180,22 @@ class TestCampaignInterfaces:
         )
         assert res_exp.exit_code == 0
         assert out_f.exists()
+
+
+def test_export_campaign_report_refuses_path_outside_workdir(tmp_path: Path, monkeypatch) -> None:
+    from nexcoder_interfaces.tools.security import export_security_campaign_report, run_security_test_campaign
+
+    work = tmp_path / "work"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    run = run_security_test_campaign(target=str(work), owned_target=True, authorized_by="tester")
+    camp_id = run["campaign_id"]
+
+    outside = tmp_path / "outside.md"
+    res = export_security_campaign_report(camp_id, format="markdown", output_path=str(outside))
+    assert res["status"] == "error"
+    assert not outside.exists()
+
+    inside = export_security_campaign_report(camp_id, format="markdown", output_path="reports/out.md")
+    assert inside["status"] == "success"
+    assert (work / "reports" / "out.md").exists()

@@ -342,7 +342,13 @@ def export_security_campaign_report(
         return {"status": "error", "message": f"Unsupported format '{format}'. Use 'json', 'markdown', or 'html'."}
 
     if output_path:
-        out = Path(output_path).resolve()
+        # output_path comes from agents (MCP) as well, so keep writes inside the working directory.
+        from nexcoder_core.sandbox import PathOutsideSandboxError, resolve_inside
+
+        try:
+            out = resolve_inside(Path.cwd(), output_path)
+        except PathOutsideSandboxError as exc:
+            return {"status": "error", "message": str(exc)}
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(content, encoding="utf-8")
         return {
