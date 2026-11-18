@@ -123,6 +123,29 @@ class PipelineApproveRequest(BaseModel):
     target_resource: str = "pipeline"
 
 
+class SecurityTestPreflightRequest(BaseModel):
+    path: str = "."
+    owned_target: bool = False
+    authorized_by: str = "owner"
+    approval_token: str | None = None
+
+
+class SecurityTestRunRequest(BaseModel):
+    path: str = "."
+    test_types: list[str] | None = None
+    num_agents: int = 4
+    budget_limit: float = 50.0
+    budget_currency: str = "USD"
+    owned_target: bool = False
+    authorized_by: str = "owner"
+    approval_token: str | None = None
+    offline: bool = True
+
+
+class SecurityTestCancelRequest(BaseModel):
+    run_id: str
+
+
 @router.get("/health")
 @router.get("/v1/health")
 def get_health() -> dict[str, Any]:
@@ -389,6 +412,71 @@ async def endpoint_pipelines_stream(
     inputs = {"task": task}
     gen = pipeline_event_generator(pipeline_name=pipeline_name, inputs=inputs)
     return StreamingResponse(gen, media_type="text/event-stream")
+
+
+# Extreme Testing / NexHub Canvas Endpoints
+@router.post("/v1/security-tests/preflight")
+def endpoint_security_tests_preflight(req: SecurityTestPreflightRequest) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["verify_security_test_target"].handler(
+        path=req.path,
+        owned_target=req.owned_target,
+        authorized_by=req.authorized_by,
+        approval_token=req.approval_token,
+    )
+
+
+@router.post("/v1/security-tests/run")
+def endpoint_security_tests_run(req: SecurityTestRunRequest) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["trigger_security_tests"].handler(
+        path=req.path,
+        test_types=req.test_types,
+        num_agents=req.num_agents,
+        budget_limit=req.budget_limit,
+        budget_currency=req.budget_currency,
+        owned_target=req.owned_target,
+        authorized_by=req.authorized_by,
+        approval_token=req.approval_token,
+        offline=req.offline,
+    )
+
+
+@router.get("/v1/security-tests/runs/{run_id}")
+def endpoint_security_tests_status(run_id: str) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["get_security_test_status"].handler(run_id=run_id)
+
+
+@router.get("/v1/security-tests/runs/{run_id}/canvas")
+def endpoint_security_tests_canvas(run_id: str) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["get_security_test_canvas"].handler(run_id=run_id)
+
+
+@router.get("/v1/security-tests/runs/{run_id}/report")
+def endpoint_security_tests_report(
+    run_id: str,
+    format: str = Query(default="markdown"),
+) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["export_security_test_report"].handler(run_id=run_id, format=format)
+
+
+@router.post("/v1/security-tests/runs/{run_id}/cancel")
+def endpoint_security_tests_cancel(run_id: str) -> dict[str, Any]:
+    return TOOL_DEFINITIONS["cancel_security_test"].handler(run_id=run_id)
+
+
+@router.get("/v1/security-tests/runs/{run_id}/stream")
+async def endpoint_security_tests_stream(run_id: str) -> StreamingResponse:
+    """Stream live test run progress and findings events over SSE."""
+    from nexcoder_interfaces.testing.service import GLOBAL_SECURITY_TEST_SERVICE
+
+    async def event_generator():
+        async for evt in GLOBAL_SECURITY_TEST_SERVICE.stream_run_events(run_id):
+            yield format_sse_event(evt, event=evt.get("event", "message"))
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
 
 
 # MCP SSE Endpoints

@@ -79,6 +79,20 @@ KNOWN_MODULES: dict[str, ModuleInfo] = {
         available_in_develop=True,
         tools=["schedule_job", "trigger_improvement"],
     ),
+    "testing": ModuleInfo(
+        name="testing",
+        package_name="nexcoder_interfaces",
+        description="Multi-agent extreme application testing (unit, system, process, DOM, API, security) for NexHub.",
+        available_in_develop=True,
+        tools=[
+            "trigger_security_tests",
+            "get_security_test_status",
+            "get_security_test_canvas",
+            "verify_security_test_target",
+            "cancel_security_test",
+            "export_security_test_report",
+        ],
+    ),
 }
 
 
