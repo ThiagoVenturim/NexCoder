@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from nexcoder_agents.ai_engineering import AIFeatureBlock
 from nexcoder_agents.data_engineering import DataEngineeringPipelineBlock
 from nexcoder_agents.engine.blocks.approval import HumanApprovalBlock
 from nexcoder_agents.engine.blocks.base import BaseBlock
@@ -797,3 +798,73 @@ def create_oss_contribution_pipeline(
     if limits:
         builder.set_limits(limits)
     return builder
+
+
+def create_ai_feature_pipeline(
+    name: str = "ai-feature-pipeline",
+    approval_action: str = "approve_ai_feature_deployment",
+    limits: ExecutionLimits | None = None,
+    model: Any = None,
+) -> PipelineBuilder:
+    """Build an end-to-end AI/ML feature delivery pipeline:
+    validate -> scaffold_feature -> architecture_review -> governance_committee -> human_approval_gate.
+    """
+    builder = PipelineBuilder(name)
+
+    val = ValidatorBlock(
+        name="ai_feature_validator",
+        required_keys=["ai_feature_request"],
+    )
+
+    ai_block = AIFeatureBlock(name="ai_feature_scaffolding")
+
+    review = PromptBlock(
+        name="ai_architecture_review",
+        user_prompt_template=(
+            "You are a principal ML engineer and AI architect.\n"
+            "Review the implemented AI feature and evaluation metrics.\n"
+            "Feature result: {ai_feature_result}\n"
+            "Synthesize an operational readiness report covering model openness, "
+            "MLOps reproducibility, serving architecture, and guardrail compliance."
+        ),
+        output_key="ai_architecture_summary",
+        tier="medium",
+        model=model,
+    )
+
+    committee = CommitteeBlock(
+        name="ai_governance_committee",
+        members=[
+            CommitteeMember(
+                name="ml_engineer",
+                perspective="Model Selection, Latency Constraints, and Open Weights Preference",
+                weight=1.5,
+            ),
+            CommitteeMember(
+                name="security_auditor",
+                perspective="Secret Avoidance, Target Authorization, and Audit Trail",
+                weight=1.5,
+            ),
+            CommitteeMember(
+                name="finops_lead",
+                perspective="Budget Limits and Inference Cost Efficiency",
+                weight=1.0,
+            ),
+        ],
+        target_key="ai_architecture_summary",
+        quorum_threshold=0.6,
+        model=model,
+    )
+
+    gate = HumanApprovalBlock(
+        name="ai_feature_gate",
+        action_name=approval_action,
+        description="Authorize AI feature integration and deployment to target repository",
+        payload_keys=["ai_feature_result", "ai_architecture_summary"],
+    )
+
+    builder.add_sequence([val, ai_block, review, committee, gate])
+    if limits:
+        builder.set_limits(limits)
+    return builder
+

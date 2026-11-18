@@ -4,6 +4,12 @@ from nexcoder_interfaces.registry import ToolDefinition
 from nexcoder_interfaces.tools.agents import approve_step, run_agent, run_pipeline
 from nexcoder_interfaces.tools.base import unavailable_tool_handler
 from nexcoder_interfaces.tools.code import generate_docs, impact_analysis, search_code
+from nexcoder_interfaces.tools.discovery import (
+    detectar_persona,
+    gerar_perfil,
+    iniciar_entrevista,
+    responder,
+)
 from nexcoder_interfaces.tools.email import send_email
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
 from nexcoder_interfaces.tools.marketing import (
@@ -29,8 +35,119 @@ from nexcoder_interfaces.tools.unavailable import (
     serve_model,
     trigger_improvement,
 )
+from nexcoder_interfaces.tools.vcs import (
+    vcs_audit_records,
+    vcs_list_repositories,
+    vcs_manage_issue,
+    vcs_manage_pull_request,
+    vcs_svn_operation,
+)
 
 TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
+    # Discovery & Onboarding
+    "detectar_persona": ToolDefinition(
+        name="detectar_persona",
+        description="Detect whether user is Persona A (established product) or Persona B (idea stage / pain only).",
+        module="discovery",
+        parameters={
+            "type": "object",
+            "properties": {
+                "sinais": {
+                    "type": "object",
+                    "description": "Signals or free text indicating repo, company, product status, or idea details.",
+                },
+            },
+        },
+        handler=detectar_persona,
+        is_available=True,
+    ),
+    "iniciar_entrevista": ToolDefinition(
+        name="iniciar_entrevista",
+        description="Start a guided branching onboarding interview for Persona A or B.",
+        module="discovery",
+        parameters={
+            "type": "object",
+            "properties": {
+                "persona": {
+                    "type": "string",
+                    "description": "Optional explicit persona (A or B, established_product or idea_stage).",
+                },
+                "sinais": {
+                    "type": "object",
+                    "description": "Optional signals to auto-detect persona if not provided.",
+                },
+                "session_id": {
+                    "type": "string",
+                    "description": "Optional session identifier.",
+                },
+                "project_name": {
+                    "type": "string",
+                    "default": "Novo Projeto",
+                    "description": "Project or company name.",
+                },
+            },
+        },
+        handler=iniciar_entrevista,
+        is_available=True,
+    ),
+    "responder": ToolDefinition(
+        name="responder",
+        description="Submit an answer to the current interview question and receive next question or completion.",
+        module="discovery",
+        parameters={
+            "type": "object",
+            "properties": {
+                "session_id": {
+                    "type": "string",
+                    "description": "Active interview session ID.",
+                },
+                "resposta": {
+                    "type": "string",
+                    "description": "User answer to the question.",
+                },
+                "question_id": {
+                    "type": "string",
+                    "description": "Optional explicit question ID.",
+                },
+            },
+            "required": ["session_id", "resposta"],
+        },
+        handler=responder,
+        is_available=True,
+    ),
+    "gerar_perfil": ToolDefinition(
+        name="gerar_perfil",
+        description="Generate structured scenario profile that feeds downstream engineering pipeline stages.",
+        module="discovery",
+        parameters={
+            "type": "object",
+            "properties": {
+                "session_id": {
+                    "type": "string",
+                    "description": "Session ID of completed interview.",
+                },
+                "answers": {
+                    "type": "object",
+                    "description": "Optional manual map of question ID to answers.",
+                },
+                "persona": {
+                    "type": "string",
+                    "description": "Optional explicit persona (A or B).",
+                },
+                "project_name": {
+                    "type": "string",
+                    "default": "Novo Projeto",
+                    "description": "Name of the project or initiative.",
+                },
+                "raw_signals": {
+                    "type": "object",
+                    "description": "Optional extra raw context signals.",
+                },
+            },
+        },
+        handler=gerar_perfil,
+        is_available=True,
+    ),
     # Ideation
     "research_idea": ToolDefinition(
         name="research_idea",
@@ -574,6 +691,97 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
         handler=publish_social_post,
         is_available=True,
     ),
+    # VCS and Repository Management
+    "vcs_list_repositories": ToolDefinition(
+        name="vcs_list_repositories",
+        description="List repositories from Azure DevOps, GitLab, or Git.",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "description": "VCS provider (azure_devops, gitlab, git)."},
+                "project_or_org": {"type": "string", "description": "Organization or project identifier."},
+                "project": {"type": "string", "description": "Project name for Azure DevOps."},
+            },
+            "required": ["provider"],
+        },
+        handler=vcs_list_repositories,
+        is_available=True,
+    ),
+    "vcs_manage_issue": ToolDefinition(
+        name="vcs_manage_issue",
+        description="Create, read, update, or list issues on Azure DevOps or GitLab.",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "description": "VCS provider (azure_devops, gitlab)."},
+                "action": {"type": "string", "description": "Action (list, get, create, update)."},
+                "project_or_org": {"type": "string", "description": "Organization or project ID."},
+                "project": {"type": "string", "description": "Project name."},
+                "issue_id": {"type": "string", "description": "Issue or work item ID."},
+                "title": {"type": "string", "description": "Issue title."},
+                "body": {"type": "string", "description": "Issue body markdown."},
+            },
+            "required": ["provider"],
+        },
+        handler=vcs_manage_issue,
+        is_available=True,
+    ),
+    "vcs_manage_pull_request": ToolDefinition(
+        name="vcs_manage_pull_request",
+        description="Create, read, list, or merge pull requests or merge requests.",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "description": "VCS provider (azure_devops, gitlab)."},
+                "action": {"type": "string", "description": "Action (list, get, create, merge)."},
+                "project_or_org": {"type": "string", "description": "Organization or project ID."},
+                "project": {"type": "string", "description": "Project name."},
+                "pr_id": {"type": "string", "description": "Pull request ID."},
+                "title": {"type": "string", "description": "Pull request title."},
+                "body": {"type": "string", "description": "Pull request body."},
+                "source_branch": {"type": "string", "description": "Source branch."},
+                "target_branch": {"type": "string", "description": "Target branch."},
+            },
+            "required": ["provider"],
+        },
+        handler=vcs_manage_pull_request,
+        is_available=True,
+    ),
+    "vcs_svn_operation": ToolDefinition(
+        name="vcs_svn_operation",
+        description="Execute Subversion operations (checkout, commit, log, diff, status).",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "description": "SVN action (checkout, commit, log, diff, status)."},
+                "repo_url": {"type": "string", "description": "Repository URL for checkout."},
+                "dest_path": {"type": "string", "description": "Destination working copy path."},
+                "message": {"type": "string", "description": "Commit message."},
+                "revision": {"type": "string", "description": "Revision number or HEAD."},
+            },
+            "required": ["action"],
+        },
+        handler=vcs_svn_operation,
+        is_available=True,
+    ),
+    "vcs_audit_records": ToolDefinition(
+        name="vcs_audit_records",
+        description="Retrieve structured audit log records of recent repository actions.",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "description": "Filter by provider name."},
+                "limit": {"type": "integer", "description": "Maximum number of records to return."},
+            },
+        },
+        handler=vcs_audit_records,
+        is_available=True,
+    ),
 }
 
 __all__ = [
@@ -584,16 +792,21 @@ __all__ = [
     "audit_log",
     "capture_page",
     "check_budget",
+    "detectar_persona",
+    "estimate_product_cost",
     "evaluate_rag",
     "generate_docs",
     "generate_marketing_campaign",
     "generate_tests",
+    "gerar_perfil",
     "impact_analysis",
+    "iniciar_entrevista",
     "judge_idea",
     "plan_sprints",
     "productivity_report",
     "publish_social_post",
     "research_idea",
+    "responder",
     "run_agent",
     "run_pipeline",
     "schedule_job",
@@ -607,4 +820,9 @@ __all__ = [
     "sync_board",
     "trigger_improvement",
     "unavailable_tool_handler",
+    "vcs_audit_records",
+    "vcs_list_repositories",
+    "vcs_manage_issue",
+    "vcs_manage_pull_request",
+    "vcs_svn_operation",
 ]

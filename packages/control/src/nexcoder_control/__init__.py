@@ -78,6 +78,7 @@ from nexcoder_control.keys import (
     FixedWindowRateLimiter,
     InMemoryAPIKeyStore,
     RateLimitExceededError,
+    SQLAlchemyAPIKeyStore,
     TokenBucket,
 )
 from nexcoder_control.metering import (
@@ -174,6 +175,7 @@ __all__ = [
     "RateLimitExceededError",
     "SMTPConnector",
     "SMTPSettings",
+    "SQLAlchemyAPIKeyStore",
     "TargetAuthorizationGate",
     "TargetAuthorizationRecord",
     "TargetNotAuthorizedError",

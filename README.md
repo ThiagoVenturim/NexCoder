@@ -14,7 +14,7 @@ An open-source, modular platform for automated software development from idea to
 | :--- | :--- | :--- |
 | `nexcoder-core` | Available | Merged in `develop` |
 | `nexcoder-code-intel` | Available | PR [#33](https://github.com/ThiagoVenturim/nexcoder/pull/33) |
-| `nexcoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) / [#85](https://github.com/ThiagoVenturim/nexcoder/issues/85) |
+| `nexcoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) / [#85](https://github.com/ThiagoVenturim/nexcoder/issues/85) / [#105](https://github.com/ThiagoVenturim/nexcoder/issues/105) |
 | `nexcoder-planning` | Available | Issue [#4](https://github.com/ThiagoVenturim/nexcoder/issues/4) |
 | `nexcoder-ideation` | Available | Issue [#5](https://github.com/ThiagoVenturim/nexcoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/nexcoder/pull/29) |
 | `nexcoder-security` | Available | Issue [#7](https://github.com/ThiagoVenturim/nexcoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/nexcoder/pull/30) |
@@ -63,6 +63,7 @@ nexcoder/
    - Frontmatter-driven agent specification catalog (`agents/<sector>/<slug>.md`) covering 10 organizational sectors (direction, requirements, product, engineering, UI/UX, QA, security, data-AI, support, marketing).
    - Reusable LangGraph pipeline building blocks: `ValidatorBlock`, `ConditionBlock`, `PromptBlock`, and `HumanApprovalBlock`.
    - Safe execution guarantees: dry-run simulations, time-bounded approval tokens, tool execution caps, and committee quorum votes.
+   - ML/AI feature engineering: approach selection (rules, classical ML, LLM/RAG), 6 parameterized recipes (classification, extraction, RAG, recommendation, summarization, chatbot), MLOps/serving reuse, and control plane guardrails (Issue #105).
    - Export adapters for Claude Code subagents and tool manifests.
 
 4. **`nexcoder-planning`**: Agentic sprint planning and task synchronization.
@@ -173,6 +174,7 @@ Documentation guides are available in the [docs/](docs/) directory:
 
 - **Foundations & Infrastructure**:
   - [Getting Started](docs/getting-started.md): Installation, environment configuration, and workspace setup.
+  - [Pluggable Database Architecture](docs/database.md): Bring your own database (PostgreSQL, MySQL, SQL Server/ODBC, SQLite), Docker, Kubernetes, and multiplatform scripts.
   - [Architecture](docs/architecture.md): Monorepo structure, data flow, package boundaries, and extension points.
   - [Models: Open-Source vs Paid](docs/models-open-vs-paid.md): Model evaluation, tier mapping, cost tradeoffs, and provider registry.
   - [Serving: vLLM vs Ollama](docs/serving-vllm-vs-ollama.md): Hardware sizing, concurrency benchmarks, Docker setups, and local LLM serving.
@@ -184,6 +186,7 @@ Documentation guides are available in the [docs/](docs/) directory:
 - **Ideation, Planning & Agents**:
   - [Ideation and Jury](docs/ideation-and-jury.md): Research squad analysis, competitive matrices, and multi-persona jury quorum voting.
   - [Agentic Planning](docs/agentic-planning.md): PRD transformation, capacity planning, Git automation, and idempotent tracker synchronization.
+  - [VCS & Repository Management](docs/vcs-integrations.md): Unified provider layer for Azure DevOps, GitLab, Git, SVN, and TortoiseGit with token isolation and audit logs.
   - [Product Cost Calculator](docs/cost-calculator.md): Estimating build, publication, recurring maintenance (month/year), and IP/brand licensing.
   - [Marketing and Promotion Engine](docs/marketing.md): Multi-channel ad copy with A/B variations, social posts (LinkedIn, Instagram, TikTok), open-source promo video assembly (Piper TTS, FFmpeg), Nextor calendar tasks, and safe publishing.
   - [Agents Catalog](docs/agents-catalog.md): Agent taxonomy, frontmatter schema, sector coverage, and specialized technology packs.

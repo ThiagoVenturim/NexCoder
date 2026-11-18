@@ -15,6 +15,7 @@ from nexcoder_control.keys.store import (
     APIKeyService,
     BaseAPIKeyStore,
     InMemoryAPIKeyStore,
+    SQLAlchemyAPIKeyStore,
 )
 
 __all__ = [
@@ -27,5 +28,6 @@ __all__ = [
     "FixedWindowRateLimiter",
     "InMemoryAPIKeyStore",
     "RateLimitExceededError",
+    "SQLAlchemyAPIKeyStore",
     "TokenBucket",
 ]
