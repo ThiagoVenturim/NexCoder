@@ -19,6 +19,7 @@ GATE_ALLOWED_PREFIXES = (
     "packages/security/src/nexcoder_security/cli.py",
     "packages/security/src/nexcoder_security/review.py",
     "packages/security/src/nexcoder_security/agents/",
+    "packages/security/src/nexcoder_security/campaign/",
     "packages/control/src/nexcoder_control/approval/",
     "packages/control/src/nexcoder_control/auth/",
     "packages/control/src/nexcoder_control/email/",

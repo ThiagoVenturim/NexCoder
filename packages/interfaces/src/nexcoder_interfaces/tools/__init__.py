@@ -24,7 +24,14 @@ from nexcoder_interfaces.tools.planning import (
     productivity_report,
     sync_board,
 )
-from nexcoder_interfaces.tools.security import security_report, security_review, security_scan
+from nexcoder_interfaces.tools.security import (
+    export_security_campaign_report,
+    get_security_test_campaign,
+    run_security_test_campaign,
+    security_report,
+    security_review,
+    security_scan,
+)
 from nexcoder_interfaces.tools.testing import (
     cancel_security_test,
     export_security_test_report,
@@ -404,6 +411,73 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
             },
         },
         handler=security_report,
+        is_available=True,
+    ),
+    "run_security_test_campaign": ToolDefinition(
+        name="run_security_test_campaign",
+        description="Run multi-agent test campaign with target authorization and budgets (Issue #71).",
+        module="security",
+        parameters={
+            "type": "object",
+            "properties": {
+                "target": {"type": "string", "default": ".", "description": "Target repository path or endpoint."},
+                "test_types": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Test types: unit, system, process, dom, api, security.",
+                },
+                "agent_count": {"type": "integer", "default": 3, "description": "Number of testing agents (1-10)."},
+                "allowed_scope": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Allowed testing scope patterns.",
+                },
+                "max_cost_usd": {"type": "number", "default": 5.0, "description": "Spending limit in USD."},
+                "max_duration_seconds": {"type": "number", "default": 120.0, "description": "Timeout in seconds."},
+                "owned_target": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Confirm target is owned or authorized per USAGE_POLICY.md.",
+                },
+                "authorized_by": {
+                    "type": "string",
+                    "default": "owner",
+                    "description": "Identity of authorizer/owner.",
+                },
+                "dry_run": {"type": "boolean", "default": True, "description": "Offline deterministic mode."},
+            },
+        },
+        handler=run_security_test_campaign,
+        is_available=True,
+    ),
+    "get_security_test_campaign": ToolDefinition(
+        name="get_security_test_campaign",
+        description="Retrieve security and quality test campaign status, metrics, and findings by campaign ID.",
+        module="security",
+        parameters={
+            "type": "object",
+            "properties": {
+                "campaign_id": {"type": "string", "description": "Campaign identifier."},
+            },
+            "required": ["campaign_id"],
+        },
+        handler=get_security_test_campaign,
+        is_available=True,
+    ),
+    "export_security_campaign_report": ToolDefinition(
+        name="export_security_campaign_report",
+        description="Export consolidated security test campaign report in JSON, Markdown, or HTML format.",
+        module="security",
+        parameters={
+            "type": "object",
+            "properties": {
+                "campaign_id": {"type": "string", "description": "Campaign identifier."},
+                "format": {"type": "string", "default": "json", "description": "Format: json, markdown, html."},
+                "output_path": {"type": "string", "description": "Optional destination file path."},
+            },
+            "required": ["campaign_id"],
+        },
+        handler=export_security_campaign_report,
         is_available=True,
     ),
     # Agents & Pipelines
@@ -913,11 +987,13 @@ __all__ = [
     "detectar_persona",
     "estimate_product_cost",
     "evaluate_rag",
+    "export_security_campaign_report",
     "export_security_test_report",
     "generate_docs",
     "generate_marketing_campaign",
     "generate_tests",
     "gerar_perfil",
+    "get_security_test_campaign",
     "get_security_test_canvas",
     "get_security_test_status",
     "impact_analysis",
@@ -930,6 +1006,7 @@ __all__ = [
     "responder",
     "run_agent",
     "run_pipeline",
+    "run_security_test_campaign",
     "schedule_job",
     "schedule_marketing_calendar",
     "search_code",

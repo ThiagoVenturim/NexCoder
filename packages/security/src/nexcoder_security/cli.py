@@ -190,6 +190,28 @@ def main(
     mask_p.add_argument("--output", help="Write masked content to file path")
     _add_target_auth_args(mask_p)
 
+    # campaign (Issue #71)
+    camp_p = subparsers.add_parser(
+        "campaign",
+        help="Run multi-agent security and quality testing campaign with target authorization and budgets",
+    )
+    camp_p.add_argument("path", default=".", nargs="?", help="Target repo or application path")
+    camp_p.add_argument(
+        "--test-types",
+        nargs="*",
+        default=["unit", "system", "process", "dom", "api", "security"],
+        help="Types of tests to execute (unit, system, process, dom, api, security)",
+    )
+    camp_p.add_argument("--agents", type=int, default=3, help="Number of parallel testing agents (1-10)")
+    camp_p.add_argument("--scope", nargs="*", default=["*"], help="Allowed testing scope patterns")
+    camp_p.add_argument("--budget-cost", type=float, default=5.0, help="Spending limit in USD")
+    camp_p.add_argument("--budget-time", type=float, default=120.0, help="Execution timeout in seconds")
+    camp_p.add_argument("--json", action="store_true", help="Output JSON report")
+    camp_p.add_argument("--markdown", action="store_true", help="Output Markdown report")
+    camp_p.add_argument("--html", action="store_true", help="Output HTML report")
+    camp_p.add_argument("--output", help="Export report to file path")
+    _add_target_auth_args(camp_p)
+
     args = parser.parse_args(argv)
 
     if not args.command:
@@ -459,6 +481,73 @@ def main(
                 actor=args.authorized_by,
             )
             return 0
+
+    if args.command == "campaign":
+        from nexcoder_security.campaign import (
+            CampaignBudget,
+            CampaignConfig,
+            SecurityTestCampaignEngine,
+            TestType,
+        )
+
+        parsed_types = [TestType.from_str(t) for t in args.test_types]
+        budget = CampaignBudget(
+            max_cost_usd=args.budget_cost,
+            max_duration_seconds=args.budget_time,
+        )
+        config = CampaignConfig(
+            target=args.path,
+            test_types=parsed_types,
+            agent_count=args.agents,
+            allowed_scope=args.scope,
+            budget=budget,
+            owned_target=args.owned_target,
+            authorized_by=args.authorized_by,
+            authorization_document=getattr(args, "auth_doc", None),
+        )
+
+        engine = SecurityTestCampaignEngine(
+            target_gate=active_gate,
+            audit_log=active_gate.audit_log,
+        )
+
+        try:
+            report = engine.run_campaign(config, raise_on_auth_failure=False)
+        except Exception as exc:
+            print(f"Campaign execution error: {exc}", file=sys.stderr)
+            return 1
+
+        if report.status == "rejected":
+            reason = report.metadata.get("rejection_reason", "Target authorization denied")
+            print(f"Refused: {reason}", file=sys.stderr)
+            return 1
+
+        if args.output:
+            fmt = "json"
+            if args.markdown:
+                fmt = "markdown"
+            elif args.html:
+                fmt = "html"
+            report.export(args.output, format=fmt)
+            print(f"Report exported to: {args.output}")
+        elif args.json:
+            print(report.to_json())
+        elif args.markdown:
+            print(report.to_markdown())
+        elif args.html:
+            print(report.to_html())
+        else:
+            print(f"Campaign {report.campaign_id} finished with status: {report.status.value.upper()}")
+            print(f"Target: {report.target} | Authorized by: {report.authorized_by}")
+            print(
+                f"Tests run: {report.total_tests_run} (Passed: {report.total_passed}, Failed: {report.total_failed})"
+            )
+            crit = report.severity_counts.get("critical", 0)
+            high = report.severity_counts.get("high", 0)
+            print(f"Findings: {len(report.findings)} (Critical: {crit}, High: {high})")
+            print(f"Duration: {report.duration_seconds:.2f}s | Cost: ${report.actual_cost_usd:.4f}")
+
+        return 0 if report.status in ("completed", "passed") else 1
 
     return 0
 
