@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import html as html_lib
 import json
 import uuid
 from datetime import UTC, datetime
@@ -261,8 +262,9 @@ class CampaignReport(BaseModel):
 
     def to_html(self) -> str:
         """Export report as self-contained HTML report with NexDash styling."""
-        escaped_target = self.target.replace("<", "&lt;").replace(">", "&gt;")
-        escaped_status = self.status.value.upper()
+        esc = html_lib.escape
+        escaped_target = esc(self.target)
+        escaped_status = esc(self.status.value.upper())
 
         status_class = "status-ok"
         if self.status in (CampaignStatus.FAILED, CampaignStatus.REJECTED):
@@ -272,17 +274,17 @@ class CampaignReport(BaseModel):
 
         findings_rows = []
         for f in self.findings:
-            sev_class = f"badge-{f.severity.value}"
-            steps_html = "<ol>" + "".join(f"<li>{s}</li>" for s in f.steps_to_reproduce) + "</ol>"
-            snippet_html = f"<pre><code>{f.reproduction_snippet}</code></pre>" if f.reproduction_snippet else ""
+            sev_class = esc(f"badge-{f.severity.value}")
+            steps_html = "<ol>" + "".join(f"<li>{esc(str(s))}</li>" for s in f.steps_to_reproduce) + "</ol>"
+            snippet_html = f"<pre><code>{esc(f.reproduction_snippet)}</code></pre>" if f.reproduction_snippet else ""
             findings_rows.append(
                 f"""<tr>
-                    <td><code>{f.id}</code></td>
-                    <td><span class="badge {sev_class}">{f.severity.value.upper()}</span></td>
-                    <td><b>{f.title}</b><br><small>{f.description}</small></td>
-                    <td><code>{f.target_ref}</code></td>
+                    <td><code>{esc(str(f.id))}</code></td>
+                    <td><span class="badge {sev_class}">{esc(f.severity.value.upper())}</span></td>
+                    <td><b>{esc(f.title)}</b><br><small>{esc(f.description)}</small></td>
+                    <td><code>{esc(f.target_ref)}</code></td>
                     <td>{steps_html}{snippet_html}</td>
-                    <td>{f.remediation_suggestion}</td>
+                    <td>{esc(f.remediation_suggestion)}</td>
                 </tr>"""
             )
 
@@ -293,7 +295,7 @@ class CampaignReport(BaseModel):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NexCoder Campaign Report: {self.campaign_id}</title>
+<title>NexCoder Campaign Report: {esc(str(self.campaign_id))}</title>
 <style>
   body {{
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -337,9 +339,9 @@ class CampaignReport(BaseModel):
 <div class="container">
   <div class="header">
     <div>
-      <h1 style="margin:0 0 8px 0;">Test Campaign: {self.campaign_id}</h1>
+      <h1 style="margin:0 0 8px 0;">Test Campaign: {esc(str(self.campaign_id))}</h1>
       <span style="color:#94a3b8;">
-        Target: <code>{escaped_target}</code> | Authorized by: <b>{self.authorized_by}</b>
+        Target: <code>{escaped_target}</code> | Authorized by: <b>{esc(self.authorized_by)}</b>
       </span>
     </div>
     <span class="status-badge {status_class}">{escaped_status}</span>

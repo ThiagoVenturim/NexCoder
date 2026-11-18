@@ -153,3 +153,35 @@ class TestCampaignModels:
         assert json_file.exists() and len(json_file.read_text(encoding="utf-8")) > 50
         assert md_file.exists() and len(md_file.read_text(encoding="utf-8")) > 50
         assert html_file.exists() and len(html_file.read_text(encoding="utf-8")) > 50
+
+    def test_campaign_report_html_escapes_untrusted_fields(self) -> None:
+        payload = "<script>alert(1)</script>"
+        finding = TestFinding(
+            campaign_id="camp_xss",
+            test_type=TestType.SECURITY,
+            agent_id="agent-security-1",
+            title=payload,
+            severity=Severity.HIGH,
+            target_ref=payload,
+            description=payload,
+            steps_to_reproduce=[payload],
+            reproduction_snippet=payload,
+            remediation_suggestion=payload,
+        )
+        report = CampaignReport(
+            campaign_id="camp_xss",
+            target=payload,
+            status=CampaignStatus.COMPLETED,
+            authorized_by=payload,
+            authorized_at=datetime.now(UTC),
+            ownership="owned",
+            scope=["*"],
+            agent_count=1,
+            test_types=[TestType.SECURITY],
+            budget_limit_usd=1.0,
+            findings=[finding],
+        )
+
+        html_str = report.to_html()
+        assert "<script>" not in html_str
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html_str
