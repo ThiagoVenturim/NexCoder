@@ -16,6 +16,7 @@ dependencies = [
   "numpy>=1.26",
   "langchain-core>=0.3",
   "httpx>=0.27",
+  "sqlalchemy>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -27,7 +28,9 @@ bedrock = ["langchain-aws>=0.2"]
 langfuse = ["langfuse>=2.50"]
 local-embeddings = ["sentence-transformers>=3.0"]
 vector = ["sqlite-vec>=0.1.6"]
-postgres = ["psycopg[binary]>=3.2", "pgvector>=0.3"]
+postgres = ["psycopg[binary]>=3.2", "pgvector>=0.3", "psycopg2-binary>=2.9.9"]
+mysql = ["pymysql>=1.1.0"]
+mssql = ["pyodbc>=5.0.0"]
 all = [
   "nexcoder-core[openai,anthropic,google,ollama,langfuse,vector]",
 ]

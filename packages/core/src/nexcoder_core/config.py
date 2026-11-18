@@ -75,9 +75,11 @@ class BudgetSpec(BaseModel):
 
 
 class StorageSpec(BaseModel):
-    backend: Literal["sqlite", "postgres"] = "sqlite"
+    backend: Literal["sqlite", "postgres", "mysql", "mssql", "sqlalchemy"] = "sqlite"
     path: str = ".nexcoder/index.sqlite"
     dsn_env: str = "NEXCODER_POSTGRES_DSN"
+    db_url: str | None = None
+    db_url_env: str = "DB_URL"
 
 
 class NexcoderConfig(BaseModel):
