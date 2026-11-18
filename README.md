@@ -174,6 +174,7 @@ Documentation guides are available in the [docs/](docs/) directory:
 
 - **Foundations & Infrastructure**:
   - [Getting Started](docs/getting-started.md): Installation, environment configuration, and workspace setup.
+  - [Pluggable Database Architecture](docs/database.md): Bring your own database (PostgreSQL, MySQL, SQL Server/ODBC, SQLite), Docker, Kubernetes, and multiplatform scripts.
   - [Architecture](docs/architecture.md): Monorepo structure, data flow, package boundaries, and extension points.
   - [Models: Open-Source vs Paid](docs/models-open-vs-paid.md): Model evaluation, tier mapping, cost tradeoffs, and provider registry.
   - [Serving: vLLM vs Ollama](docs/serving-vllm-vs-ollama.md): Hardware sizing, concurrency benchmarks, Docker setups, and local LLM serving.

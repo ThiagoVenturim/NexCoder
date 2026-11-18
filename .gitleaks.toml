@@ -17,6 +17,7 @@ regexes = [
   '''fk_nonexistent_key_12345''',
   '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9''',
   '''sk-1234567890abcdef''',
+  '''sk-123456789012345678901234''',
   '''sk-live9876543210abcdef''',
   '''sk-antigravity-secret-key-123''',
   '''sk-secret-key-abcdef''',
@@ -30,4 +31,7 @@ regexes = [
   '''sk-[a-zA-Z0-9]{32,}''',
   '''mock-ado-pat-placeholder''',
   '''mock-gl-token-placeholder''',
+  '''ghp_1{36}''',
+  '''ghp_123456789012345678901234567890123456''',
+  '''postgres://admin:topsecretpw@localhost:5432/mydb''',
 ]

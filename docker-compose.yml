@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nexcoder-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nexcoder}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexcoder_placeholder_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-nexcoder}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexcoder-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: postgresql+psycopg2://${POSTGRES_USER:-nexcoder}:${POSTGRES_PASSWORD:-nexcoder_placeholder_pass}@db:5432/${POSTGRES_DB:-nexcoder}
+      NEXCODER_API_KEY: ${NEXCODER_API_KEY:-nexcoder_dev_api_key_placeholder}
+      PORT: 8000
+      HOST: 0.0.0.0
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+    name: nexcoder_postgres_data

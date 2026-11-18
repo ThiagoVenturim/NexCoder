@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexcoder-service
+  labels:
+    app.kubernetes.io/name: nexcoder
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: nexcoder
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
