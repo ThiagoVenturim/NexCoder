@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 from collections.abc import Callable
@@ -15,12 +16,23 @@ from nexcoder_continuous_improvement.auto_improve.models import (
 )
 
 FORBIDDEN_TARGET_BRANCHES = {"main", "master", "release"}
-FORBIDDEN_INTERNAL_PATTERNS = [
-    re.compile(r"sisloc", re.IGNORECASE),
-    re.compile(r"net1/", re.IGNORECASE),
-    re.compile(r"C:\\\\apoia-apps", re.IGNORECASE),
-    re.compile(r"C:/apoia-apps", re.IGNORECASE),
-]
+
+# Internal hostnames/paths must never leak into generated public commits. The public
+# repo ships only a generic placeholder; operators add their own real internal names via
+# the NEXCODER_INTERNAL_DENYLIST env var (comma-separated regexes) so those strings stay
+# out of the source tree entirely.
+_DEFAULT_INTERNAL_DENYLIST = (r"internal-host-example",)
+
+
+def load_forbidden_internal_patterns() -> list[re.Pattern[str]]:
+    """Build the internal-reference denylist from the generic default plus env config."""
+    terms = list(_DEFAULT_INTERNAL_DENYLIST)
+    raw = os.environ.get("NEXCODER_INTERNAL_DENYLIST", "")
+    terms.extend(term.strip() for term in raw.split(",") if term.strip())
+    return [re.compile(term, re.IGNORECASE) for term in terms]
+
+
+FORBIDDEN_INTERNAL_PATTERNS = load_forbidden_internal_patterns()
 
 EMOJI_PATTERN = re.compile(
     "["
@@ -125,13 +137,14 @@ class NexLinkDevAgentBridge:
     def _check_internal_leak(self, changed_files: list[str] | None = None) -> list[str]:
         hits: list[str] = []
         target_files = self._resolve_files(changed_files)
+        forbidden_patterns = load_forbidden_internal_patterns()
         for path in target_files:
             try:
                 content = path.read_text(encoding="utf-8", errors="ignore")
             except OSError:
                 continue
             for line_no, line in enumerate(content.splitlines(), start=1):
-                for pat in FORBIDDEN_INTERNAL_PATTERNS:
+                for pat in forbidden_patterns:
                     if pat.search(line):
                         hits.append(f"{path.name}:{line_no} references internal pattern '{pat.pattern}'")
         return hits
