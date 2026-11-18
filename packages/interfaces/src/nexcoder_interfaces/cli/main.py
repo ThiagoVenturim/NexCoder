@@ -54,6 +54,13 @@ email_app = typer.Typer(
 )
 app.add_typer(email_app, name="email")
 
+marketing_app = typer.Typer(
+    name="marketing",
+    help="Generate advertising copy, social media posts, promo video, and posting schedules.",
+    no_args_is_help=True,
+)
+app.add_typer(marketing_app, name="marketing")
+
 campaign_app = typer.Typer(
     name="campaign",
     help="Multi-agent security and quality testing campaigns with authorization and budget controls (Issue #71).",
@@ -369,6 +376,86 @@ def cmd_email_templates() -> None:
         for t in mgr.list_templates()
     ]
     print(json.dumps(templates, indent=2))
+
+
+@marketing_app.command(name="campaign")
+def cmd_marketing_campaign(
+    feature: str = typer.Option(..., "--feature", "-f", help="Summary or description of the product feature."),
+    product: str = typer.Option("NexCoder", "--product", "-p", help="Product name."),
+    output_dir: str | None = typer.Option(None, "--output-dir", "-o", help="Optional output directory for drafts."),
+    audience: str = typer.Option("developers", "--audience", "-a", help="Target audience."),
+    duration: float = typer.Option(30.0, "--duration", "-d", help="Target video duration in seconds."),
+) -> None:
+    """Generate ad copies, social posts, promo video, and calendar drafts."""
+    from nexcoder_interfaces.tools.marketing import generate_marketing_campaign
+
+    result = generate_marketing_campaign(
+        feature_summary=feature,
+        product_name=product,
+        output_dir=output_dir,
+        audience=audience,
+        video_duration=duration,
+    )
+    print(json.dumps(result, indent=2))
+
+
+@marketing_app.command(name="video")
+def cmd_marketing_video(
+    feature: str = typer.Option(..., "--feature", "-f", help="Summary of feature to promote."),
+    product: str = typer.Option("NexCoder", "--product", "-p", help="Product name."),
+    output_dir: str | None = typer.Option(None, "--output-dir", "-o", help="Optional output directory."),
+    duration: float = typer.Option(30.0, "--duration", "-d", help="Video duration in seconds."),
+    aspect_ratio: str = typer.Option("9:16", "--aspect-ratio", "-r", help="Aspect ratio (9:16 or 16:9)."),
+) -> None:
+    """Produce promotional video storyboard, subtitles, Piper TTS audio, and FFmpeg assembly scripts."""
+    from nexcoder_interfaces.tools.marketing import assemble_marketing_video
+
+    result = assemble_marketing_video(
+        feature_summary=feature,
+        product_name=product,
+        output_dir=output_dir,
+        duration=duration,
+        aspect_ratio=aspect_ratio,
+    )
+    print(json.dumps(result, indent=2))
+
+
+@marketing_app.command(name="calendar")
+def cmd_marketing_calendar(
+    feature: str = typer.Option(..., "--feature", "-f", help="Summary of feature."),
+    product: str = typer.Option("NexCoder", "--product", "-p", help="Product name."),
+) -> None:
+    """Generate optimal posting schedule and Nextor Kanban tasks."""
+    from nexcoder_interfaces.tools.marketing import schedule_marketing_calendar
+
+    result = schedule_marketing_calendar(
+        feature_summary=feature,
+        product_name=product,
+    )
+    print(json.dumps(result, indent=2))
+
+
+@marketing_app.command(name="publish")
+def cmd_marketing_publish(
+    platform: str = typer.Option(..., "--platform", "-p", help="Platform: linkedin, instagram, or tiktok."),
+    content: str = typer.Option(..., "--content", "-c", help="Text content to publish."),
+    token: str = typer.Option(..., "--token", "-t", help="Valid human approval token."),
+    confirmed: bool = typer.Option(False, "--confirmed", help="Explicit human confirmation flag."),
+    dry_run: bool = typer.Option(True, "--dry-run/--live", help="Simulate without network mutation."),
+    media: str | None = typer.Option(None, "--media", "-m", help="Optional media file path."),
+) -> None:
+    """Publish a social post to official APIs with mandatory human approval."""
+    from nexcoder_interfaces.tools.marketing import publish_social_post
+
+    result = publish_social_post(
+        platform=platform,
+        content_text=content,
+        approval_token=token,
+        confirmed=confirmed,
+        dry_run=dry_run,
+        media_path=media,
+    )
+    print(json.dumps(result, indent=2))
 
 
 @app.command(name="serve")

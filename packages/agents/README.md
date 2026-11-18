@@ -146,6 +146,23 @@ print(len(report.findings))
 print(report.to_markdown())
 ```
 
+### Marketing Campaign, Social Posts, and Video Generation
+
+```python
+from nexcoder_agents.marketing import MarketingOrchestrator
+
+orchestrator = MarketingOrchestrator()
+bundle = orchestrator.generate_campaign(
+    product_name="NexCoder",
+    feature_summary="Automated marketing and video production suite",
+    output_dir=".nexcoder/marketing/drafts",
+)
+
+print(f"Ads generated: {len(bundle.ads)} channels")
+print(f"Video duration: {bundle.video.script.total_duration_seconds}s")
+print(f"Calendar tasks: {len(bundle.calendar.nextor_tasks)}")
+```
+
 ### ML/AI Feature Engineering and Parameterized Recipes (Issue #105)
 
 ```python

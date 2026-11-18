@@ -14,7 +14,7 @@ An open-source, modular platform for automated software development from idea to
 | :--- | :--- | :--- |
 | `nexcoder-core` | Available | Merged in `develop` |
 | `nexcoder-code-intel` | Available | PR [#33](https://github.com/ThiagoVenturim/nexcoder/pull/33) |
-| `nexcoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) / [#105](https://github.com/ThiagoVenturim/nexcoder/issues/105) |
+| `nexcoder-agents` | Available | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) / [#85](https://github.com/ThiagoVenturim/nexcoder/issues/85) / [#105](https://github.com/ThiagoVenturim/nexcoder/issues/105) |
 | `nexcoder-planning` | Available | Issue [#4](https://github.com/ThiagoVenturim/nexcoder/issues/4) |
 | `nexcoder-ideation` | Available | Issue [#5](https://github.com/ThiagoVenturim/nexcoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/nexcoder/pull/29) |
 | `nexcoder-security` | Available | Issue [#7](https://github.com/ThiagoVenturim/nexcoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/nexcoder/pull/30) |
@@ -188,6 +188,7 @@ Documentation guides are available in the [docs/](docs/) directory:
   - [Agentic Planning](docs/agentic-planning.md): PRD transformation, capacity planning, Git automation, and idempotent tracker synchronization.
   - [VCS & Repository Management](docs/vcs-integrations.md): Unified provider layer for Azure DevOps, GitLab, Git, SVN, and TortoiseGit with token isolation and audit logs.
   - [Product Cost Calculator](docs/cost-calculator.md): Estimating build, publication, recurring maintenance (month/year), and IP/brand licensing.
+  - [Marketing and Promotion Engine](docs/marketing.md): Multi-channel ad copy with A/B variations, social posts (LinkedIn, Instagram, TikTok), open-source promo video assembly (Piper TTS, FFmpeg), Nextor calendar tasks, and safe publishing.
   - [Agents Catalog](docs/agents-catalog.md): Agent taxonomy, frontmatter schema, sector coverage, and specialized technology packs.
   - [Pipelines](docs/pipelines.md): LangGraph workflow orchestration, reusable blocks, human approval gates, and dry-run guarantees.
 
