@@ -25,6 +25,14 @@ from nexcoder_interfaces.tools.planning import (
     sync_board,
 )
 from nexcoder_interfaces.tools.security import security_report, security_review, security_scan
+from nexcoder_interfaces.tools.testing import (
+    cancel_security_test,
+    export_security_test_report,
+    get_security_test_canvas,
+    get_security_test_status,
+    trigger_security_tests,
+    verify_security_test_target,
+)
 from nexcoder_interfaces.tools.unavailable import (
     audit_log,
     capture_page,
@@ -691,6 +699,115 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
         handler=publish_social_post,
         is_available=True,
     ),
+    # Extreme Quality & Security Testing (NexHub Integration)
+    "trigger_security_tests": ToolDefinition(
+        name="trigger_security_tests",
+        description=(
+            "Dispatch multi-agent extreme testing (unit, system, process, DOM, API, security) for an authorized target."
+        ),
+        module="testing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "default": ".", "description": "Target workspace or repo directory."},
+                "test_types": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Suites to execute: unit, system, process, dom, api, security.",
+                },
+                "num_agents": {"type": "integer", "default": 4, "description": "Number of testing agents."},
+                "budget_limit": {"type": "number", "default": 50.0, "description": "Maximum spending budget."},
+                "budget_currency": {"type": "string", "default": "USD", "description": "Budget currency code."},
+                "owned_target": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Confirm target is owned or authorized per USAGE_POLICY.md.",
+                },
+                "authorized_by": {
+                    "type": "string",
+                    "default": "owner",
+                    "description": "Identity of authorizer for audit log.",
+                },
+                "approval_token": {"type": "string", "description": "Single-use approval token."},
+                "offline": {"type": "boolean", "default": True, "description": "Run strictly offline with mocks."},
+            },
+        },
+        handler=trigger_security_tests,
+        is_available=True,
+    ),
+    "get_security_test_status": ToolDefinition(
+        name="get_security_test_status",
+        description="Retrieve execution status, per-agent logs, and progress for an active or completed test run.",
+        module="testing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "run_id": {"type": "string", "description": "Identifier of the test run."},
+            },
+            "required": ["run_id"],
+        },
+        handler=get_security_test_status,
+        is_available=True,
+    ),
+    "get_security_test_canvas": ToolDefinition(
+        name="get_security_test_canvas",
+        description="Retrieve full NexHub canvas payload (cards, markdown notes, connections) for visualization.",
+        module="testing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "run_id": {"type": "string", "description": "Identifier of the test run."},
+            },
+            "required": ["run_id"],
+        },
+        handler=get_security_test_canvas,
+        is_available=True,
+    ),
+    "verify_security_test_target": ToolDefinition(
+        name="verify_security_test_target",
+        description="Preflight target verification to check whether workspace is authorized for extreme testing.",
+        module="testing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "default": ".", "description": "Target workspace path."},
+                "owned_target": {"type": "boolean", "default": False, "description": "Owned confirmation flag."},
+                "authorized_by": {"type": "string", "default": "owner", "description": "Authorizer identity."},
+                "approval_token": {"type": "string", "description": "Single-use approval token."},
+            },
+        },
+        handler=verify_security_test_target,
+        is_available=True,
+    ),
+    "cancel_security_test": ToolDefinition(
+        name="cancel_security_test",
+        description="Cancel an ongoing test run.",
+        module="testing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "run_id": {"type": "string", "description": "Identifier of the test run."},
+            },
+            "required": ["run_id"],
+        },
+        handler=cancel_security_test,
+        is_available=True,
+    ),
+    "export_security_test_report": ToolDefinition(
+        name="export_security_test_report",
+        description="Export the consolidated test and security report as Markdown or raw JSON.",
+        module="testing",
+        parameters={
+            "type": "object",
+            "properties": {
+                "run_id": {"type": "string", "description": "Identifier of the test run."},
+                "format": {"type": "string", "default": "markdown", "description": "Format: markdown or json."},
+            },
+            "required": ["run_id"],
+        },
+        handler=export_security_test_report,
+        is_available=True,
+    ),
     # VCS and Repository Management
     "vcs_list_repositories": ToolDefinition(
         name="vcs_list_repositories",
@@ -790,15 +907,19 @@ __all__ = [
     "approve_step",
     "assemble_marketing_video",
     "audit_log",
+    "cancel_security_test",
     "capture_page",
     "check_budget",
     "detectar_persona",
     "estimate_product_cost",
     "evaluate_rag",
+    "export_security_test_report",
     "generate_docs",
     "generate_marketing_campaign",
     "generate_tests",
     "gerar_perfil",
+    "get_security_test_canvas",
+    "get_security_test_status",
     "impact_analysis",
     "iniciar_entrevista",
     "judge_idea",
@@ -819,7 +940,9 @@ __all__ = [
     "serve_model",
     "sync_board",
     "trigger_improvement",
+    "trigger_security_tests",
     "unavailable_tool_handler",
+    "verify_security_test_target",
     "vcs_audit_records",
     "vcs_list_repositories",
     "vcs_manage_issue",

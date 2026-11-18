@@ -14,6 +14,12 @@ from nexcoder_interfaces.tools.email import send_email
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
 from nexcoder_interfaces.tools.planning import estimate_product_cost, plan_sprints, productivity_report
 from nexcoder_interfaces.tools.security import security_report
+from nexcoder_interfaces.tools.testing import (
+    get_security_test_canvas,
+    get_security_test_status,
+    trigger_security_tests,
+    verify_security_test_target,
+)
 from nexcoder_interfaces.tools.unavailable import capture_page, generate_tests
 
 app = typer.Typer(
@@ -49,6 +55,13 @@ marketing_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(marketing_app, name="marketing")
+
+test_app = typer.Typer(
+    name="test",
+    help="Multi-agent extreme testing (unit, system, process, DOM, API, security) for NexHub.",
+    no_args_is_help=True,
+)
+app.add_typer(test_app, name="test")
 
 vcs_app = typer.Typer(
     name="vcs",
@@ -469,6 +482,83 @@ def cmd_serve(
             cors_origins=origins,
         )
         uvicorn.run(fastapi_app, host=host, port=port)
+
+
+@test_app.command(name="run")
+def cmd_test_run(
+    path: Path = typer.Option(Path("."), "--path", "-p", help="Target workspace directory to test."),
+    types: str = typer.Option(
+        "unit,system,process,dom,api,security",
+        "--types",
+        "-t",
+        help="Comma-separated test types (unit, system, process, dom, api, security).",
+    ),
+    num_agents: int = typer.Option(4, "--num-agents", "-n", help="Number of testing agents."),
+    budget: float = typer.Option(50.0, "--budget", "-b", help="Budget limit in USD."),
+    owned_target: bool = typer.Option(
+        False,
+        "--owned-target",
+        help="Explicit confirmation that target is owned per USAGE_POLICY.md.",
+    ),
+    authorized_by: str = typer.Option("owner", "--authorized-by", help="Authorizer identity for audit log."),
+    approval_token: str | None = typer.Option(None, "--token", help="Single-use approval token."),
+    offline: bool = typer.Option(True, "--offline/--online", help="Run strictly offline with deterministic mocks."),
+    as_json: bool = typer.Option(False, "--json", help="Output raw JSON instead of formatted report."),
+) -> None:
+    """Dispatch multi-agent extreme testing (unit, system, process, DOM, API, security) for an authorized target."""
+    type_list = [t.strip() for t in types.split(",") if t.strip()]
+    res = trigger_security_tests(
+        path=str(path),
+        test_types=type_list,
+        num_agents=num_agents,
+        budget_limit=budget,
+        owned_target=owned_target,
+        authorized_by=authorized_by,
+        approval_token=approval_token,
+        offline=offline,
+    )
+    if as_json or res.get("status") == "rejected":
+        print(json.dumps(res, indent=2))
+    else:
+        print(res.get("summary", ""))
+        print(f"\nRun ID: {res.get('run_id')} | Status: {res.get('status')}")
+        gate_str = "PASSED" if res.get("passed_gate") else "BLOCKED"
+        print(f"Total findings: {res.get('total_findings')} | Gate verdict: {gate_str}")
+
+
+@test_app.command(name="status")
+def cmd_test_status(
+    run_id: str = typer.Argument(..., help="Run ID of the security test execution."),
+) -> None:
+    """Retrieve execution status and agent logs for a test run."""
+    res = get_security_test_status(run_id=run_id)
+    print(json.dumps(res, indent=2))
+
+
+@test_app.command(name="canvas")
+def cmd_test_canvas(
+    run_id: str = typer.Argument(..., help="Run ID of the security test execution."),
+) -> None:
+    """Retrieve NexHub canvas payload (cards, notes, connections) for visualization."""
+    res = get_security_test_canvas(run_id=run_id)
+    print(json.dumps(res, indent=2))
+
+
+@test_app.command(name="preflight")
+def cmd_test_preflight(
+    path: Path = typer.Option(Path("."), "--path", "-p", help="Target workspace path to verify."),
+    owned_target: bool = typer.Option(False, "--owned-target", help="Mark target as owned."),
+    authorized_by: str = typer.Option("owner", "--authorized-by", help="Authorizer identity."),
+    approval_token: str | None = typer.Option(None, "--token", help="Single-use approval token."),
+) -> None:
+    """Verify whether workspace is authorized for extreme testing and preview authorization state."""
+    res = verify_security_test_target(
+        path=str(path),
+        owned_target=owned_target,
+        authorized_by=authorized_by,
+        approval_token=approval_token,
+    )
+    print(json.dumps(res, indent=2))
 
 
 @vcs_app.command(name="repos")
