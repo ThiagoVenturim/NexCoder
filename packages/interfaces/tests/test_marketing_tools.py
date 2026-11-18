@@ -17,12 +17,13 @@ from typer.testing import CliRunner
 runner = CliRunner()
 
 
-def test_generate_marketing_campaign_tool(tmp_path: Path) -> None:
+def test_generate_marketing_campaign_tool(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
     draft_dir = tmp_path / "drafts"
     res = generate_marketing_campaign(
         feature_summary="Automated marketing and video generator",
         product_name="NexCoder",
-        output_dir=str(draft_dir),
+        output_dir="drafts",
     )
     assert res["status"] == "success"
     assert "google_search" in res["ads_channels"]
@@ -32,12 +33,28 @@ def test_generate_marketing_campaign_tool(tmp_path: Path) -> None:
     assert (draft_dir / "SUMMARY.md").exists()
 
 
-def test_assemble_marketing_video_tool(tmp_path: Path) -> None:
-    video_dir = tmp_path / "video"
+def test_marketing_tools_refuse_output_dir_outside_workdir(tmp_path: Path, monkeypatch) -> None:
+    work = tmp_path / "work"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    outside = tmp_path / "outside"
+
+    res = generate_marketing_campaign(feature_summary="x", output_dir=str(outside))
+    assert res["status"] == "error"
+    res_video = assemble_marketing_video(feature_summary="x", output_dir="../outside")
+    assert res_video["status"] == "error"
+    res_name = assemble_marketing_video(feature_summary="x", product_name="../../escape")
+    assert res_name["status"] == "success"
+    assert not outside.exists()
+    assert not (tmp_path / "escape").exists()
+
+
+def test_assemble_marketing_video_tool(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
     res = assemble_marketing_video(
         feature_summary="Offline video production with Piper and FFmpeg",
         product_name="NexCoder",
-        output_dir=str(video_dir),
+        output_dir="video",
     )
     assert res["status"] == "success"
     assert Path(res["storyboard_path"]).exists()
@@ -93,7 +110,8 @@ def test_publish_social_post_tool_governance() -> None:
     assert "dryrun" in res_dryrun["post_id"]
 
 
-def test_cli_marketing_campaign(tmp_path: Path) -> None:
+def test_cli_marketing_campaign(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
     out_dir = tmp_path / "cli_drafts"
     result = runner.invoke(
         app,

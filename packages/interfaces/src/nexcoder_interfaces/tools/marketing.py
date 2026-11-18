@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,16 @@ from nexcoder_agents.marketing import (
     VideoScriptGenerator,
 )
 from nexcoder_agents.marketing.video import FFmpegCompositor, PiperTTSClient, SubtitleGenerator
+from nexcoder_core.sandbox import PathOutsideSandboxError, resolve_inside
+
+
+def _slug(name: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_-]+", "-", name.lower().strip()) or "product"
+
+
+def _resolve_output_dir(output_dir: str | None, default: str) -> Path:
+    """Resolve an agent-supplied output directory, refusing anything outside the working directory."""
+    return resolve_inside(Path.cwd(), output_dir or default)
 
 
 def generate_marketing_campaign(
@@ -34,11 +45,16 @@ def generate_marketing_campaign(
     }
     target_aud = aud_map.get(audience, TargetAudience.DEVELOPERS)
 
+    try:
+        target_dir = _resolve_output_dir(output_dir, f".nexcoder/marketing/drafts/{_slug(product_name)}")
+    except PathOutsideSandboxError as exc:
+        return {"status": "error", "message": str(exc)}
+
     orchestrator = MarketingOrchestrator()
     bundle = orchestrator.generate_campaign(
         product_name=product_name,
         feature_summary=feature_summary,
-        output_dir=output_dir,
+        output_dir=target_dir,
         audience=target_aud,
         video_duration_seconds=video_duration,
     )
@@ -72,7 +88,10 @@ def assemble_marketing_video(
     aspect_ratio: str = "9:16",
 ) -> dict[str, Any]:
     """Produce promotional video script, subtitles, Piper TTS audio, and FFmpeg assembly scripts."""
-    target_path = Path(output_dir or f".nexcoder/marketing/drafts/{product_name.lower()}/video")
+    try:
+        target_path = _resolve_output_dir(output_dir, f".nexcoder/marketing/drafts/{_slug(product_name)}/video")
+    except PathOutsideSandboxError as exc:
+        return {"status": "error", "message": str(exc)}
     target_path.mkdir(parents=True, exist_ok=True)
 
     script_gen = VideoScriptGenerator()
