@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 from datetime import UTC, datetime
 from typing import Any, Literal
@@ -54,9 +55,53 @@ class AppendOnlyAuditLog:
 
     GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        db_url: str | None = None,
+        engine: Any = None,
+        auto_persist: bool = True,
+    ) -> None:
         self._events: list[AuditEvent] = []
         self._lock = threading.Lock()
+        self._engine: Any = None
+        self._table: Any = None
+
+        target_url = db_url
+        if target_url is None and engine is None:
+            target_url = os.environ.get("DB_URL") or os.environ.get("NEXCODER_DB_URL")
+
+        if auto_persist and (target_url is not None or engine is not None):
+            from nexcoder_core.store.db import create_db_engine, get_metadata, init_db
+            from sqlalchemy import select
+
+            self._engine = engine or create_db_engine(target_url)
+            self._metadata = get_metadata()
+            init_db(self._engine)
+            self._table = self._metadata.tables["audit_events"]
+
+            # Load existing events in sequence order
+            with self._engine.connect() as conn:
+                stmt = select(self._table).order_by(self._table.c.sequence_no.asc())
+                rows = conn.execute(stmt).fetchall()
+                for r in rows:
+                    details = json.loads(r.details_json) if isinstance(r.details_json, str) else (r.details_json or {})
+                    ts = r.timestamp
+                    if ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=UTC)
+                    evt = AuditEvent(
+                        event_id=r.event_id,
+                        sequence_no=r.sequence_no,
+                        timestamp=ts,
+                        event_type=r.event_type,
+                        actor=r.actor,
+                        action=r.action,
+                        resource=r.resource,
+                        severity=r.severity,
+                        prev_hash=r.prev_hash,
+                        event_hash=r.event_hash,
+                        details=details,
+                    )
+                    self._events.append(evt)
 
     def record_event(
         self,
@@ -101,6 +146,24 @@ class AppendOnlyAuditLog:
                 details=event_details,
             )
             self._events.append(event)
+
+            if self._engine is not None and self._table is not None:
+                with self._engine.begin() as conn:
+                    insert_stmt = self._table.insert().values(
+                        event_id=event.event_id,
+                        sequence_no=event.sequence_no,
+                        timestamp=event.timestamp,
+                        event_type=event.event_type,
+                        actor=event.actor,
+                        action=event.action,
+                        resource=event.resource,
+                        severity=event.severity,
+                        prev_hash=event.prev_hash,
+                        event_hash=event.event_hash,
+                        details_json=json.dumps(event.details, sort_keys=True, default=str),
+                    )
+                    conn.execute(insert_stmt)
+
             return event
 
     def verify_integrity(self) -> tuple[bool, str]:
