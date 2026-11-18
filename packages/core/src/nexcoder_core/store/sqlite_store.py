@@ -70,8 +70,31 @@ def _searchable(text: str) -> str:
 
 
 class HybridStore:
-    def __init__(self, path: str | Path, dimensions: int | None = None):
-        self.path = Path(path)
+    def __init__(
+        self,
+        path: str | Path | None = None,
+        dimensions: int | None = None,
+        db_url: str | None = None,
+    ):
+        self._sa_store = None
+        target_url = db_url
+        if target_url is None and isinstance(path, str) and ("://" in path or path.startswith("odbc:")):
+            target_url = path
+
+        if target_url is not None:
+            from nexcoder_core.store.sqlalchemy_store import SQLAlchemyStore
+
+            self._sa_store = SQLAlchemyStore(db_url=target_url, dimensions=dimensions)
+            self.dimensions = self._sa_store.dimensions
+            if target_url.startswith("sqlite:///"):
+                clean_path = target_url[len("sqlite:///") :].split("?")[0]
+            else:
+                clean_path = target_url
+            self.path = Path(clean_path)
+            return
+
+        resolved_path = path or ".nexcoder/index.sqlite"
+        self.path = Path(resolved_path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(str(self.path))
         self.conn.row_factory = sqlite3.Row
@@ -129,9 +152,13 @@ class HybridStore:
 
     def hashes(self) -> dict[str, str]:
         """Map of chunk id to content hash, used for incremental indexing."""
+        if self._sa_store is not None:
+            return self._sa_store.hashes()
         return {r["id"]: r["content_hash"] for r in self.conn.execute("SELECT id, content_hash FROM chunks")}
 
     def upsert(self, chunks: list[StoredChunk]) -> None:
+        if self._sa_store is not None:
+            return self._sa_store.upsert(chunks)
         cur = self.conn.cursor()
         for chunk in chunks:
             existing = cur.execute("SELECT rowid FROM chunks WHERE id=?", (chunk.id,)).fetchone()
@@ -158,6 +185,8 @@ class HybridStore:
         self.conn.commit()
 
     def delete(self, ids: list[str]) -> None:
+        if self._sa_store is not None:
+            return self._sa_store.delete(ids)
         cur = self.conn.cursor()
         for chunk_id in ids:
             row = cur.execute("SELECT rowid FROM chunks WHERE id=?", (chunk_id,)).fetchone()
@@ -175,10 +204,14 @@ class HybridStore:
         return {"id": row["id"], "text": row["text"], "metadata": json.loads(row["metadata"]), "score": score}
 
     def get(self, chunk_id: str) -> dict | None:
+        if self._sa_store is not None:
+            return self._sa_store.get(chunk_id)
         row = self.conn.execute("SELECT * FROM chunks WHERE id=?", (chunk_id,)).fetchone()
         return self._row(row, 1.0) if row else None
 
     def count(self) -> int:
+        if self._sa_store is not None:
+            return self._sa_store.count()
         return int(self.conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0])
 
     def vector_search(self, query_vector: list[float], k: int = 20, where: dict | None = None) -> list[dict]:
@@ -188,6 +221,8 @@ class HybridStore:
         and scored in memory using vectorized NumPy operations. For ultra-large repositories,
         partition indices or combine with external vector indexes.
         """
+        if self._sa_store is not None:
+            return self._sa_store.vector_search(query_vector, k=k, where=where)
         if self._vec and self.dimensions and not where:
             rows = self.conn.execute(
                 "SELECT c.*, v.distance FROM chunks_vec v JOIN chunks c ON c.rowid = v.rowid "
@@ -220,6 +255,8 @@ class HybridStore:
 
     def text_search(self, query: str, k: int = 20, where: dict | None = None) -> list[dict]:
         """Full-text search using SQLite FTS5 BM25 with optional metadata filtering."""
+        if self._sa_store is not None:
+            return self._sa_store.text_search(query, k=k, where=where)
         match = fts_query(query)
         if not match:
             return []
@@ -250,6 +287,8 @@ class HybridStore:
         candidates: int = 40,
         where: dict | None = None,
     ) -> list[dict]:
+        if self._sa_store is not None:
+            return self._sa_store.hybrid_search(query, query_vector, k=k, candidates=candidates, where=where)
         lists = [self.text_search(query, candidates, where=where)]
         if query_vector is not None:
             lists.insert(0, self.vector_search(query_vector, candidates, where=where))
@@ -258,6 +297,8 @@ class HybridStore:
 
     def get_embeddings(self, ids: list[str]) -> dict[str, list[float]]:
         """Return a mapping of chunk id to embedding vector for the requested chunk ids."""
+        if self._sa_store is not None:
+            return self._sa_store.get_embeddings(ids)
         if not ids:
             return {}
         query = (
@@ -269,6 +310,8 @@ class HybridStore:
 
     def delete_by_metadata(self, key: str, value: object) -> int:
         """Delete all chunks where metadata[key] == value. Returns count of deleted chunks."""
+        if self._sa_store is not None:
+            return self._sa_store.delete_by_metadata(key, value)
         safe_key = "".join(c for c in key if c.isalnum() or c == "_")
         query = "SELECT id FROM chunks WHERE json_extract(metadata, '$.' || ?) = ?"
         rows = self.conn.execute(query, (safe_key, value)).fetchall()
@@ -279,10 +322,14 @@ class HybridStore:
 
     def get_metadata_values(self, key: str) -> dict[str, object]:
         """Return a mapping of chunk id to metadata[key] for chunks that have that metadata key."""
+        if self._sa_store is not None:
+            return self._sa_store.get_metadata_values(key)
         safe_key = "".join(c for c in key if c.isalnum() or c == "_")
         query = "SELECT id, json_extract(metadata, '$.' || ?) AS val FROM chunks WHERE val IS NOT NULL"
         rows = self.conn.execute(query, (safe_key,)).fetchall()
         return {r["id"]: r["val"] for r in rows}
 
     def close(self) -> None:
+        if self._sa_store is not None:
+            return self._sa_store.close()
         self.conn.close()

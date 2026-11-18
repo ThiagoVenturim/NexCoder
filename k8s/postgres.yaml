@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexcoder-db
+  labels:
+    app.kubernetes.io/name: nexcoder-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nexcoder-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nexcoder-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: nexcoder-config
+                  key: DB_NAME
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: nexcoder-config
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nexcoder-secrets
+                  key: DB_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexcoder-db
+  labels:
+    app.kubernetes.io/name: nexcoder-db
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: nexcoder-db
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
