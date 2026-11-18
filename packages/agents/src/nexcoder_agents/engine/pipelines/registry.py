@@ -5,6 +5,7 @@ from typing import Any
 from nexcoder_agents.engine.graph import PipelineGraph
 from nexcoder_agents.engine.pipelines.models import PipelineTemplate
 from nexcoder_agents.engine.pipelines.templates import (
+    create_ai_feature_pipeline,
     create_bugfix_pipeline,
     create_data_engineering_pipeline,
     create_documentation_pipeline,
@@ -165,6 +166,17 @@ def _init_default_templates() -> None:
             category="security",
             required_inputs=["target_path"],
             factory=create_security_review_pipeline,
+        ),
+        PipelineTemplate(
+            name="ai-feature-pipeline",
+            description=(
+                "End-to-end ML/AI feature delivery: approach selection, parameterized recipes "
+                "(classification, extraction, RAG, recommendation, summarization, chatbot), "
+                "MLOps training integration, serving orchestration, offline evaluation, and guardrails."
+            ),
+            category="ai-ml",
+            required_inputs=["ai_feature_request"],
+            factory=create_ai_feature_pipeline,
         ),
     ]
 

@@ -39,6 +39,14 @@ Agentic planning engine for nexcoder: converts Product Requirement Documents (PR
   - Standardized branch creation from integration bases (`develop`).
   - Conventional commit builder strictly validating types and enforcing zero emojis and no AI co-author trailers.
   - Automated pull request creation with milestone linkage and verification checklists.
+- **Unified VCS and Repository Management Providers (`nexcoder_planning.vcs`)**:
+  - Unified interface (`RepoManagementProvider`) across Azure DevOps, GitLab, Git, Subversion (SVN), and TortoiseGit.
+  - Azure DevOps: Git repositories, work items/boards (WIQL), pull requests, and pipelines via REST API + PAT.
+  - GitLab: projects, issues, merge requests, and CI/CD pipelines via REST API + token.
+  - SVN: checkout, commit, log, diff, status, and update via the svn CLI.
+  - TortoiseGit: Windows Git automation, command line dialog construction (`TortoiseGitProc.exe`), and batch shortcuts.
+  - Git: reusable high-level Git operations with zero emoji enforcement.
+  - Security and audit: tokens strictly in environment variables, timing-attack safe comparison (`hmac.compare_digest`), and structured audit logging with credential redaction.
 
 ## Verification and Compliance (Issue #4)
 
