@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
+import os
 import secrets
 import threading
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
+from typing import Any
+
+from sqlalchemy import select
 
 from nexcoder_control.auth.base import AuthenticationError, ForbiddenError
 from nexcoder_control.keys.models import APIKeyCreate, APIKeyCreatedResult, APIKeyRecord
@@ -89,6 +94,121 @@ class InMemoryAPIKeyStore(BaseAPIKeyStore):
             return True
 
 
+class SQLAlchemyAPIKeyStore(BaseAPIKeyStore):
+    """Thread-safe persistent API key store backed by SQLAlchemy."""
+
+    def __init__(self, db_url: str | None = None, engine: Any = None) -> None:
+        from nexcoder_core.store.db import create_db_engine, get_metadata, init_db
+
+        self.engine = engine or create_db_engine(db_url)
+        self.metadata = get_metadata()
+        init_db(self.engine)
+        self._table = self.metadata.tables["api_keys"]
+
+    def _row_to_record(self, row: Any) -> APIKeyRecord:
+        if isinstance(row.allowed_models, str):
+            allowed_models = json.loads(row.allowed_models)
+        else:
+            allowed_models = row.allowed_models or []
+
+        if isinstance(row.metadata_json, str):
+            metadata_json = json.loads(row.metadata_json)
+        else:
+            metadata_json = row.metadata_json or {}
+
+        return APIKeyRecord(
+            key_id=row.key_id,
+            name=row.name,
+            prefix=row.prefix,
+            hashed_secret=row.hashed_secret,
+            owner=row.owner,
+            scopes=allowed_models,
+            usd_cap=row.budget_limit_usd,
+            current_spend_usd=float(row.current_spend_usd or 0.0),
+            rate_limit_rpm=row.rate_limit_rpm,
+            rate_limit_tpm=None,
+            created_at=row.created_at,
+            expires_at=row.expires_at,
+            is_active=bool(row.is_active),
+            metadata=metadata_json,
+        )
+
+    def save(self, record: APIKeyRecord) -> None:
+        with self.engine.begin() as conn:
+            check_stmt = select(self._table.c.key_id).where(self._table.c.key_id == record.key_id)
+            existing = conn.execute(check_stmt).fetchone()
+
+            values = {
+                "name": record.name,
+                "prefix": record.prefix,
+                "hashed_secret": record.hashed_secret,
+                "owner": record.owner,
+                "tier": record.metadata.get("tier", "standard"),
+                "is_active": record.is_active,
+                "created_at": record.created_at,
+                "expires_at": record.expires_at,
+                "current_spend_usd": record.current_spend_usd,
+                "budget_limit_usd": record.usd_cap,
+                "rate_limit_rpm": record.rate_limit_rpm or 60,
+                "allowed_models": json.dumps(record.scopes),
+                "allowed_endpoints": json.dumps([]),
+                "metadata_json": json.dumps(record.metadata, default=str),
+            }
+
+            if existing:
+                update_stmt = self._table.update().where(self._table.c.key_id == record.key_id).values(**values)
+                conn.execute(update_stmt)
+            else:
+                insert_stmt = self._table.insert().values(key_id=record.key_id, **values)
+                conn.execute(insert_stmt)
+
+    def get(self, key_id: str) -> APIKeyRecord | None:
+        with self.engine.connect() as conn:
+            stmt = select(self._table).where(self._table.c.key_id == key_id)
+            row = conn.execute(stmt).fetchone()
+            return self._row_to_record(row) if row else None
+
+    def find_by_prefix(self, prefix: str) -> list[APIKeyRecord]:
+        with self.engine.connect() as conn:
+            stmt = select(self._table).where(self._table.c.prefix == prefix)
+            rows = conn.execute(stmt).fetchall()
+            return [self._row_to_record(r) for r in rows]
+
+    def list_all(self) -> list[APIKeyRecord]:
+        with self.engine.connect() as conn:
+            stmt = select(self._table)
+            rows = conn.execute(stmt).fetchall()
+            return [self._row_to_record(r) for r in rows]
+
+    def update_spend(self, key_id: str, additional_usd: float) -> APIKeyRecord:
+        with self.engine.begin() as conn:
+            stmt = select(self._table).where(self._table.c.key_id == key_id)
+            row = conn.execute(stmt).fetchone()
+            if not row:
+                raise KeyError(f"API key '{key_id}' not found")
+
+            new_spend = float(row.current_spend_usd or 0.0) + additional_usd
+            update_stmt = (
+                self._table.update()
+                .where(self._table.c.key_id == key_id)
+                .values(current_spend_usd=new_spend)
+            )
+            conn.execute(update_stmt)
+
+            fetch_stmt = select(self._table).where(self._table.c.key_id == key_id)
+            updated_row = conn.execute(fetch_stmt).fetchone()
+            return self._row_to_record(updated_row)
+
+    def revoke(self, key_id: str) -> bool:
+        with self.engine.begin() as conn:
+            check_stmt = select(self._table.c.key_id).where(self._table.c.key_id == key_id)
+            if not conn.execute(check_stmt).fetchone():
+                return False
+            update_stmt = self._table.update().where(self._table.c.key_id == key_id).values(is_active=False)
+            conn.execute(update_stmt)
+            return True
+
+
 class APIKeyService:
     """Service managing API key lifecycle, verification, USD caps, and rate limits."""
 
@@ -96,8 +216,16 @@ class APIKeyService:
         self,
         store: BaseAPIKeyStore | None = None,
         rate_limiter: FixedWindowRateLimiter | None = None,
+        db_url: str | None = None,
     ) -> None:
-        self.store = store or InMemoryAPIKeyStore()
+        if store is not None:
+            self.store = store
+        elif db_url is not None:
+            self.store = SQLAlchemyAPIKeyStore(db_url=db_url)
+        elif os.environ.get("DB_URL") or os.environ.get("NEXCODER_DB_URL"):
+            self.store = SQLAlchemyAPIKeyStore(db_url=os.environ.get("DB_URL") or os.environ["NEXCODER_DB_URL"])
+        else:
+            self.store = InMemoryAPIKeyStore()
         self.rate_limiter = rate_limiter or FixedWindowRateLimiter(window_seconds=60.0)
         self._buckets: dict[str, TokenBucket] = {}
         self._bucket_lock = threading.Lock()

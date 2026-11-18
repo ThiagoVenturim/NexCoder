@@ -4,6 +4,13 @@ Ideation, research squad, and jury committee package for nexcoder: transforms fr
 
 ## Features
 
+- **Scenario Discovery & Guided Onboarding**:
+  - `detectar_persona`: Classifies users between Persona A (established company with active software/codebase) and Persona B (idea stage / pain only).
+  - Branching guided interview (`iniciar_entrevista`, `responder`):
+    - Persona A: Gathers current tech stack, hosting infrastructure, technical debt, business goals, compliance constraints, and code access permissions.
+    - Persona B: Sharpens core problem statement, target audience, differentiation, budget limits, delivery timeline, and key risk assumptions.
+  - `gerar_perfil`: Consolidates a sanitized `ScenarioProfile` that configures downstream pipeline stages (GraphRAG indexing, quality agents, security gate, research squad, jury committee, PRD generator, cost calculator).
+  - Strict privacy protections: All tokens, passwords, and sensitive credentials are automatically redacted with zero data leakage.
 - **Intake & Structuring**:
   - `IdeaAnalyst` structures free-text brainstorms into clear problem statements, target audience segments, and value hypotheses.
   - Generates initial assumptions and domain tagging.

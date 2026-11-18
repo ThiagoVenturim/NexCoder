@@ -172,6 +172,7 @@ Guias detalhados estao disponiveis no diretorio [docs/](docs/):
 
 - **Fundamentos e Infraestrutura**:
   - [Primeiros Passos](docs/getting-started.md): Instalacao, configuracao de ambiente e preparacao de espacos de trabalho.
+  - [Banco de Dados Plugavel](docs/database.md): Traga seu proprio banco (PostgreSQL, MySQL, SQL Server/ODBC, SQLite), Docker, Kubernetes e scripts multiplataforma.
   - [Arquitetura](docs/architecture.md): Estrutura do monorepositorio, fluxo de dados e limites entre pacotes.
   - [Modelos: Codigo Aberto vs Proprietarios](docs/models-open-vs-paid.md): Comparacao de modelos, mapeamento por camadas e compensacoes de custo.
   - [Execucao Local: vLLM vs Ollama](docs/serving-vllm-vs-ollama.md): Dimensionamento de hardware, benchmarks de concorrencia e conteineres.
