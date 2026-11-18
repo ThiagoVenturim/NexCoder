@@ -42,6 +42,13 @@ Security scanners, specialist agents, and release gate for the nexcoder platform
    - `server isolate`: Privatization engine auditing and remediating unshielded port mappings (binding internal databases and caches strictly to `127.0.0.1`).
    - `server mask`: PII and secret anonymizer for text logs, SQL database dumps, structured JSON records, and CSV files supporting placeholder, redact, and salted hash strategies.
 
+6. **Control Plane & Security Test Campaigns (Issue #71)**:
+   - Target authorization gate: strictly verifies target ownership or requires an Ed25519 signed authorization document (fail-closed, default NEGAR).
+   - Test types: unit (unitario), system (sistema), process (processo), DOM (DOM/UI), API (endpoints/schemas), and security (defensive SAST/secrets/injection).
+   - Multi-agent orchestration: allocates parallel specialist agents up to configured agent count.
+   - Budget policy and audit logging: enforces spending limits (USD) and timeout budgets with full audit trails in `AppendOnlyAuditLog`.
+   - Actionable reporting: produces consolidated findings with severity, step-by-step reproduction guide, and surgical remediation advice exportable to JSON, Markdown, and NexDash HTML.
+
 ## Installation
 
 ```bash
@@ -136,6 +143,9 @@ nexcoder-security server isolate ./docker-compose.yml --remediate --owned-target
 
 # Mask PII in SQL database dump
 nexcoder-security server mask ./backup.sql --format sql --strategy placeholder --output ./backup_masked.sql --owned-target
+
+# Run multi-agent security and quality testing campaign (Issue #71)
+nexcoder-security campaign ./src --test-types unit api security --agents 4 --budget-cost 10.0 --owned-target --authorized-by sec-lead --markdown
 ```
 
 ## Origin

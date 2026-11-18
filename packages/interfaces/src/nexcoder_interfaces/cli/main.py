@@ -13,7 +13,12 @@ from nexcoder_interfaces.tools.code import generate_docs, search_code
 from nexcoder_interfaces.tools.email import send_email
 from nexcoder_interfaces.tools.ideation import judge_idea, research_idea
 from nexcoder_interfaces.tools.planning import estimate_product_cost, plan_sprints, productivity_report
-from nexcoder_interfaces.tools.security import security_report
+from nexcoder_interfaces.tools.security import (
+    export_security_campaign_report,
+    get_security_test_campaign,
+    run_security_test_campaign,
+    security_report,
+)
 from nexcoder_interfaces.tools.testing import (
     get_security_test_canvas,
     get_security_test_status,
@@ -48,6 +53,13 @@ email_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(email_app, name="email")
+
+campaign_app = typer.Typer(
+    name="campaign",
+    help="Multi-agent security and quality testing campaigns with authorization and budget controls (Issue #71).",
+    no_args_is_help=True,
+)
+app.add_typer(campaign_app, name="campaign")
 
 test_app = typer.Typer(
     name="test",
@@ -395,6 +407,93 @@ def cmd_serve(
             cors_origins=origins,
         )
         uvicorn.run(fastapi_app, host=host, port=port)
+
+
+@campaign_app.command(name="run")
+def cmd_campaign_run(
+    target: Path = typer.Option(Path("."), "--target", "-t", help="Target repository or app directory."),
+    test_types: str = typer.Option(
+        "unit,system,process,dom,api,security",
+        "--test-types",
+        help="Comma-separated test types (unit, system, process, dom, api, security).",
+    ),
+    agents: int = typer.Option(3, "--agents", "-a", help="Number of parallel testing agents."),
+    budget_cost: float = typer.Option(5.0, "--budget-cost", help="Maximum budget in USD."),
+    budget_time: float = typer.Option(120.0, "--budget-time", help="Execution timeout in seconds."),
+    owned_target: bool = typer.Option(False, "--owned-target", help="Confirm target is owned by operator."),
+    authorized_by: str = typer.Option("owner", "--authorized-by", help="Operator or approver identity."),
+    auth_doc: Path | None = typer.Option(None, "--auth-doc", help="Path to signed authorization YAML/JSON."),
+    dry_run: bool = typer.Option(True, "--dry-run/--live", help="Offline deterministic mode."),
+    json_output: bool = typer.Option(False, "--json", help="Output full JSON result."),
+) -> None:
+    """Run an orchestrated security and quality test campaign against an authorized target."""
+    types_list = [t.strip() for t in test_types.split(",") if t.strip()]
+    doc_path = str(auth_doc.resolve()) if auth_doc else None
+
+    result = run_security_test_campaign(
+        target=str(target.resolve()),
+        test_types=types_list,
+        agent_count=agents,
+        max_cost_usd=budget_cost,
+        max_duration_seconds=budget_time,
+        owned_target=owned_target,
+        authorized_by=authorized_by,
+        authorization_document=doc_path,
+        dry_run=dry_run,
+    )
+
+    if json_output:
+        print(json.dumps(result, indent=2))
+        return
+
+    if result.get("status") in ("rejected", "error"):
+        print(f"Campaign refused or failed: {result.get('reason') or result.get('message')}")
+        raise typer.Exit(code=1)
+
+    print(f"Campaign {result.get('campaign_id')} completed successfully.")
+    print(f"Target: {result.get('target')} | Status: {result.get('status')}")
+    passed = result.get('total_passed')
+    failed = result.get('total_failed')
+    total = result.get('total_tests_run')
+    print(f"Tests run: {total} (Passed: {passed}, Failed: {failed})")
+    findings = result.get('findings_count')
+    duration = result.get('duration_seconds')
+    cost = result.get('actual_cost_usd')
+    print(f"Findings: {findings} | Duration: {duration}s | Cost: ${cost}")
+
+
+@campaign_app.command(name="get")
+def cmd_campaign_get(
+    campaign_id: str = typer.Argument(..., help="Campaign ID to inspect."),
+    json_output: bool = typer.Option(True, "--json", help="Output JSON details."),
+) -> None:
+    """Retrieve details and findings of a test campaign."""
+    res = get_security_test_campaign(campaign_id)
+    if res.get("status") == "not_found":
+        print(f"Campaign '{campaign_id}' not found.")
+        raise typer.Exit(code=1)
+    print(json.dumps(res, indent=2))
+
+
+@campaign_app.command(name="export")
+def cmd_campaign_export(
+    campaign_id: str = typer.Argument(..., help="Campaign ID to export."),
+    format: str = typer.Option("markdown", "--format", "-f", help="Format: json, markdown, html."),
+    output: Path | None = typer.Option(None, "--output", "-o", help="Destination file path."),
+) -> None:
+    """Export campaign report to markdown, HTML, or JSON."""
+    res = export_security_campaign_report(campaign_id, format=format)
+    if res.get("status") != "success":
+        print(f"Export failed: {res.get('message')}")
+        raise typer.Exit(code=1)
+    if output:
+        # The operator chose this path on the command line, so it is not sandboxed like agent input.
+        out_path = output.resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(res.get("content", ""), encoding="utf-8")
+        print(f"Report exported to: {out_path}")
+    else:
+        print(res.get("content"))
 
 
 @test_app.command(name="run")

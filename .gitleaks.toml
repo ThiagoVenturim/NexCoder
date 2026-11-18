@@ -27,6 +27,7 @@ regexes = [
   '''sk-proj-supersecretkey1234567890''',
   '''sk-proj-supersecretapikey123456789''',
   '''sk-proj-1234567890abcdef12345''',
+  '''fc_apr_9876543210abcdef''',
   '''hf_[a-zA-Z0-9]{34,}''',
   '''sk-[a-zA-Z0-9]{32,}''',
   '''mock-ado-pat-placeholder''',
