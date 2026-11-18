@@ -13,6 +13,10 @@ class FindingCategory(StrEnum):
     OBSERVABILITY = "observability"
     SECURITY = "security"
     DEPENDENCY = "dependency"
+    TEST_FAILURE = "test_failure"
+    LOW_COVERAGE = "low_coverage"
+    TODO_DEBT = "todo_debt"
+    LINT = "lint"
 
 
 class ImprovementFinding(BaseModel):
@@ -26,6 +30,8 @@ class ImprovementFinding(BaseModel):
     acceptance_given: str = "A finding has been detected by continuous monitoring"
     acceptance_when: str = "The responsible agent applies the fix or implementation"
     acceptance_then: str = "All tests pass offline and the issue is resolved"
+    file_path: str | None = None
+    line_number: int | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 

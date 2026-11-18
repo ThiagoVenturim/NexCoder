@@ -31,6 +31,13 @@ from nexcoder_interfaces.tools.unavailable import (
     serve_model,
     trigger_improvement,
 )
+from nexcoder_interfaces.tools.vcs import (
+    vcs_audit_records,
+    vcs_list_repositories,
+    vcs_manage_issue,
+    vcs_manage_pull_request,
+    vcs_svn_operation,
+)
 
 TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
     # Ideation
@@ -595,6 +602,97 @@ TOOL_DEFINITIONS: dict[str, ToolDefinition] = {
         handler=export_security_test_report,
         is_available=True,
     ),
+    # VCS and Repository Management
+    "vcs_list_repositories": ToolDefinition(
+        name="vcs_list_repositories",
+        description="List repositories from Azure DevOps, GitLab, or Git.",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "description": "VCS provider (azure_devops, gitlab, git)."},
+                "project_or_org": {"type": "string", "description": "Organization or project identifier."},
+                "project": {"type": "string", "description": "Project name for Azure DevOps."},
+            },
+            "required": ["provider"],
+        },
+        handler=vcs_list_repositories,
+        is_available=True,
+    ),
+    "vcs_manage_issue": ToolDefinition(
+        name="vcs_manage_issue",
+        description="Create, read, update, or list issues on Azure DevOps or GitLab.",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "description": "VCS provider (azure_devops, gitlab)."},
+                "action": {"type": "string", "description": "Action (list, get, create, update)."},
+                "project_or_org": {"type": "string", "description": "Organization or project ID."},
+                "project": {"type": "string", "description": "Project name."},
+                "issue_id": {"type": "string", "description": "Issue or work item ID."},
+                "title": {"type": "string", "description": "Issue title."},
+                "body": {"type": "string", "description": "Issue body markdown."},
+            },
+            "required": ["provider"],
+        },
+        handler=vcs_manage_issue,
+        is_available=True,
+    ),
+    "vcs_manage_pull_request": ToolDefinition(
+        name="vcs_manage_pull_request",
+        description="Create, read, list, or merge pull requests or merge requests.",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "description": "VCS provider (azure_devops, gitlab)."},
+                "action": {"type": "string", "description": "Action (list, get, create, merge)."},
+                "project_or_org": {"type": "string", "description": "Organization or project ID."},
+                "project": {"type": "string", "description": "Project name."},
+                "pr_id": {"type": "string", "description": "Pull request ID."},
+                "title": {"type": "string", "description": "Pull request title."},
+                "body": {"type": "string", "description": "Pull request body."},
+                "source_branch": {"type": "string", "description": "Source branch."},
+                "target_branch": {"type": "string", "description": "Target branch."},
+            },
+            "required": ["provider"],
+        },
+        handler=vcs_manage_pull_request,
+        is_available=True,
+    ),
+    "vcs_svn_operation": ToolDefinition(
+        name="vcs_svn_operation",
+        description="Execute Subversion operations (checkout, commit, log, diff, status).",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "description": "SVN action (checkout, commit, log, diff, status)."},
+                "repo_url": {"type": "string", "description": "Repository URL for checkout."},
+                "dest_path": {"type": "string", "description": "Destination working copy path."},
+                "message": {"type": "string", "description": "Commit message."},
+                "revision": {"type": "string", "description": "Revision number or HEAD."},
+            },
+            "required": ["action"],
+        },
+        handler=vcs_svn_operation,
+        is_available=True,
+    ),
+    "vcs_audit_records": ToolDefinition(
+        name="vcs_audit_records",
+        description="Retrieve structured audit log records of recent repository actions.",
+        module="planning",
+        parameters={
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "description": "Filter by provider name."},
+                "limit": {"type": "integer", "description": "Maximum number of records to return."},
+            },
+        },
+        handler=vcs_audit_records,
+        is_available=True,
+    ),
 }
 
 __all__ = [
@@ -605,6 +703,7 @@ __all__ = [
     "cancel_security_test",
     "capture_page",
     "check_budget",
+    "estimate_product_cost",
     "evaluate_rag",
     "export_security_test_report",
     "generate_docs",
@@ -630,4 +729,9 @@ __all__ = [
     "trigger_security_tests",
     "unavailable_tool_handler",
     "verify_security_test_target",
+    "vcs_audit_records",
+    "vcs_list_repositories",
+    "vcs_manage_issue",
+    "vcs_manage_pull_request",
+    "vcs_svn_operation",
 ]

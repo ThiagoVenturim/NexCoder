@@ -146,6 +146,30 @@ print(len(report.findings))
 print(report.to_markdown())
 ```
 
+### ML/AI Feature Engineering and Parameterized Recipes (Issue #105)
+
+```python
+from nexcoder_agents import AIFeatureAdvisor, AIFeatureRequest, RecipeType
+
+advisor = AIFeatureAdvisor()
+request = AIFeatureRequest(
+    project_dir="examples/quickstart/sample_project",
+    feature_name="review_sentiment",
+    recipe=RecipeType.CLASSIFICATION,
+    description="Classify customer reviews as positive, negative, or neutral",
+    output_schema={"labels": '["positive", "negative", "neutral"]'},
+    owned_target=True,
+    enable_mlops_training=True,
+    enable_serving_compose=True,
+)
+
+result = advisor.implement_feature(request, write_to_disk=True, run_eval=True)
+print("Approach:", result.approach_decision.approach)
+print("Recommended Model:", result.approach_decision.recommended_model)
+print("Generated Files:", len(result.generated_files))
+print("Evaluation Passed:", result.evaluation.passed)
+```
+
 ## Origin
 
 A catalog of automation agents and personas distilled into a generic, vendor-agnostic architecture.

@@ -12,7 +12,7 @@ O `nexcoder` orquestra o ciclo completo de entrega de software: intake de ideias
 | :--- | :--- | :--- |
 | `nexcoder-core` | Disponivel | Incorporado em `develop` |
 | `nexcoder-code-intel` | Disponivel | PR [#33](https://github.com/ThiagoVenturim/nexcoder/pull/33) |
-| `nexcoder-agents` | Disponivel | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) |
+| `nexcoder-agents` | Disponivel | Issue [#3](https://github.com/ThiagoVenturim/nexcoder/issues/3) / [#31](https://github.com/ThiagoVenturim/nexcoder/issues/31) / [#105](https://github.com/ThiagoVenturim/nexcoder/issues/105) |
 | `nexcoder-planning` | Disponivel | Issue [#4](https://github.com/ThiagoVenturim/nexcoder/issues/4) |
 | `nexcoder-ideation` | Disponivel | Issue [#5](https://github.com/ThiagoVenturim/nexcoder/issues/5), PR [#29](https://github.com/ThiagoVenturim/nexcoder/pull/29) |
 | `nexcoder-security` | Disponivel | Issue [#7](https://github.com/ThiagoVenturim/nexcoder/issues/7), PR [#30](https://github.com/ThiagoVenturim/nexcoder/pull/30) |
@@ -61,6 +61,7 @@ nexcoder/
    - Catalogo formal com metadados em frontmatter YAML (`agents/<sector>/<slug>.md`), cobrindo 10 setores organizacionais (diretoria, requisitos, produto, engenharia, UI/UX, qualidade/QA, seguranca, dados/IA, suporte e marketing).
    - Blocos modulares reutilizaveis para LangGraph: `ValidatorBlock`, `ConditionBlock`, `PromptBlock` e `HumanApprovalBlock`.
    - Garantias operacionais de seguranca: execucao simulada (dry-run), fichas de aprovacao com tempo limite, tetos de execucao de ferramentas e votacao por quorum em comite.
+   - Engenharia de recursos de ML/IA: selecao de abordagem (regras, ML classico, LLM/RAG), 6 receitas parametrizadas (classificacao, extracao, RAG, recomendacao, resumo, chatbot), reuso de MLOps e serving, e guardrails no plano de controle (Issue #105).
    - Exportadores para criacao de pacotes de subagentes e ferramentas compativeis com Claude Code.
 
 4. **`nexcoder-planning`**: Planejamento agil de sprints e sincronizacao de tarefas.
@@ -182,6 +183,7 @@ Guias detalhados estao disponiveis no diretorio [docs/](docs/):
 - **Ideacao, Planejamento e Agentes**:
   - [Ideacao e Comite](docs/ideation-and-jury.md): Esquadrao de pesquisa de mercado, matriz competitiva e votacao por quorum.
   - [Planejamento Agilico](docs/agentic-planning.md): Conversao de PRD, gestao de capacidade de sprint e sincronizacao idempotente de tarefas.
+  - [VCS e Gestao de Repositorios](docs/vcs-integrations.md): Camada comum de integracao com Azure DevOps, GitLab, Git, SVN e TortoiseGit, seguranca de tokens e auditoria.
   - [Calculadora de Custo de Produto](docs/cost-calculator.md): Estimativa de construcao, publicacao, manutencao (mes/ano) e licencas/marca.
   - [Catalogo de Agentes](docs/agents-catalog.md): Taxonomia de personas, esquema de metadados e pacotes por tecnologia.
   - [Pipelines](docs/pipelines.md): Orquestracao de fluxos LangGraph, blocos reutilizaveis e portais de aprovacao humana.
