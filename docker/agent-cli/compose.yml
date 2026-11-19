@@ -1,0 +1,33 @@
+# Optional long-running agent CLI container for ContainerCLIBackend(mode="exec").
+#
+#   docker compose -f docker/agent-cli/compose.yml up -d --build
+#   docker compose -f docker/agent-cli/compose.yml run --rm agent-cli login
+#
+# The login lives in the named volume below, never in the image or the repository.
+services:
+  agent-cli:
+    build:
+      context: .
+    image: nexcoder/agent-cli:local
+    container_name: nexcoder-agent-cli
+    command: ["idle"]
+    environment:
+      NEXCODER_AGENT_CLI: ${NEXCODER_AGENT_CLI:-claude}
+    volumes:
+      - agent-home:/home/agent
+      - ${NEXCODER_AGENT_WORKSPACE:-./workspace}:/workspace:ro
+    read_only: true
+    tmpfs:
+      - /tmp:rw,size=256m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 2g
+    cpus: 2
+    restart: unless-stopped
+
+volumes:
+  agent-home:
+    name: nexcoder-agent-cli-home
