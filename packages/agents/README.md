@@ -209,6 +209,27 @@ proposal = assistant.build_proposal(candidate)   # diagnosis, mockup, cost
 print(proposal.cost.year_one_total)
 ```
 
+### Agent Backends: Agent CLI in a Container (Issue #115)
+
+`nexcoder_agents.backends` defines `AgentBackend`, a pluggable interface next to the API model backends.
+A backend takes a whole task and returns a structured `AgentResult` with status, output, model, usage and
+reported cost. The default is `OfflineAgentBackend`, which uses no network and no subprocess.
+`ContainerCLIBackend` sends the task to an agent CLI running in a container with the user's own login.
+See [docker/agent-cli/README.md](../../docker/agent-cli/README.md) for the image, the login volume, the terms
+of use and the wire protocol.
+
+```python
+from nexcoder_agents.backends import build_agent_backend
+
+backend = build_agent_backend()  # offline unless NEXCODER_AGENT_BACKEND says otherwise
+result = backend.dispatch("Summarize the project layout.")
+print(result.status, result.output)
+```
+
+```bash
+nexcoder-agents dispatch "Summarize the project layout." --backend container --workspace .
+```
+
 ## Origin
 
 A catalog of automation agents and personas distilled into a generic, vendor-agnostic architecture.
