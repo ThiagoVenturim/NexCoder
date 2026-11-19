@@ -179,6 +179,7 @@ Guias detalhados estao disponiveis no diretorio [docs/](docs/):
   - [Execucao Local: vLLM vs Ollama](docs/serving-vllm-vs-ollama.md): Dimensionamento de hardware, benchmarks de concorrencia e conteineres.
   - [Observabilidade com Langfuse](docs/observability-langfuse.md): Rastreamento de traces, controle de custos, disjuntor e metricas.
   - [Plano de Controle](docs/control-plane.md): Orcamento por chave de API, controle de taxas, auditoria e governanca humana.
+  - [Backend de CLI de Agente em Container](docker/agent-cli/README.md): Executa tarefas por um CLI de agente em container com o seu proprio login, respeitando os termos de uso do provedor.
   - [Infraestrutura como Codigo (IaC)](docs/iac-provisioning.md): Provisionamento de servidores, VMs e nuvem, catalogo de referencia e isolamento de credenciais.
   - [Seguranca e Exposicao de Servidor](docs/server-security.md): Proxy reverso Nginx com TLS, scripts de hardening (bash/ps1), isolamento de rede e mascaramento de dados PII.
 

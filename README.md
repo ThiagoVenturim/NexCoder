@@ -181,6 +181,7 @@ Documentation guides are available in the [docs/](docs/) directory:
   - [Serving: vLLM vs Ollama](docs/serving-vllm-vs-ollama.md): Hardware sizing, concurrency benchmarks, Docker setups, and local LLM serving.
   - [Observability with Langfuse](docs/observability-langfuse.md): Tracing, cost tracking, circuit breaker configuration, and evaluation metrics.
   - [Control Plane](docs/control-plane.md): API key budgeting, rate limiting, audit logging, and human-in-the-loop governance.
+  - [Agent CLI Container Backend](docker/agent-cli/README.md): Run tasks through an agent CLI in a container with your own login, within the provider's terms of use.
   - [Infrastructure as Code (IaC)](docs/iac-provisioning.md): Multi-target server, VM, and cloud provisioning, reference catalog, and user credential isolation.
   - [Server Security & Exposure](docs/server-security.md): Hardened Nginx reverse proxy, OS hardening scripts (bash/ps1), privatization, and PII masking.
 
