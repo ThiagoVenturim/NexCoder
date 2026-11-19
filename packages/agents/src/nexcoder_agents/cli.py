@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from nexcoder_agents.ai_engineering import (
     AIFeatureRequest,
     RecipeType,
 )
+from nexcoder_agents.backends import BACKEND_NAMES, AgentBackendError, ContainerBackendConfig, build_agent_backend
 from nexcoder_agents.catalog.registry import AgentCatalog
 from nexcoder_agents.catalog.skills import SkillCatalog
 from nexcoder_agents.data_engineering import (
@@ -302,7 +304,81 @@ def build_parser() -> argparse.ArgumentParser:
         help="Count of available training samples.",
     )
 
+    # dispatch subcommand (agent backends, issue #115)
+    dispatch_parser = subparsers.add_parser(
+        "dispatch",
+        help="Send one task to an agent backend (offline by default, or the agent CLI container) and print JSON.",
+    )
+    dispatch_parser.add_argument("prompt", type=str, help="Task text.")
+    dispatch_parser.add_argument(
+        "--backend",
+        choices=list(BACKEND_NAMES),
+        default=None,
+        help="Agent backend (default: $NEXCODER_AGENT_BACKEND or offline).",
+    )
+    dispatch_parser.add_argument("--system-prompt", type=str, default=None, help="Optional system prompt.")
+    dispatch_parser.add_argument("--timeout", type=float, default=None, help="Task timeout in seconds.")
+    dispatch_parser.add_argument("--actor", type=str, default="cli", help="Actor recorded in the audit log.")
+    dispatch_parser.add_argument("--runtime", type=str, default="docker", help="Container runtime (docker or podman).")
+    dispatch_parser.add_argument("--image", type=str, default="nexcoder/agent-cli:local", help="Agent CLI image.")
+    dispatch_parser.add_argument("--volume", type=str, default="nexcoder-agent-cli-home", help="Login volume name.")
+    dispatch_parser.add_argument("--cli", type=str, default="claude", help="Adapter inside the image.")
+    dispatch_parser.add_argument("--mode", choices=["run", "exec"], default="run", help="docker run or docker exec.")
+    dispatch_parser.add_argument("--container-name", type=str, default="nexcoder-agent-cli", help="For exec mode.")
+    dispatch_parser.add_argument("--workspace", type=Path, default=None, help="Directory mounted at /workspace.")
+    dispatch_parser.add_argument("--writable-workspace", action="store_true", help="Mount the workspace read-write.")
+    dispatch_parser.add_argument("--network", type=str, default=None, help="Container network.")
+    dispatch_parser.add_argument(
+        "--command",
+        dest="agent_command",
+        type=str,
+        default=None,
+        help="Argv for the command backend (default: $NEXCODER_AGENT_COMMAND).",
+    )
+
     return parser
+
+
+def _dispatch(parsed: argparse.Namespace) -> int:
+    from nexcoder_control.metering.audit import AppendOnlyAuditLog
+    from nexcoder_control.metering.cost_tracker import CostTracker
+
+    audit_log = AppendOnlyAuditLog()
+    cost_tracker = CostTracker()
+    kwargs: dict = {"audit_log": audit_log, "cost_tracker": cost_tracker}
+    if parsed.timeout is not None:
+        kwargs["timeout_s"] = parsed.timeout
+    try:
+        config = ContainerBackendConfig(
+            runtime=parsed.runtime,
+            image=parsed.image,
+            credentials_volume=parsed.volume,
+            cli=parsed.cli,
+            mode=parsed.mode,
+            container_name=parsed.container_name,
+            workspace_dir=parsed.workspace,
+            workspace_read_only=not parsed.writable_workspace,
+            network=parsed.network,
+            **({"timeout_s": parsed.timeout} if parsed.timeout is not None else {}),
+        )
+        backend = build_agent_backend(
+            parsed.backend, container_config=config, command=parsed.agent_command, **kwargs
+        )
+    except (AgentBackendError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+
+    result = backend.dispatch(
+        parsed.prompt,
+        system_prompt=parsed.system_prompt,
+        timeout_s=parsed.timeout,
+        actor=parsed.actor,
+        agent_id="cli_dispatch",
+    )
+    payload = result.model_dump(mode="json")
+    payload["audit_events"] = len(audit_log.query(actor=parsed.actor))
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0 if result.ok else 1
 
 
 def main(args: list[str] | None = None) -> int:
@@ -312,6 +388,9 @@ def main(args: list[str] | None = None) -> int:
     if not parsed.command:
         parser.print_help()
         return 0
+
+    if parsed.command == "dispatch":
+        return _dispatch(parsed)
 
     catalog = AgentCatalog.default()
     skills = SkillCatalog.default()
