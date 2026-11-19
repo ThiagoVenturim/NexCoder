@@ -28,6 +28,7 @@ GATE_ALLOWED_PREFIXES = (
     "packages/ideation/src/nexcoder_ideation/search/providers.py",
     "packages/planning/src/nexcoder_planning/adapters/",
     "packages/capture/src/nexcoder_capture/web/",
+    "packages/testing/src/nexcoder_testing/gate/",
 )
 
 PROHIBITED_SCAN_COMMANDS = frozenset({

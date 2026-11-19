@@ -22,6 +22,7 @@ O `nexcoder` orquestra o ciclo completo de entrega de software: intake de ideias
 | `nexcoder-serving` | Disponivel | Issue [#11](https://github.com/ThiagoVenturim/nexcoder/issues/11) |
 | `nexcoder-continuous-improvement` | Disponivel | Issue [#8](https://github.com/ThiagoVenturim/nexcoder/issues/8) |
 | `nexcoder-mlops` | Disponivel | Issue [#97](https://github.com/ThiagoVenturim/nexcoder/issues/97) |
+| `nexcoder-testing` | Disponivel | Issue [#70](https://github.com/ThiagoVenturim/nexcoder/issues/70) |
 
 ---
 

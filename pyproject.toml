@@ -38,5 +38,6 @@ pythonpath = [
     "packages/continuous-improvement/src",
     "packages/iac/src",
     "packages/mlops/src",
+    "packages/testing/src",
 ]
 addopts = "-q --import-mode=importlib"

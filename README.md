@@ -24,6 +24,7 @@ An open-source, modular platform for automated software development from idea to
 | `nexcoder-serving` | Available | Issue [#11](https://github.com/ThiagoVenturim/nexcoder/issues/11) |
 | `nexcoder-continuous-improvement` | Available | Issue [#8](https://github.com/ThiagoVenturim/nexcoder/issues/8) |
 | `nexcoder-mlops` | Available | Issue [#97](https://github.com/ThiagoVenturim/nexcoder/issues/97) |
+| `nexcoder-testing` | Available | Issue [#70](https://github.com/ThiagoVenturim/nexcoder/issues/70) |
 
 ---
 
