@@ -188,6 +188,7 @@ Guias detalhados estao disponiveis no diretorio [docs/](docs/):
   - [VCS e Gestao de Repositorios](docs/vcs-integrations.md): Camada comum de integracao com Azure DevOps, GitLab, Git, SVN e TortoiseGit, seguranca de tokens e auditoria.
   - [Calculadora de Custo de Produto](docs/cost-calculator.md): Estimativa de construcao, publicacao, manutencao (mes/ano) e licencas/marca.
   - [Marketing e Divulgacao](docs/marketing.md): Copy de anuncios com testes A/B, posts para redes sociais (LinkedIn, Instagram, TikTok), montagem de video aberta (Piper TTS, FFmpeg), calendario integrado ao Nextor e publicacao segura com aprovacao humana.
+  - [Prospeccao Assistida (lead-gen)](docs/leadgen.md): Fontes publicas, sinais passivos do site, proposta com mockup e custo, e rascunhos de e-mail com aprovacao humana e travas de LGPD/CAN-SPAM.
   - [Catalogo de Agentes](docs/agents-catalog.md): Taxonomia de personas, esquema de metadados e pacotes por tecnologia.
   - [Pipelines](docs/pipelines.md): Orquestracao de fluxos LangGraph, blocos reutilizaveis e portais de aprovacao humana.
 

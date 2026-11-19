@@ -257,3 +257,12 @@ class TestTargetAuthorizationGate:
             assert "AKIA1234567890ABCDEF" not in dump
             assert "inline_secret_value_987654" not in dump
             assert "[REDACTED]" in dump
+
+
+def test_token_target_with_trailing_whitespace_still_matches() -> None:
+    """issue_token strips the target, so verification must accept the same unstripped target."""
+    manager = ApprovalTokenManager()
+    target = "email:client@example.com:Proposal for a site of "
+    _record, raw = manager.issue_token(action_name="email:send", target_resource=target, approver="lead")
+    consumed = manager.verify_and_consume(raw_token=raw, action_name="email:send", target_resource=target)
+    assert consumed.is_consumed is True

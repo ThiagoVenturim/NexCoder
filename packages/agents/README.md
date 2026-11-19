@@ -187,6 +187,28 @@ print("Generated Files:", len(result.generated_files))
 print("Evaluation Passed:", result.evaluation.passed)
 ```
 
+### Assisted Prospecting and Proposals with Guardrails (Issue #103)
+
+Public sources only, passive observation of the public home page only, and human approval
+for every e-mail. See [docs/leadgen.md](../../docs/leadgen.md).
+
+```python
+from nexcoder_agents.leadgen import LeadGenAssistant, OutreachPolicy, StaticBusinessSource
+
+policy = OutreachPolicy(
+    sender_name="Your Name",
+    sender_organization="Your Studio",
+    sender_email="sales@your-domain.example",
+    postal_address="Street, number, city",
+    unsubscribe_url="https://your-domain.example/unsubscribe?c={code}",
+)
+source = StaticBusinessSource([{"name": "Padaria", "segment": "padaria", "region": "Vitoria"}])
+assistant = LeadGenAssistant([source], policy)
+candidate = assistant.find_candidates("Vitoria", "padaria")[0]
+proposal = assistant.build_proposal(candidate)   # diagnosis, mockup, cost
+print(proposal.cost.year_one_total)
+```
+
 ### Agent Backends: Agent CLI in a Container (Issue #115)
 
 `nexcoder_agents.backends` defines `AgentBackend`, a pluggable interface next to the API model backends.

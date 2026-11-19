@@ -129,7 +129,8 @@ class ApprovalTokenManager:
             if record.is_expired():
                 raise ApprovalRequiredError(f"Approval token '{record.token_id}' expired at {record.expires_at}")
 
-            if record.action_name != action_name or record.target_resource != target_resource:
+            # issue_token stores stripped values, so compare stripped values here as well.
+            if record.action_name != action_name.strip() or record.target_resource != target_resource.strip():
                 raise ApprovalRequiredError(
                     f"Approval token target mismatch (expected '{record.action_name}' on '{record.target_resource}', "
                     f"attempted '{action_name}' on '{target_resource}')"
