@@ -1,4 +1,4 @@
-# Contributing to faccoder
+# Contributing to nexcoder
 
 Thank you for helping. A few rules keep the project consistent.
 
@@ -18,8 +18,8 @@ The hooks block emojis and strip AI co-author trailers from commit messages.
   documentation, UI strings or commit messages.
 - `ruff check packages scripts` passes.
 - `python -m pytest packages` passes without network access. Use the `offline`
-  preset (`FaccoderConfig(preset="offline")`) or `FakeChatModel` in tests.
-- Model calls go through `faccoder_core.get_chat_model(tier)`; never hardcode a
+  preset (`NexcoderConfig(preset="offline")`) or `FakeChatModel` in tests.
+- Model calls go through `nexcoder_core.get_chat_model(tier)`; never hardcode a
   vendor model in a package.
 - No secrets or real personal data in code, tests or fixtures.
 
@@ -31,7 +31,7 @@ Conventional commits in English: `feat(code-intel): add COBOL paragraph parser`,
 ## Packages
 
 Each package lives in `packages/<name>/` with its own `pyproject.toml`, `src/`,
-`tests/` and `README.md`, and depends on `faccoder-core`.
+`tests/` and `README.md`, and depends on `nexcoder-core`.
 
 ## How to contribute
 

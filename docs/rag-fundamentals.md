@@ -2,7 +2,7 @@
 
 Retrieval-Augmented Generation (RAG) grounds language models in an external knowledge repository, eliminating hallucinations and enabling agents to navigate large codebases.
 
-However, applying text-based RAG directly to source code often produces poor results if lexical precision and syntactic structure are ignored. This guide explains the core concepts of code RAG and how `faccoder` implements them.
+However, applying text-based RAG directly to source code often produces poor results if lexical precision and syntactic structure are ignored. This guide explains the core concepts of code RAG and how `nexcoder` implements them.
 
 ---
 
@@ -22,7 +22,7 @@ When applied to code, this breaks down:
 
 ## 1. Syntactic Symbol Chunking
 
-Instead of fixed-length character windows, `faccoder-code-intel` chunks code along **Abstract Syntax Tree (AST)** symbol boundaries using Tree-sitter and Object Pascal parsers:
+Instead of fixed-length character windows, `nexcoder-code-intel` chunks code along **Abstract Syntax Tree (AST)** symbol boundaries using Tree-sitter and Object Pascal parsers:
 
 ```
 +--------------------------------------------------------------+
@@ -57,7 +57,7 @@ No single search algorithm handles all code queries:
 - **Lexical BM25 (SQLite FTS5)** excels at exact identifier lookups (`UserRepository`, `HTTP_401_UNAUTHORIZED`, error codes).
 - **Dense Vector Search (`sqlite-vec`)** excels at natural language intent ("how are customer payments refunded?").
 
-`faccoder-core` integrates both through `HybridStore`:
+`nexcoder-core` integrates both through `HybridStore`:
 
 ```
                [User Query: "find customer charge method"]
@@ -83,7 +83,7 @@ No single search algorithm handles all code queries:
 
 Standard score normalization across different scoring algorithms (e.g. BM25 unbounded scores vs cosine [-1, 1]) is notoriously fragile.
 
-`faccoder` fuses ranked lists using **Reciprocal Rank Fusion (RRF)**:
+`nexcoder` fuses ranked lists using **Reciprocal Rank Fusion (RRF)**:
 
 $$RRF\_Score(d) = \sum_{m \in M} \frac{1}{k + rank_m(d)}$$
 
@@ -96,11 +96,11 @@ Items appearing near the top of both lists receive massive score boosts, while i
 
 ---
 
-## Practical Example in faccoder
+## Practical Example in nexcoder
 
 ```python
-from faccoder_code_intel import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 # 1. Initialize hybrid index
 embedder = HashEmbedder(dimensions=256)

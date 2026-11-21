@@ -2,7 +2,7 @@
 
 Turning a Product Requirement Document (PRD) into synchronized, trackable code tasks requires more than a simple text summary. It requires understanding dependencies, calculating team capacity, maintaining idempotency, and updating issue trackers as work progresses.
 
-The `faccoder-planning` package provides agentic sprint planning and task synchronization across GitHub, GitLab, and Azure DevOps.
+The `nexcoder-planning` package provides agentic sprint planning and task synchronization across GitHub, GitLab, and Azure DevOps.
 
 ---
 
@@ -46,7 +46,7 @@ The `faccoder-planning` package provides agentic sprint planning and task synchr
 `PRDConverter` parses Markdown PRDs using deterministic heuristics and LLM extraction to produce a hierarchical backlog:
 
 ```python
-from faccoder_planning import PRDConverter
+from nexcoder_planning import PRDConverter
 
 converter = PRDConverter()
 backlog = converter.convert_prd(prd_markdown_text)
@@ -74,7 +74,7 @@ Every generated task includes:
 Raw backlog estimates cannot be scheduled without accounting for real-world team availability:
 
 ```python
-from faccoder_planning import CapacityCalculator, SprintCapacityConfig, TeamMember
+from nexcoder_planning import CapacityCalculator, SprintCapacityConfig, TeamMember
 
 config = SprintCapacityConfig(
     sprint_duration_days=10,
@@ -101,14 +101,14 @@ The calculator matches estimated task hours against layer-specific availability,
 
 When creating issues in external trackers (such as GitHub, GitLab, or Azure DevOps), repeating the planning step must never create duplicate tickets.
 
-`faccoder-planning` embeds an invisible HTML comment marker into the body of every generated item:
+`nexcoder-planning` embeds an invisible HTML comment marker into the body of every generated item:
 
 ```markdown
-<!-- faccoder-id: fc-task-7a9b1c2d-4e5f -->
+<!-- nexcoder-id: fc-task-7a9b1c2d-4e5f -->
 ```
 
 Before creating any ticket or project item, the adapter queries the tracker:
-1. Searches existing issues for the matching `faccoder-id`.
+1. Searches existing issues for the matching `nexcoder-id`.
 2. If found, **updates** the title, description, and milestones in place.
 3. If not found, **creates** a new issue and attaches the marker.
 

@@ -1,9 +1,16 @@
-# faccoder-ideation
+# nexcoder-ideation
 
-Ideation, research squad, and jury committee package for faccoder: transforms free-text product ideas into rigorous, verified Product Requirement Documents (PRDs) and system architecture proposals through autonomous multi-agent diligence and human governance gates.
+Ideation, research squad, and jury committee package for nexcoder: transforms free-text product ideas into rigorous, verified Product Requirement Documents (PRDs) and system architecture proposals through autonomous multi-agent diligence and human governance gates.
 
 ## Features
 
+- **Scenario Discovery & Guided Onboarding**:
+  - `detectar_persona`: Classifies users between Persona A (established company with active software/codebase) and Persona B (idea stage / pain only).
+  - Branching guided interview (`iniciar_entrevista`, `responder`):
+    - Persona A: Gathers current tech stack, hosting infrastructure, technical debt, business goals, compliance constraints, and code access permissions.
+    - Persona B: Sharpens core problem statement, target audience, differentiation, budget limits, delivery timeline, and key risk assumptions.
+  - `gerar_perfil`: Consolidates a sanitized `ScenarioProfile` that configures downstream pipeline stages (GraphRAG indexing, quality agents, security gate, research squad, jury committee, PRD generator, cost calculator).
+  - Strict privacy protections: All tokens, passwords, and sensitive credentials are automatically redacted with zero data leakage.
 - **Intake & Structuring**:
   - `IdeaAnalyst` structures free-text brainstorms into clear problem statements, target audience segments, and value hypotheses.
   - Generates initial assumptions and domain tagging.
@@ -23,7 +30,7 @@ Ideation, research squad, and jury committee package for faccoder: transforms fr
   - Quorum-based voting mechanism producing consensus decisions: `go`, `pivot`, or `no-go`.
   - Support for multi-round refinement and re-evaluation cycles.
 - **Deliverables & b85 Governance Gate**:
-  - Generates standard Markdown PRD directly compatible with `faccoder-planning`.
+  - Generates standard Markdown PRD directly compatible with `nexcoder-planning`.
   - Comprehensive Markdown and self-contained responsive HTML executive reports.
   - Modular system architecture proposal with component breakdown and security controls.
   - Cryptographic b85 human approval gate with 30-minute token expiration before advancing to sprint planning.
@@ -37,7 +44,7 @@ pip install -e packages/ideation
 ## Quick Start
 
 ```python
-from faccoder_ideation import IdeationPipeline
+from nexcoder_ideation import IdeationPipeline
 
 # Initialize pipeline (100% offline with mock search provider)
 pipeline = IdeationPipeline(allow_network=False)
@@ -61,4 +68,4 @@ print(f"Generated PRD: {files['prd']}")
 
 ## Origin
 
-Derived from research and multi-agent pipeline techniques developed in ApoIA and lochome, formalized into a modular, public open-source architecture.
+A modular, open-source architecture for research and multi-agent pipelines.

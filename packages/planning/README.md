@@ -1,6 +1,6 @@
-# faccoder-planning
+# nexcoder-planning
 
-Agentic planning engine for faccoder: converts Product Requirement Documents (PRDs) into structured backlogs (epics, user stories, tasks), computes sprint capacity factoring in velocity and buffer reserves, and syncs tasks with platform trackers (GitHub, GitLab, Azure DevOps) idempotently using unique tracking markers.
+Agentic planning engine for nexcoder: converts Product Requirement Documents (PRDs) into structured backlogs (epics, user stories, tasks), computes sprint capacity factoring in velocity and buffer reserves, and syncs tasks with platform trackers (GitHub, GitLab, Azure DevOps) idempotently using unique tracking markers.
 
 ## Features
 
@@ -24,12 +24,29 @@ Agentic planning engine for faccoder: converts Product Requirement Documents (PR
   - Full cursor-based pagination for Projects v2 GraphQL API, overcoming 50/100 item limits.
   - Duplicate prevention when adding items to boards.
   - Milestone management and automated issue linking.
-  - Hidden tracking marker `<!-- faccoder-id: <uuid> -->` ensuring idempotent syncing.
+  - Hidden tracking marker `<!-- nexcoder-id: <uuid> -->` ensuring idempotent syncing across GitHub, GitLab, Azure DevOps, and Redmine (`RedmineAdapter`).
   - Safe by default: `--dry-run` is enabled across all write operations.
+- **Developer Productivity Reports (`nexdash` Integration)**:
+  - Pulls PRs, review latency, lead time, and closed issues from GitHub, Azure DevOps, and Redmine (`collect_github_productivity`, `collect_azure_devops_productivity`, `collect_redmine_productivity`).
+  - Normalizes records into the `dev_productivity` semantic cube and requests rendered HTML dashboards from `nexdash` over MCP, REST, or offline mode (`generate_productivity_dashboard`).
+- **Product Cost Calculator (Build, Publish, Maintain, License, and Brand)**:
+  - Estimating product lifecycle costs: development (human team, hybrid, or AI-only), publication setup, recurring monthly/annual cloud operations, and trademark/IP protection.
+  - Three scenarios per estimate: Basic (MVP), Medium (Recommended), and High (Enterprise).
+  - Configurable YAML pricing catalog with real, transparent sources (no guessed prices).
+  - Integration with `nexcoder-control` metering (`CostTracker`) for actual AI token costs and `nexcoder-iac` (#95) cloud topologies.
+  - Automated client commercial proposal generation with milestone disbursement schedules.
 - **Git Automation Helpers**:
   - Standardized branch creation from integration bases (`develop`).
   - Conventional commit builder strictly validating types and enforcing zero emojis and no AI co-author trailers.
   - Automated pull request creation with milestone linkage and verification checklists.
+- **Unified VCS and Repository Management Providers (`nexcoder_planning.vcs`)**:
+  - Unified interface (`RepoManagementProvider`) across Azure DevOps, GitLab, Git, Subversion (SVN), and TortoiseGit.
+  - Azure DevOps: Git repositories, work items/boards (WIQL), pull requests, and pipelines via REST API + PAT.
+  - GitLab: projects, issues, merge requests, and CI/CD pipelines via REST API + token.
+  - SVN: checkout, commit, log, diff, status, and update via the svn CLI.
+  - TortoiseGit: Windows Git automation, command line dialog construction (`TortoiseGitProc.exe`), and batch shortcuts.
+  - Git: reusable high-level Git operations with zero emoji enforcement.
+  - Security and audit: tokens strictly in environment variables, timing-attack safe comparison (`hmac.compare_digest`), and structured audit logging with credential redaction.
 
 ## Verification and Compliance (Issue #4)
 
@@ -41,7 +58,8 @@ All deliverables from Issue #4 are fully implemented and verified offline:
 - [x] GitLab and Azure DevOps adapters
 - [x] Sync loop: issue and PR status to board, re-plan, slippage alerts
 - [x] Git helpers: branch, conventional commit strictly without emojis or co-author trailers, PR creation
-- [x] 54/54 unit tests passing offline with zero external dependencies
+- [x] Product cost calculator (build, publish, maintain, license, brand) with YAML pricing catalog, scenarios (basic, medium, high), control plane integration, and commercial proposal generation
+- [x] 65/65 unit tests passing offline with zero external dependencies
 
 ## Installation
 
@@ -52,7 +70,7 @@ pip install -e packages/planning
 ## Quick Start
 
 ```python
-from faccoder_planning import (
+from nexcoder_planning import (
     BoardSynchronizer,
     CapacityCalculator,
     GitHubAdapter,

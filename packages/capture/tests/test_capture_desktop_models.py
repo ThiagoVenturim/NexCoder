@@ -1,8 +1,8 @@
-"""Unit tests for faccoder_capture.desktop.models."""
+"""Unit tests for nexcoder_capture.desktop.models."""
 
 from __future__ import annotations
 
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.models import (
     DesktopBoundingBox,
     DesktopCaptureConfig,
     DesktopCaptureResult,

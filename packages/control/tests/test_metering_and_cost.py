@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_control.metering.audit import AppendOnlyAuditLog
-from faccoder_control.metering.budgets import BudgetAlert, BudgetExceededError, BudgetManager, BudgetPolicy
-from faccoder_control.metering.cost_tracker import CostTracker
-from faccoder_control.metering.mcp_middleware import MCPToolMeter
+from nexcoder_control.metering.audit import AppendOnlyAuditLog
+from nexcoder_control.metering.budgets import BudgetAlert, BudgetExceededError, BudgetManager, BudgetPolicy
+from nexcoder_control.metering.cost_tracker import CostTracker
+from nexcoder_control.metering.mcp_middleware import MCPToolMeter
 
 
 class TestMCPToolMeter:

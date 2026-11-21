@@ -1,16 +1,16 @@
 # Models: Open-Source vs Paid
 
-`faccoder` is designed to be provider-neutral. It supports both self-hosted open-source models (via Ollama, vLLM, LM Studio, llama.cpp) and paid commercial APIs (Anthropic, OpenAI, Google Gemini, AWS Bedrock, Microsoft Azure).
+`nexcoder` is designed to be provider-neutral. It supports both self-hosted open-source models (via Ollama, vLLM, LM Studio, llama.cpp) and paid commercial APIs (Anthropic, OpenAI, Google Gemini, AWS Bedrock, Microsoft Azure).
 
-This guide explains how `faccoder` abstracts model selection, compares cost-to-performance tradeoffs, and provides configuration best practices.
+This guide explains how `nexcoder` abstracts model selection, compares cost-to-performance tradeoffs, and provides configuration best practices.
 
 ---
 
 ## The Three-Tier Model Strategy
 
-Rather than configuring individual model names (e.g. `gpt-4o`, `claude-3-5-sonnet`, `llama-3.1-70b`) throughout your code, `faccoder` maps workflows to three capability tiers:
+Rather than configuring individual model names (e.g. `gpt-4o`, `claude-3-5-sonnet`, `llama-3.1-70b`) throughout your code, `nexcoder` maps workflows to three capability tiers:
 
-| Tier | Capability Profile | Typical Open-Source Models | Typical Paid Commercial Models | Primary Workloads in faccoder |
+| Tier | Capability Profile | Typical Open-Source Models | Typical Paid Commercial Models | Primary Workloads in nexcoder |
 |---|---|---|---|---|
 | `small` | Fast, low latency, economical, high throughput | Llama 3.2 3B, Qwen 2.5 7B, Mistral 7B | Claude 3.5 Haiku, GPT-4o mini, Gemini 1.5 Flash | Query expansion, chunk tagging, routing, schema extraction, unit test drafting |
 | `medium` | Strong reasoning, precise code generation, long context | Qwen 2.5 Coder 32B, Llama 3.3 70B, DeepSeek V2.5 | Claude 3.5 Sonnet, GPT-4o, Gemini 1.5 Pro | AST analysis, refactoring, feature implementation, pipeline validation |
@@ -30,9 +30,9 @@ Rather than configuring individual model names (e.g. `gpt-4o`, `claude-3-5-sonne
 
 ---
 
-## Configuring Providers in faccoder
+## Configuring Providers in nexcoder
 
-Providers are configured via environment variables and loaded through `FaccoderConfig`:
+Providers are configured via environment variables and loaded through `NexcoderConfig`:
 
 ### 1. Paid Commercial Configuration
 
@@ -77,7 +77,7 @@ export VLLM_MODEL_LARGE="meta-llama/Llama-3.3-70B-Instruct"
 
 ## The Hybrid Recommendation
 
-For enterprise production deployments, `faccoder` recommends the `hybrid` preset:
+For enterprise production deployments, `nexcoder` recommends the `hybrid` preset:
 
 1. **Volume Tier (Local / Open-Source)**:
    - Use local vLLM or Ollama for parsing, summarization, query generation, and symbol chunking.

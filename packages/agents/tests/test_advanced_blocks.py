@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 
 import pytest
-from faccoder_agents.engine import (
+from nexcoder_agents.engine import (
     Ballot,
     BlockStatus,
     CommitteeBlock,
@@ -13,7 +13,7 @@ from faccoder_agents.engine import (
     PipelineBuilder,
     ValidatorBlock,
 )
-from faccoder_core.llm.fake import FakeChatModel
+from nexcoder_core.llm.fake import FakeChatModel
 
 
 def test_committee_block_consensus_go() -> None:

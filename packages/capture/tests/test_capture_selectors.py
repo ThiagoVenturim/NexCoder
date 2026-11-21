@@ -1,8 +1,8 @@
-"""Unit tests for faccoder_capture.web.selectors."""
+"""Unit tests for nexcoder_capture.web.selectors."""
 
 from __future__ import annotations
 
-from faccoder_capture.web.selectors import DOMParser, ElementNode, SelectorExtractor
+from nexcoder_capture.web.selectors import DOMParser, ElementNode, SelectorExtractor
 
 
 def test_dom_parser_hierarchy() -> None:

@@ -1,4 +1,4 @@
-from faccoder_security.agents import (
+from nexcoder_security.agents import (
     ASVSComplianceAgent,
     ComplianceStatus,
     DependencyAgent,
@@ -9,7 +9,7 @@ from faccoder_security.agents import (
     ThreatModelAgent,
     TriageVerdict,
 )
-from faccoder_security.models import Finding, FindingCategory, Location, Remediation, Severity
+from nexcoder_security.models import Finding, FindingCategory, Location, Remediation, Severity
 
 
 def test_threat_model_agent():

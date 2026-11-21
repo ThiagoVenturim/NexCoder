@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from faccoder_interfaces.tools import (
+from nexcoder_interfaces.tools import (
     TOOL_DEFINITIONS,
     approve_step,
     capture_page,
@@ -11,10 +11,13 @@ from faccoder_interfaces.tools import (
     impact_analysis,
     judge_idea,
     plan_sprints,
+    productivity_report,
     research_idea,
     run_agent,
     run_pipeline,
     search_code,
+    security_report,
+    security_review,
     security_scan,
     sync_board,
 )
@@ -111,9 +114,41 @@ def test_generate_docs_offline(tmp_path: Path) -> None:
 def test_security_scan_offline(tmp_path: Path) -> None:
     safe_file = tmp_path / "clean.py"
     safe_file.write_text("def add(a: int, b: int) -> int:\n    return a + b\n", encoding="utf-8")
-    res = security_scan(path=str(tmp_path), force_offline=True)
+    res = security_scan(path=str(tmp_path), force_offline=True, owned_target=True, authorized_by="dev-owner")
     assert res["status"] == "success"
+    assert res["authorized"] is True
     assert "passed_gate" in res
+
+
+def test_security_scan_refuses_unmarked_target(tmp_path: Path) -> None:
+    from nexcoder_control.metering.audit import AppendOnlyAuditLog
+
+    safe_file = tmp_path / "clean.py"
+    safe_file.write_text("def add(a: int, b: int) -> int:\n    return a + b\n", encoding="utf-8")
+    audit = AppendOnlyAuditLog()
+    res = security_scan(path=str(tmp_path), force_offline=True, owned_target=False, audit_log=audit)
+    assert res["status"] == "rejected"
+    assert res["authorized"] is False
+    assert "USAGE_POLICY.md" in res["reason"]
+    events = audit.query(event_type="target.authorization.denied")
+    assert len(events) == 1
+    assert events[0].resource == str(tmp_path.resolve())
+
+
+def test_security_review_tool_offline(tmp_path: Path) -> None:
+    vuln_file = tmp_path / "vuln.py"
+    vuln_file.write_text('cursor.execute(f"SELECT * FROM accounts WHERE id = {user_id}")\n', encoding="utf-8")
+
+    rejected = security_review(path=str(vuln_file), owned_target=False)
+    assert rejected["status"] == "rejected"
+    assert rejected["authorized"] is False
+
+    ok = security_review(path=str(vuln_file), owned_target=True, authorized_by="sec-owner")
+    assert ok["status"] == "success"
+    assert ok["authorized"] is True
+    assert ok["exploit_published"] is False
+    assert ok["total_findings"] >= 1
+    assert ok["findings"][0]["rule_id"] == "sql-injection.concatenated-query"
 
 
 def test_run_agent_offline() -> None:
@@ -193,3 +228,30 @@ def test_unavailable_tools() -> None:
     gen_res = generate_tests("spec_v1")
     assert gen_res["status"] == "unavailable"
     assert gen_res["module"] == "capture"
+
+
+def test_productivity_and_security_reports_offline(tmp_path: Path) -> None:
+    prod_html = tmp_path / "prod.html"
+    prod_res = productivity_report(
+        project="nexcoder",
+        team="core-squad",
+        period="2026-Q4",
+        transport="offline",
+        output_html_path=str(prod_html),
+    )
+    assert prod_res["status"] == "success"
+    assert prod_res["model_id"] == "dev_productivity"
+    assert prod_html.is_file()
+    assert "window.NEXDASH_DATA=" in prod_res["html"]
+
+    sec_html = tmp_path / "sec.html"
+    sec_res = security_report(
+        project="nexcoder",
+        period="2026-Q4",
+        transport="offline",
+        output_html_path=str(sec_html),
+    )
+    assert sec_res["status"] == "success"
+    assert sec_res["model_id"] == "security_posture"
+    assert sec_html.is_file()
+    assert "window.NEXDASH_DATA=" in sec_res["html"]

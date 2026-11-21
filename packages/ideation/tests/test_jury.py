@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 
-from faccoder_core.llm.fake import FakeChatModel
-from faccoder_ideation.jury.committee import JuryCommittee
-from faccoder_ideation.jury.personas import STANDARD_JURY_PERSONAS
-from faccoder_ideation.jury.rubric import DEFAULT_RUBRIC
-from faccoder_ideation.models import (
+from nexcoder_core.llm.fake import FakeChatModel
+from nexcoder_ideation.jury.committee import JuryCommittee
+from nexcoder_ideation.jury.personas import STANDARD_JURY_PERSONAS
+from nexcoder_ideation.jury.rubric import DEFAULT_RUBRIC
+from nexcoder_ideation.models import (
     ComplianceRisk,
     LegalPrivacyData,
     MarketResearchData,

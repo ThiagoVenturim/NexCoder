@@ -1,4 +1,4 @@
-from faccoder_security.models import (
+from nexcoder_security.models import (
     Finding,
     FindingCategory,
     Location,

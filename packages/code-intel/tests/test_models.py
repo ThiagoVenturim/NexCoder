@@ -1,6 +1,6 @@
 """Tests for symbol data models."""
 
-from faccoder_code_intel.models import (
+from nexcoder_code_intel.models import (
     RelationshipKind,
     Symbol,
     SymbolLocation,

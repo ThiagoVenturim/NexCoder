@@ -1,10 +1,10 @@
-from faccoder_planning.capacity import (
+from nexcoder_planning.capacity import (
     CapacityCalculator,
     SprintCapacityConfig,
     TeamMember,
     VelocityRecord,
 )
-from faccoder_planning.models import Task
+from nexcoder_planning.models import Task
 
 
 def test_team_member_gross_hours():

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from faccoder_agents.catalog import (
+from nexcoder_agents.catalog import (
     AgentCatalog,
     SkillCatalog,
     load_skill_file,

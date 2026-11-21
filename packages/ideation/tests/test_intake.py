@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 
-from faccoder_core.llm.fake import FakeChatModel
-from faccoder_ideation.intake import IdeaAnalyst
-from faccoder_ideation.models import RawIdea, StructuredIdea
+from nexcoder_core.llm.fake import FakeChatModel
+from nexcoder_ideation.intake import IdeaAnalyst
+from nexcoder_ideation.models import RawIdea, StructuredIdea
 
 
 def test_heuristic_intake() -> None:

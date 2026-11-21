@@ -1,7 +1,7 @@
 import json
 
-from faccoder_core.llm.fake import FakeChatModel
-from faccoder_planning import PRDConverter
+from nexcoder_core.llm.fake import FakeChatModel
+from nexcoder_planning import PRDConverter
 
 SAMPLE_PRD = """# PRD: Tenant Authentication System
 

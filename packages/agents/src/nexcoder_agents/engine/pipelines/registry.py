@@ -1,0 +1,184 @@
+from __future__ import annotations
+
+from typing import Any
+
+from nexcoder_agents.engine.graph import PipelineGraph
+from nexcoder_agents.engine.pipelines.models import PipelineTemplate
+from nexcoder_agents.engine.pipelines.templates import (
+    create_ai_feature_pipeline,
+    create_bugfix_pipeline,
+    create_data_engineering_pipeline,
+    create_documentation_pipeline,
+    create_feature_pipeline,
+    create_legacy_migration_pipeline,
+    create_oss_contribution_pipeline,
+    create_quality_review_pipeline,
+    create_refactor_pipeline,
+    create_security_audit_pipeline,
+    create_security_review_pipeline,
+    create_software_engineering_pipeline,
+)
+
+_REGISTRY: dict[str, PipelineTemplate] = {}
+_ALIASES: dict[str, str] = {
+    "revisao-de-qualidade": "quality-review",
+    "revisao_de_qualidade": "quality-review",
+    "revisao de qualidade": "quality-review",
+}
+
+
+def register_pipeline_template(template: PipelineTemplate) -> None:
+    """Register a new ready-made pipeline template."""
+    _REGISTRY[template.name] = template
+
+
+def get_pipeline_template(name: str) -> PipelineTemplate:
+    """Retrieve a registered pipeline template by name."""
+    if not _REGISTRY:
+        _init_default_templates()
+    resolved = _ALIASES.get(name, name)
+    if resolved not in _REGISTRY:
+        raise KeyError(f"Pipeline template '{name}' not found. Available: {list(_REGISTRY.keys())}")
+    return _REGISTRY[resolved]
+
+
+def list_pipeline_templates(category: str | None = None) -> list[PipelineTemplate]:
+    """List registered pipeline templates, optionally filtered by category."""
+    if not _REGISTRY:
+        _init_default_templates()
+    templates = list(_REGISTRY.values())
+    if category:
+        templates = [t for t in templates if t.category == category]
+    return templates
+
+
+def build_pipeline(name: str, **kwargs: Any) -> PipelineGraph:
+    """Build and compile a ready-made pipeline by name."""
+    template = get_pipeline_template(name)
+    return template.build(**kwargs)
+
+
+def _init_default_templates() -> None:
+    """Populate default ready-made templates."""
+    defaults = [
+        PipelineTemplate(
+            name="feature-delivery",
+            description="End-to-end feature delivery: validation, architecture design, codegen, committee, approval.",
+            category="delivery",
+            required_inputs=["feature_name", "user_story"],
+            factory=create_feature_pipeline,
+        ),
+        PipelineTemplate(
+            name="bugfix-delivery",
+            description=(
+                "Surgical defect resolution: incident triage, root-cause analysis, "
+                "patch synthesis, committee, approval."
+            ),
+            category="maintenance",
+            required_inputs=["issue_id", "description", "error_stack"],
+            factory=create_bugfix_pipeline,
+        ),
+        PipelineTemplate(
+            name="code-refactor",
+            description=(
+                "Structural refactoring: complexity audit, modularization planning, committee review, approval gate."
+            ),
+            category="maintenance",
+            required_inputs=["target_module", "refactor_goal"],
+            factory=create_refactor_pipeline,
+        ),
+        PipelineTemplate(
+            name="security-audit",
+            description=(
+                "Threat modeling and security assessment: STRIDE analysis, "
+                "security committee, remediation plan, approval."
+            ),
+            category="governance",
+            required_inputs=["service_name", "attack_surface"],
+            factory=create_security_audit_pipeline,
+        ),
+        PipelineTemplate(
+            name="legacy-migration",
+            description=(
+                "Incremental legacy modernization: logic deconstruction, "
+                "modern stack synthesis, parity audit, approval."
+            ),
+            category="migration",
+            required_inputs=["legacy_source", "target_stack"],
+            factory=create_legacy_migration_pipeline,
+        ),
+        PipelineTemplate(
+            name="documentation",
+            description=(
+                "System documentation: architectural synthesis, API reference generation, publishing approval gate."
+            ),
+            category="documentation",
+            required_inputs=["project_name", "source_scope"],
+            factory=create_documentation_pipeline,
+        ),
+        PipelineTemplate(
+            name="software-engineering-review",
+            description=(
+                "Software engineering review: pattern trade-offs, practices audit, ADRs, "
+                "bottom-up docs, sprint planning, and guided refactoring."
+            ),
+            category="engineering",
+            required_inputs=["project_name", "architecture_goal"],
+            factory=create_software_engineering_pipeline,
+        ),
+        PipelineTemplate(
+            name="quality-review",
+            description=(
+                "Code quality and architecture review (revisao de qualidade): gated target check, "
+                "AST/CodeGraph detectors for duplication, wrappers, over-engineering, readability, "
+                "performance, SQL modeling, structure and branches, prioritized P1/P2/P3 report."
+            ),
+            category="quality",
+            required_inputs=["project_path"],
+            factory=create_quality_review_pipeline,
+        ),
+        PipelineTemplate(
+            name="data-engineering-pipeline",
+            description=(
+                "End-to-end data engineering: batch/stream ingestion, ELT/ETL transformation, "
+                "schema quality contracts, storage modeling, DAG generation, and observability."
+            ),
+            category="data",
+            required_inputs=["pipeline_name", "pipeline_description"],
+            factory=create_data_engineering_pipeline,
+        ),
+        PipelineTemplate(
+            name="oss-contribution",
+            description=(
+                "Read-only open-source project analysis: RAG/GraphRAG mapping, static bug and security "
+                "detection, fix synthesis, coordinated disclosure routing, and contribution reporting."
+            ),
+            category="open-source",
+            required_inputs=["repo_path_or_url"],
+            factory=create_oss_contribution_pipeline,
+        ),
+        PipelineTemplate(
+            name="security-review",
+            description=(
+                "Comprehensive security review: prompt injection, SQL injection, data leakage, "
+                "general application security, optional runtime monitor, target gate, and responsible disclosure."
+            ),
+            category="security",
+            required_inputs=["target_path"],
+            factory=create_security_review_pipeline,
+        ),
+        PipelineTemplate(
+            name="ai-feature-pipeline",
+            description=(
+                "End-to-end ML/AI feature delivery: approach selection, parameterized recipes "
+                "(classification, extraction, RAG, recommendation, summarization, chatbot), "
+                "MLOps training integration, serving orchestration, offline evaluation, and guardrails."
+            ),
+            category="ai-ml",
+            required_inputs=["ai_feature_request"],
+            factory=create_ai_feature_pipeline,
+        ),
+    ]
+
+    for tmpl in defaults:
+        _REGISTRY[tmpl.name] = tmpl

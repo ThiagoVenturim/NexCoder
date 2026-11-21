@@ -2,7 +2,7 @@
 
 Selecting the right embedding model is the foundation of dense vector retrieval. Code embeddings differ substantially from standard natural language embeddings: they must represent programming language grammars, abstract symbol relationships, camelCase/snake_case tokens, and cross-language concepts.
 
-This guide benchmarks and evaluates embedding model options supported in `faccoder`.
+This guide benchmarks and evaluates embedding model options supported in `nexcoder`.
 
 ---
 
@@ -15,7 +15,7 @@ This guide benchmarks and evaluates embedding model options supported in `faccod
 | **voyage-code-3** | 1536 / 1024 | 16384 | Commercial API | State-of-the-art | Maximum retrieval accuracy for enterprise cloud deployments |
 | **text-embedding-3-large** | 3072 / 1536 | 8192 | OpenAI API | Strong | Existing OpenAI infrastructure; Matryoshka support |
 | **text-embedding-004** | 768 | 2048 | Google Cloud API | Strong | Google Cloud / Vertex AI ecosystem |
-| **HashEmbedder (faccoder internal)** | 256 | N/A | Local CPU (Zero model) | Deterministic mock | Hermetic offline testing and automated CI pipelines |
+| **HashEmbedder (nexcoder internal)** | 256 | N/A | Local CPU (Zero model) | Deterministic mock | Hermetic offline testing and automated CI pipelines |
 
 ---
 
@@ -32,14 +32,14 @@ Models specifically trained for code (such as `voyage-code-3` or `bge-m3` with i
 
 ---
 
-## Configuring Embeddings in faccoder
+## Configuring Embeddings in nexcoder
 
-`faccoder-core` supports multiple embedding backends via `build_embedder`:
+`nexcoder-core` supports multiple embedding backends via `build_embedder`:
 
 ### 1. Local BGE-M3 (Sentence-Transformers)
 
 ```python
-from faccoder_core.retrieval.embeddings import build_embedder
+from nexcoder_core.retrieval.embeddings import build_embedder
 
 embedder = build_embedder(provider="sentence-transformers", model_name="BAAI/bge-m3", dimensions=1024)
 vectors = embedder.embed_documents(["def calculate_tax(subtotal): return subtotal * 0.08"])
@@ -64,7 +64,7 @@ embedder = build_embedder(
 ### 4. Hermetic Offline Testing
 
 ```python
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 # Zero network, instant startup, deterministic outputs for tests
 embedder = HashEmbedder(dimensions=256)

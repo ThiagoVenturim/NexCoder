@@ -19,11 +19,12 @@ node_modules/
 .env
 *.env.local
 fabrica.local.yaml
-.faccoder/
+.nexcoder/
 *.sqlite
 *.db
 captures/
 langfuse-data/
+outputs/
 
 # Editors and OS
 .vscode/

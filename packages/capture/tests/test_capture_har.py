@@ -1,10 +1,10 @@
-"""Unit tests for faccoder_capture.web.har."""
+"""Unit tests for nexcoder_capture.web.har."""
 
 from __future__ import annotations
 
 import json
 
-from faccoder_capture.web.har import HarRecorder, sanitize_headers, sanitize_url
+from nexcoder_capture.web.har import HarRecorder, sanitize_headers, sanitize_url
 
 
 def test_sanitize_headers() -> None:
@@ -148,11 +148,11 @@ def test_to_har_dict() -> None:
         size_bytes=2048,
     )
 
-    har_dict = recorder.to_har_dict(creator_name="faccoder-capture-test")
+    har_dict = recorder.to_har_dict(creator_name="nexcoder-capture-test")
     assert "log" in har_dict
     log = har_dict["log"]
     assert log["version"] == "1.2"
-    assert log["creator"]["name"] == "faccoder-capture-test"
+    assert log["creator"]["name"] == "nexcoder-capture-test"
     assert len(log["entries"]) == 1
 
     entry = log["entries"][0]

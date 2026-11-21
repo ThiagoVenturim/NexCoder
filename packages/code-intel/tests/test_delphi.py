@@ -1,8 +1,8 @@
 """Tests for generic Delphi/Object Pascal parser."""
 
-from faccoder_code_intel.models import RelationshipKind, SymbolType
-from faccoder_code_intel.parsers import parse_file
-from faccoder_code_intel.parsers.delphi import DelphiParser
+from nexcoder_code_intel.models import RelationshipKind, SymbolType
+from nexcoder_code_intel.parsers import parse_file
+from nexcoder_code_intel.parsers.delphi import DelphiParser
 
 
 def test_delphi_unit_parsing() -> None:

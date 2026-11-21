@@ -3,16 +3,21 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_control.approval.machines import MachineApprovalManager
-from faccoder_control.approval.tokens import ApprovalRequiredError, ApprovalTokenManager
-from faccoder_control.auth.base import ForbiddenError
+from nexcoder_control.approval.machines import MachineApprovalManager
+from nexcoder_control.approval.target_gate import (
+    TargetAuthorizationGate,
+    TargetNotAuthorizedError,
+    normalize_target,
+)
+from nexcoder_control.approval.tokens import ApprovalRequiredError, ApprovalTokenManager
+from nexcoder_control.auth.base import ForbiddenError
 
 
 class TestApprovalTokens:
     def test_issue_and_consume_token(self, approval_manager: ApprovalTokenManager) -> None:
         record, raw_token = approval_manager.issue_token(
             action_name="git_force_push",
-            target_resource="repo:faccoder/main",
+            target_resource="repo:nexcoder/main",
             approver="lead_engineer",
             ttl_minutes=15,
         )
@@ -23,7 +28,7 @@ class TestApprovalTokens:
         consumed = approval_manager.verify_and_consume(
             raw_token=raw_token,
             action_name="git_force_push",
-            target_resource="repo:faccoder/main",
+            target_resource="repo:nexcoder/main",
             dry_run=False,
         )
         assert consumed.is_consumed
@@ -34,7 +39,7 @@ class TestApprovalTokens:
             approval_manager.verify_and_consume(
                 raw_token=raw_token,
                 action_name="git_force_push",
-                target_resource="repo:faccoder/main",
+                target_resource="repo:nexcoder/main",
                 dry_run=False,
             )
 
@@ -122,3 +127,142 @@ class TestCLIMachineApproval:
 
         with pytest.raises(ForbiddenError, match="is not approved"):
             machine_manager.verify_machine("box_2")
+
+
+class TestTargetAuthorizationGate:
+    def test_refuses_unmarked_target_and_logs_audit(self, tmp_path) -> None:
+        gate = TargetAuthorizationGate()
+        target = tmp_path / "unmarked_repo"
+        target.mkdir()
+
+        with pytest.raises(TargetNotAuthorizedError, match="USAGE_POLICY.md"):
+            gate.verify_target(target, mode="security_scan", owned_target=False, authorized_by="bob")
+
+        denied_events = gate.audit_log.query(event_type="target.authorization.denied")
+        assert len(denied_events) == 1
+        evt = denied_events[0]
+        assert evt.actor == "bob"
+        assert evt.action == "security_scan"
+        assert evt.resource == normalize_target(target)
+        assert evt.details["status"] == "denied"
+        assert evt.details["owned_target"] is False
+
+        valid, _msg = gate.audit_log.verify_integrity()
+        assert valid is True
+
+    def test_passes_marked_target_and_logs_authorizer_when_and_target(self, tmp_path) -> None:
+        gate = TargetAuthorizationGate()
+        target = tmp_path / "owned_repo"
+        target.mkdir()
+
+        rec = gate.verify_target(
+            target,
+            mode="security_scan",
+            owned_target=True,
+            authorized_by="alice",
+        )
+        assert rec.authorized_by == "alice"
+        assert rec.ownership == "owned"
+        assert rec.target == normalize_target(target)
+        assert rec.authorized_at is not None
+
+        granted_events = gate.audit_log.query(event_type="target.authorization.granted")
+        assert len(granted_events) == 1
+        evt = granted_events[0]
+        assert evt.actor == "alice"
+        assert evt.action == "security_scan"
+        assert evt.resource == normalize_target(target)
+        assert evt.details["authorized_by"] == "alice"
+        assert evt.details["target"] == normalize_target(target)
+        assert "authorized_at" in evt.details
+
+    def test_pre_registered_owned_target_and_revocation(self, tmp_path) -> None:
+        gate = TargetAuthorizationGate()
+        target = "https://staging.example.com"
+
+        gate.mark_owned_target(target, authorized_by="platform-team")
+        assert gate.is_target_authorized(target) is True
+
+        rec = gate.verify_target(target, mode="web_capture")
+        assert rec.authorized_by == "platform-team"
+
+        gate.revoke_target(target, revoked_by="security-officer")
+        assert gate.is_target_authorized(target) is False
+
+        with pytest.raises(TargetNotAuthorizedError):
+            gate.verify_target(target, mode="web_capture")
+
+    def test_approval_token_authorizes_once_and_never_logs_secret(self, tmp_path) -> None:
+        gate = TargetAuthorizationGate()
+        target = tmp_path / "partner_repo"
+        target.mkdir()
+        norm = normalize_target(target)
+
+        _tok_rec, raw_secret = gate.token_manager.issue_token(
+            action_name="security_scan",
+            target_resource=norm,
+            approver="ciso",
+        )
+
+        rec = gate.verify_target(target, mode="security_scan", approval_token=raw_secret)
+        assert rec.authorized_by == "ciso"
+        assert rec.ownership == "authorized"
+
+        # Single-use token cannot be reused
+        with pytest.raises(TargetNotAuthorizedError):
+            gate.verify_target(target, mode="security_scan", approval_token=raw_secret)
+
+        # Ensure raw token secret never appears in any audit event
+        for evt in gate.audit_log.query(limit=50):
+            serialized = evt.model_dump_json()
+            assert raw_secret not in serialized
+
+    def test_no_secrets_in_audit_log_on_grant_or_denial(self, tmp_path) -> None:
+        gate = TargetAuthorizationGate()
+        target = "https://admin:SuperSecretPass99!@internal.example.com/app"
+        sensitive_meta = {
+            "api_key": "sk-proj-supersecretapikey123456789",
+            "password": "PlaintextPassword123!",
+            "nested": {
+                "auth_header": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.secretpayload",
+                "aws": "AKIA1234567890ABCDEF",
+                "note": "token=inline_secret_value_987654",
+            },
+        }
+
+        with pytest.raises(TargetNotAuthorizedError):
+            gate.verify_target(
+                target,
+                mode="security_scan",
+                owned_target=False,
+                metadata=sensitive_meta,
+            )
+
+        gate.verify_target(
+            target,
+            mode="security_scan",
+            owned_target=True,
+            authorized_by="sec-ops",
+            metadata=sensitive_meta,
+        )
+
+        events = gate.audit_log.query(limit=20)
+        assert len(events) == 2
+        for evt in events:
+            dump = evt.model_dump_json()
+            assert "SuperSecretPass99!" not in dump
+            assert "sk-proj-supersecretapikey123456789" not in dump
+            assert "PlaintextPassword123!" not in dump
+            assert "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.secretpayload" not in dump
+            assert "AKIA1234567890ABCDEF" not in dump
+            assert "inline_secret_value_987654" not in dump
+            assert "[REDACTED]" in dump
+
+
+def test_token_target_with_trailing_whitespace_still_matches() -> None:
+    """issue_token strips the target, so verification must accept the same unstripped target."""
+    manager = ApprovalTokenManager()
+    target = "email:client@example.com:Proposal for a site of "
+    _record, raw = manager.issue_token(action_name="email:send", target_resource=target, approver="lead")
+    consumed = manager.verify_and_consume(raw_token=raw, action_name="email:send", target_resource=target)
+    assert consumed.is_consumed is True

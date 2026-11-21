@@ -1,10 +1,10 @@
-from faccoder_planning.capacity import (
+from nexcoder_planning.capacity import (
     SprintCapacityConfig,
     TeamMember,
     VelocityRecord,
     VelocityTracker,
 )
-from faccoder_planning.models import Task
+from nexcoder_planning.models import Task
 
 
 def test_velocity_record_properties():

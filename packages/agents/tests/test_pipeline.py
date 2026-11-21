@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_agents.engine import (
+from nexcoder_agents.engine import (
     ApprovalStatus,
     ConditionBlock,
     HumanApprovalBlock,
@@ -9,7 +9,7 @@ from faccoder_agents.engine import (
     PromptBlock,
     ValidatorBlock,
 )
-from faccoder_core.llm.fake import FakeChatModel
+from nexcoder_core.llm.fake import FakeChatModel
 
 
 def test_linear_pipeline_dry_run() -> None:

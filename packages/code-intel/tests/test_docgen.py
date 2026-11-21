@@ -1,15 +1,15 @@
 """Tests for BottomUpDocEngine hierarchical documentation generation."""
 
-from faccoder_code_intel.docgen import BottomUpDocEngine, DocLevel
-from faccoder_code_intel.graph import Community
-from faccoder_code_intel.models import (
+from langchain_core.language_models.fake_chat_models import FakeListChatModel
+from nexcoder_code_intel.docgen import BottomUpDocEngine, DocLevel
+from nexcoder_code_intel.graph import Community
+from nexcoder_code_intel.models import (
     Symbol,
     SymbolLocation,
     SymbolParameter,
     SymbolSignature,
     SymbolType,
 )
-from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
 
 def test_bottom_up_doc_generation() -> None:

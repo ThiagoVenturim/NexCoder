@@ -5,11 +5,11 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from faccoder_agents.catalog import AgentCatalog, SkillCatalog
-from faccoder_agents.catalog.models import AgentSpec
-from faccoder_agents.catalog.skills import SkillSpec
-from faccoder_agents.cli import main
-from faccoder_agents.export import (
+from nexcoder_agents.catalog import AgentCatalog, SkillCatalog
+from nexcoder_agents.catalog.models import AgentSpec
+from nexcoder_agents.catalog.skills import SkillSpec
+from nexcoder_agents.cli import main
+from nexcoder_agents.export import (
     export_claude_package,
     format_claude_agent_md,
     resolve_safe_export_path,
@@ -101,7 +101,7 @@ def test_cli_no_args_prints_help(capsys) -> None:
     code = main([])
     assert code == 0
     captured = capsys.readouterr()
-    assert "usage:" in captured.out.lower() or "faccoder-agents" in captured.out
+    assert "usage:" in captured.out.lower() or "nexcoder-agents" in captured.out
 
 
 def test_export_claude_package_empty_sectors(tmp_path: Path) -> None:

@@ -1,10 +1,10 @@
-# faccoder-security
+# nexcoder-security
 
-Security scanners, specialist agents, and release gate for the faccoder platform.
+Security scanners, specialist agents, and release gate for the nexcoder platform.
 
 ## Overview
 
-`faccoder-security` provides automated vulnerability scanning, specialist security intelligence agents, and a release gating engine designed to protect software throughout the development pipeline:
+`nexcoder-security` provides automated vulnerability scanning, specialist security intelligence agents, and a release gating engine designed to protect software throughout the development pipeline:
 
 1. **Scanners and Adapters**: Unified wrapper and offline heuristic engine integrating:
    - **Semgrep**: Static analysis for security vulnerabilities and code anti-patterns.
@@ -22,21 +22,37 @@ Security scanners, specialist agents, and release gate for the faccoder platform
    - `sec-secrets`: Exposed credential analysis, cryptographic entropy calculation, and immediate revocation/rotation playbooks.
    - `sec-asvs`: Full compliance audit against OWASP ASVS v4.0 (L1-L3), OWASP Web Top 10, and OWASP LLM Top 10.
    - `sec-fixer`: Generation of surgical unified diff patches to remediate detected vulnerabilities.
+   - `sec-prompt-injection`: Audits LLM prompts, system/user role separation, external data boundaries, and unvalidated tool calls.
+   - `sec-sql-injection`: Detects SQL queries assembled with string concatenation/formatting and unsafe ORM raw statements.
+   - `sec-data-leakage`: Detects secrets, tokens, and PII leaked in logs, HTTP responses, HAR captures, reports, state dumps, and unconfigured egress.
+   - `sec-appsec-general`: Audits unauthenticated routes, fail-open auth, wildcard CORS with credentials, non-constant-time token comparisons (`==`), path traversal, SSRF, and `shell=True` commands.
+   - `RuntimeSecurityMonitor`: Optional runtime monitor that inspects prompts and tool calls and blocks prompt injection and dangerous tool arguments.
 
 3. **Release Security Gate & Configuration**:
    - `security-gate`: Configurable release blocker preventing deployments with unresolved high or critical vulnerabilities.
    - `app_config`: Secure defaults scaffolding including Content Security Policy (CSP) headers, `SECURITY.md` responsible disclosure documentation, and deterministic dependency pinning.
 
+4. **Security Posture Dashboards (`nexdash` Integration)**:
+   - Converts multi-scanner findings, SBOM outdated dependencies, and release gate coverage into the `security_posture` semantic cube (`compute_security_metrics`, `generate_security_dashboard`).
+   - Communicates with `nexdash` via MCP, REST, or offline mode to produce CSP-hardened HTML dashboards.
+
+5. **Server Exposure, Hardening & Data Masking**:
+   - `server nginx`: Hardened Nginx reverse proxy configuration generator with TLS 1.2/1.3, Let's Encrypt support, gzip compression, rate limiting zones, HSTS/CSP security headers, and syntax/container validation.
+   - `server hardening`: Idempotent OS hardening scripts in Bash (`.sh`) and PowerShell (`.ps1`) covering firewall (ufw/nftables/netsh), passwordless SSH, fail2ban, unattended upgrades, non-root service accounts, and kernel sysctl parameters.
+   - `server isolate`: Privatization engine auditing and remediating unshielded port mappings (binding internal databases and caches strictly to `127.0.0.1`).
+   - `server mask`: PII and secret anonymizer for text logs, SQL database dumps, structured JSON records, and CSV files supporting placeholder, redact, and salted hash strategies.
+
+6. **Control Plane & Security Test Campaigns (Issue #71)**:
+   - Target authorization gate: strictly verifies target ownership or requires an Ed25519 signed authorization document (fail-closed, default NEGAR).
+   - Test types: unit (unitario), system (sistema), process (processo), DOM (DOM/UI), API (endpoints/schemas), and security (defensive SAST/secrets/injection).
+   - Multi-agent orchestration: allocates parallel specialist agents up to configured agent count.
+   - Budget policy and audit logging: enforces spending limits (USD) and timeout budgets with full audit trails in `AppendOnlyAuditLog`.
+   - Actionable reporting: produces consolidated findings with severity, step-by-step reproduction guide, and surgical remediation advice exportable to JSON, Markdown, and NexDash HTML.
+
 ## Installation
 
 ```bash
-pip install faccoder-security
-```
-
-Or install with CLI support:
-
-```bash
-pip install "faccoder-security[cli]"
+pip install nexcoder-security
 ```
 
 ## Quick Start
@@ -44,10 +60,10 @@ pip install "faccoder-security[cli]"
 ### Multi-Scanner Engine
 
 ```python
-from faccoder_security import MultiScannerEngine
+from nexcoder_security import MultiScannerEngine
 
 engine = MultiScannerEngine()
-result = engine.scan(".", force_offline=True)
+result = engine.scan(".", force_offline=True, owned_target=True, authorized_by="sec-engineer")
 
 print(f"Total findings: {result.total_findings()}")
 for finding in result.findings:
@@ -57,10 +73,10 @@ for finding in result.findings:
 ### Security Release Gate
 
 ```python
-from faccoder_security import GatePolicy, MultiScannerEngine, SecurityGateEvaluator
+from nexcoder_security import GatePolicy, MultiScannerEngine, SecurityGateEvaluator
 
 engine = MultiScannerEngine()
-scan_result = engine.scan(".", force_offline=True)
+scan_result = engine.scan(".", force_offline=True, owned_target=True, authorized_by="sec-engineer")
 
 policy = GatePolicy(max_critical=0, max_high=0)
 evaluator = SecurityGateEvaluator(default_policy=policy)
@@ -75,7 +91,7 @@ if not verdict.passed:
 ### Specialist Security Agents
 
 ```python
-from faccoder_security.agents import ThreatModelAgent, SecurityFixerAgent
+from nexcoder_security.agents import ThreatModelAgent, SecurityFixerAgent
 
 # Threat Modeling
 tm = ThreatModelAgent()
@@ -98,19 +114,40 @@ for patch in fix_report.patches:
 ### CLI Commands
 
 ```bash
-# Run scanners over a directory
-faccoder-security scan ./src --offline
+# Run scanners over an owned directory
+nexcoder-security scan ./src --offline --owned-target --authorized-by sec-engineer
+
+# Run scanners with a cryptographically signed authorization document
+nexcoder-security scan https://api.example.com --offline --auth-doc ./auth_doc.yaml
 
 # Evaluate the security release gate
-faccoder-security gate . --max-critical 0 --max-high 0 --offline
+nexcoder-security gate . --max-critical 0 --max-high 0 --offline --owned-target
 
 # Generate CycloneDX SBOM
-faccoder-security sbom . --format cyclonedx-json --offline
+nexcoder-security sbom . --format cyclonedx-json --offline --owned-target
 
 # Scaffold security baseline assets
-faccoder-security init-app-security . --name "MyService" --email "security@example.com"
+nexcoder-security init-app-security . --name "MyService" --email "security@example.com"
+
+# Run responsible-disclosure security review (prompt injection, SQLi, data leakage, general security)
+nexcoder-security review ./src --owned-target --authorized-by sec-engineer --enable-monitor
+
+# Generate Nginx reverse proxy and TLS configuration
+nexcoder-security server nginx --domain app.example.com --upstream 127.0.0.1:8000 --output nginx.conf --owned-target
+
+# Generate idempotent OS hardening scripts (Bash and PowerShell)
+nexcoder-security server hardening --profile basic --output-bash hardening.sh --output-ps1 hardening.ps1 --owned-target
+
+# Audit and remediate Docker Compose port exposure
+nexcoder-security server isolate ./docker-compose.yml --remediate --owned-target
+
+# Mask PII in SQL database dump
+nexcoder-security server mask ./backup.sql --format sql --strategy placeholder --output ./backup_masked.sql --owned-target
+
+# Run multi-agent security and quality testing campaign (Issue #71)
+nexcoder-security campaign ./src --test-types unit api security --agents 4 --budget-cost 10.0 --owned-target --authorized-by sec-lead --markdown
 ```
 
 ## Origin
 
-Ported and generalized from internal security and vulnerability scanning automation developed within the ApoIA platform and lochome, standardizing security pipelines across multi-tenant cloud ecosystems.
+Security and vulnerability scanning automation with standardized pipelines.

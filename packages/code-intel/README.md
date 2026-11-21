@@ -1,12 +1,12 @@
-# faccoder-code-intel
+# nexcoder-code-intel
 
-Code intelligence package for `faccoder`: AST and symbol parsing across languages, symbol-level chunking, CodeGraph, GraphRAG community detection, HyDE retrieval, and bottom-up documentation generation.
+Code intelligence package for `nexcoder`: AST and symbol parsing across languages, symbol-level chunking, CodeGraph, GraphRAG community detection, HyDE retrieval, and bottom-up documentation generation.
 
 ## Features
 
 - **Symbol Extraction**: Structured symbol models (`Symbol`, `SymbolType`, `SymbolLocation`, `SymbolSignature`, and relationships).
-- **Tree-sitter Parsers**: Robust AST-based parsers for Python, Go, JavaScript, TypeScript, Java, C, C++, and Rust.
-- **Delphi Parser**: Generic Object Pascal and Delphi form parser supporting units, interfaces, implementations, classes, methods, and DFM form components.
+- **Tree-sitter Parsers**: AST-based parsers for Python, Go, JavaScript, TypeScript, Java, C, C++, and Rust.
+- **Delphi Parser**: Object Pascal and Delphi form parser supporting units, interfaces, implementations, classes, methods, and DFM form components.
 - **Symbol Chunker**: Chunks source code along syntactic symbol boundaries, preserving context for RAG.
 - **Code Graph & Impact Analysis**: Directed multirelational graph modeling calls, inheritance, implementation, and UI bindings with blast radius and risk scoring.
 - **GraphRAG Communities**: Multi-resolution Louvain community detection with hierarchical architectural summaries and multi-hop query context assembly.
@@ -17,8 +17,10 @@ Code intelligence package for `faccoder`: AST and symbol parsing across language
 
 All deliverables from Issue #2 are fully implemented and verified offline:
 
-- [x] Tree-sitter parsers: C, C++, C#, Java, Python, Go, JS/TS, Rust, Kotlin, PHP
-- [x] Specialized parsers: Delphi (units, implementations, DFM forms), COBOL, OutSystems `.oml`
+- [x] Tree-sitter parsers: C, C++, Java, Python, Go, JS/TS, Rust
+- [ ] Tree-sitter parsers: C#, Kotlin, PHP (planned)
+- [x] Specialized parsers: Delphi (units, implementations, DFM forms)
+- [ ] Specialized parsers: COBOL, OutSystems `.oml` (planned)
 - [x] Symbol chunking and syntax boundary preservation
 - [x] Embedding model selection per tier
 - [x] Hybrid retrieval + RRF + MMR + rerank + query rewriting and HyDE
@@ -36,8 +38,8 @@ pip install -e packages/code-intel
 ### 1. Code Search with HyDE and Reranking
 
 ```python
-from faccoder_code_intel import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 embedder = HashEmbedder(dimensions=256)
 index = CodeSearchIndex("code_index.db", embedder=embedder)
@@ -52,7 +54,7 @@ for hit in results:
 ### 2. CodeGraph & Structural Impact Analysis
 
 ```python
-from faccoder_code_intel import CodeGraph, parse_file
+from nexcoder_code_intel import CodeGraph, parse_file
 
 graph = CodeGraph()
 symbols = parse_file("service.py") + parse_file("repo.py")
@@ -68,7 +70,7 @@ for affected in report.affected_symbols:
 ### 3. GraphRAG Community Detection
 
 ```python
-from faccoder_code_intel import CommunityDetector, GraphRAGContext
+from nexcoder_code_intel import CommunityDetector, GraphRAGContext
 
 detector = CommunityDetector()
 communities = detector.detect_communities(graph, resolutions=[1.0])
@@ -81,7 +83,7 @@ print("Discovered Subsystems:", [c["title"] for c in context["communities"]])
 ### 4. Bottom-up Documentation Generation
 
 ```python
-from faccoder_code_intel import BottomUpDocEngine
+from nexcoder_code_intel import BottomUpDocEngine
 
 engine = BottomUpDocEngine()
 doc_tree = engine.generate_tree(symbols, communities=communities)

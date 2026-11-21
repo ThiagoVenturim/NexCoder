@@ -1,14 +1,14 @@
-"""Unit tests for faccoder_capture.generators.page_objects."""
+"""Unit tests for nexcoder_capture.generators.page_objects."""
 
 from __future__ import annotations
 
-from faccoder_capture.generators.page_objects import (
+from nexcoder_capture.generators.page_objects import (
     _format_locator_expr,
     _to_pascal_case,
     _to_snake_case,
     generate_page_object,
 )
-from faccoder_capture.models import StableSelector, WebCaptureResult
+from nexcoder_capture.models import StableSelector, WebCaptureResult
 
 
 def test_naming_helpers() -> None:

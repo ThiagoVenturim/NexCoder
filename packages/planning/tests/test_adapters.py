@@ -1,26 +1,26 @@
 import httpx
-from faccoder_planning.adapters.azure_devops import AzureDevOpsAdapter
-from faccoder_planning.adapters.base import (
-    embed_faccoder_id,
-    extract_faccoder_id,
+from nexcoder_planning.adapters.azure_devops import AzureDevOpsAdapter
+from nexcoder_planning.adapters.base import (
+    embed_nexcoder_id,
+    extract_nexcoder_id,
 )
-from faccoder_planning.adapters.github import GitHubAdapter
-from faccoder_planning.adapters.gitlab import GitLabAdapter
-from faccoder_planning.models import Epic, Plan, Story, Task
+from nexcoder_planning.adapters.github import GitHubAdapter
+from nexcoder_planning.adapters.gitlab import GitLabAdapter
+from nexcoder_planning.models import Epic, Plan, Story, Task
 
 
 def test_marker_embedding_and_extraction():
     uuid_str = "12345678-1234-5678-1234-567812345678"
     body = "This is a feature task description."
 
-    embedded = embed_faccoder_id(body, uuid_str)
-    assert f"<!-- faccoder-id: {uuid_str} -->" in embedded
+    embedded = embed_nexcoder_id(body, uuid_str)
+    assert f"<!-- nexcoder-id: {uuid_str} -->" in embedded
 
-    extracted = extract_faccoder_id(embedded)
+    extracted = extract_nexcoder_id(embedded)
     assert extracted == uuid_str
 
     # Calling embed again should be idempotent
-    re_embedded = embed_faccoder_id(embedded, uuid_str)
+    re_embedded = embed_nexcoder_id(embedded, uuid_str)
     assert re_embedded == embedded
 
 
@@ -34,14 +34,14 @@ def test_github_adapter_dry_run_by_default():
     assert result.action == "dry_run_create"
     assert result.dry_run is True
     assert "Would create GitHub issue" in result.message
-    assert task.faccoder_id in result.message
+    assert task.nexcoder_id in result.message
 
 
 def test_github_adapter_pagination_and_idempotence():
     # Setup mock transport for pagination and issues
     task = Task(
         id="TSK-10",
-        faccoder_id="test-uuid-42",
+        nexcoder_id="test-uuid-42",
         title="Existing Task Title",
         description="Task description",
         estimate_hours=5.0,
@@ -101,10 +101,10 @@ def test_github_adapter_pagination_and_idempotence():
 
 
 def test_github_adapter_sync_plan_with_updates():
-    task1 = Task(id="T1", faccoder_id="id-1", title="Title 1", description="Body 1")
-    task2 = Task(id="T2", faccoder_id="id-2", title="New Task", description="Body 2")
+    task1 = Task(id="T1", nexcoder_id="id-1", title="Title 1", description="Body 1")
+    task2 = Task(id="T2", nexcoder_id="id-2", title="New Task", description="Body 2")
 
-    existing_task1_body = "Old Body\n\n<!-- faccoder-id: id-1 -->"
+    existing_task1_body = "Old Body\n\n<!-- nexcoder-id: id-1 -->"
 
     created_calls = []
     updated_calls = []
@@ -203,7 +203,7 @@ def test_gitlab_and_azure_adapters_dry_run():
 def test_azure_devops_tag_persistence_and_lifecycle():
     task = Task(
         id="TSK-02",
-        faccoder_id="azure-tag-uuid-99",
+        nexcoder_id="azure-tag-uuid-99",
         title="Deploy Pipeline",
         description="Task for CI/CD",
         estimate_hours=3.0,
@@ -225,7 +225,7 @@ def test_azure_devops_tag_persistence_and_lifecycle():
                     "fields": {
                         "System.Title": "Deploy Pipeline",
                         "System.Description": "HTML desc without comment",  # simulation of HTML normalization
-                        "System.Tags": "faccoder-id:azure-tag-uuid-99; backend",
+                        "System.Tags": "nexcoder-id:azure-tag-uuid-99; backend",
                     },
                     "_links": {"html": {"href": "https://dev.azure.com/org/proj/_workitems/edit/501"}},
                 },
@@ -240,10 +240,10 @@ def test_azure_devops_tag_persistence_and_lifecycle():
         assert res.action == "created"
         assert res.remote_id == "501"
 
-    # Verify that tags patch op included the tag faccoder-id:azure-tag-uuid-99
+    # Verify that tags patch op included the tag nexcoder-id:azure-tag-uuid-99
     tag_op = next((op for op in created_patch_ops if op.get("path") == "/fields/System.Tags"), None)
     assert tag_op is not None
-    assert "faccoder-id:azure-tag-uuid-99" in tag_op["value"]
+    assert "nexcoder-id:azure-tag-uuid-99" in tag_op["value"]
 
 
 def test_client_context_manager_lifecycle():

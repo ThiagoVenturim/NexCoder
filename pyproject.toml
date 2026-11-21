@@ -17,10 +17,14 @@ ignore = ["S101", "S105", "S106", "B008"]
 "**/web/**" = ["B008"]
 "**/interfaces/**" = ["B008"]
 "scripts/**" = ["S603", "S607"]
+"examples/**" = ["S603", "S607"]
 
 [tool.pytest.ini_options]
-testpaths = ["packages"]
+testpaths = ["packages", "examples"]
 pythonpath = [
+    ".",
+    "examples/quickstart",
+    "examples/reports_nexdash",
     "packages/core/src",
     "packages/code-intel/src",
     "packages/planning/src",
@@ -32,5 +36,8 @@ pythonpath = [
     "packages/interfaces/src",
     "packages/serving/src",
     "packages/continuous-improvement/src",
+    "packages/iac/src",
+    "packages/mlops/src",
+    "packages/testing/src",
 ]
 addopts = "-q --import-mode=importlib"

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from faccoder_security.gate import (
+from nexcoder_security.gate import (
     generate_csp_header,
     generate_security_md,
     pin_dependencies,

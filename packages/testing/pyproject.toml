@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nexcoder-testing"
+version = "0.1.0"
+description = "Multi-agent extreme application testing (unit, system, process, DOM, API, and defensive security) for owned targets."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "nexcoder-core>=0.1.0",
+    "nexcoder-control>=0.1.0",
+    "nexcoder-agents>=0.1.0",
+    "nexcoder-capture>=0.1.0",
+    "nexcoder-security>=0.1.0",
+    "pydantic>=2.7",
+]
+
+[project.scripts]
+nexcoder-testing = "nexcoder_testing.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nexcoder_testing"]

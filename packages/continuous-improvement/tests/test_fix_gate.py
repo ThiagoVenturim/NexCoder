@@ -1,6 +1,6 @@
 """Unit tests for automated fix gating policies."""
 
-from faccoder_continuous_improvement.pipeline.fix_gate import FixGate, FixProposal
+from nexcoder_continuous_improvement.pipeline.fix_gate import FixGate, FixProposal
 
 
 def test_fix_gate_blocks_no_go_jury() -> None:

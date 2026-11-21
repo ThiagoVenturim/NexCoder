@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from faccoder_serving.raft.builder import RaftBuilder, RaftSample
+from nexcoder_serving.raft.builder import RaftBuilder, RaftSample
 
 
 def test_raft_sample_formatting() -> None:

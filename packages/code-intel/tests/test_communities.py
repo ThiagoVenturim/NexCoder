@@ -1,7 +1,7 @@
 """Tests for GraphRAG community detection and hierarchical summaries."""
 
-from faccoder_code_intel.graph import CodeGraph, CommunityDetector, EdgeType, GraphRAGContext
-from faccoder_code_intel.models import Symbol, SymbolLocation, SymbolType
+from nexcoder_code_intel.graph import CodeGraph, CommunityDetector, EdgeType, GraphRAGContext
+from nexcoder_code_intel.models import Symbol, SymbolLocation, SymbolType
 
 
 def _sym(name: str, file_path: str = "app.py") -> Symbol:

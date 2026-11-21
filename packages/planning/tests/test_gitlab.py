@@ -1,9 +1,9 @@
 import json
 
 import httpx
-from faccoder_planning.adapters.base import RemoteIssue
-from faccoder_planning.adapters.gitlab import GitLabAdapter
-from faccoder_planning.models import Task
+from nexcoder_planning.adapters.base import RemoteIssue
+from nexcoder_planning.adapters.gitlab import GitLabAdapter
+from nexcoder_planning.models import Task
 
 
 def test_gitlab_client_lifecycle():
@@ -18,7 +18,7 @@ def test_gitlab_client_lifecycle():
 def test_gitlab_list_issues_pagination_and_marker():
     task = Task(
         id="TSK-GL-1",
-        faccoder_id="gitlab-uuid-1234",
+        nexcoder_id="gitlab-uuid-1234",
         title="GitLab Task Title",
         description="GitLab Task Body",
         estimate_hours=4.0,
@@ -76,7 +76,7 @@ def test_gitlab_list_issues_pagination_and_marker():
 def test_gitlab_create_and_update_issue_live():
     task = Task(
         id="TSK-GL-2",
-        faccoder_id="gitlab-uuid-5678",
+        nexcoder_id="gitlab-uuid-5678",
         title="Implement Pipeline",
         description="Set up CI in GitLab",
         estimate_hours=6.0,
@@ -136,7 +136,7 @@ def test_gitlab_create_and_update_issue_live():
         number=42,
         title="Old Title",
         body="Old Body",
-        faccoder_id=task.faccoder_id,
+        nexcoder_id=task.nexcoder_id,
         url="https://gitlab.com/group/proj/-/issues/42",
     )
     res_update = adapter.update_issue(remote, task)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from faccoder_interfaces.cli.main import app
+from nexcoder_interfaces.cli.main import app
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -22,9 +22,9 @@ def test_cli_help() -> None:
 def test_cli_init_command(tmp_path: Path) -> None:
     result = runner.invoke(app, ["init", "--path", str(tmp_path)])
     assert result.exit_code == 0
-    assert "Successfully initialized faccoder project" in result.stdout
+    assert "Successfully initialized nexcoder project" in result.stdout
 
-    config_file = tmp_path / "faccoder.yaml"
+    config_file = tmp_path / "nexcoder.yaml"
     assert config_file.is_file()
     content = config_file.read_text(encoding="utf-8")
     assert "preset: hybrid" in content
@@ -107,7 +107,7 @@ def test_cli_export_mcp_command(tmp_path: Path) -> None:
     assert mcp_file.is_file()
     data = json.loads(mcp_file.read_text(encoding="utf-8"))
     assert "mcpServers" in data
-    assert "faccoder" in data["mcpServers"]
+    assert "nexcoder" in data["mcpServers"]
 
 
 def test_cli_export_claude_command(tmp_path: Path) -> None:
@@ -116,3 +116,51 @@ def test_cli_export_claude_command(tmp_path: Path) -> None:
     assert result.exit_code == 0
     data = json.loads(result.stdout)
     assert Path(data["mcp_config"]).is_file()
+
+
+def test_cli_report_productivity_and_security_commands(tmp_path: Path) -> None:
+    prod_out = tmp_path / "prod_dash.html"
+    res_prod = runner.invoke(
+        app,
+        [
+            "report",
+            "productivity",
+            "--project",
+            "nexcoder",
+            "--team",
+            "core",
+            "--period",
+            "2026-Q4",
+            "--transport",
+            "mcp",
+            "--out",
+            str(prod_out),
+        ],
+    )
+    assert res_prod.exit_code == 0
+    data_prod = json.loads(res_prod.stdout)
+    assert data_prod["status"] == "success"
+    assert data_prod["transport"] == "mcp"
+    assert prod_out.is_file()
+
+    sec_out = tmp_path / "sec_dash.html"
+    res_sec = runner.invoke(
+        app,
+        [
+            "report",
+            "security",
+            "--project",
+            "nexcoder",
+            "--period",
+            "2026-Q4",
+            "--transport",
+            "mcp",
+            "--out",
+            str(sec_out),
+        ],
+    )
+    assert res_sec.exit_code == 0
+    data_sec = json.loads(res_sec.stdout)
+    assert data_sec["status"] == "success"
+    assert data_sec["transport"] == "mcp"
+    assert sec_out.is_file()

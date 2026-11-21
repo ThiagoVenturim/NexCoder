@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from faccoder_serving.compose import (
+from nexcoder_serving.compose import (
     ServingConfig,
     ServingProfile,
     generate_compose_config,

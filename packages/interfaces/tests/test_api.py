@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from faccoder_control.approval import ApprovalTokenManager
-from faccoder_control.auth.local import LocalAuthProvider
-from faccoder_control.keys import APIKeyCreate, APIKeyService
-from faccoder_interfaces.api.app import create_app
+from nexcoder_control.approval import ApprovalTokenManager
+from nexcoder_control.auth.local import LocalAuthProvider
+from nexcoder_control.keys import APIKeyCreate, APIKeyService
+from nexcoder_interfaces.api.app import create_app
 from starlette.testclient import TestClient
 
 
@@ -77,7 +77,10 @@ def test_api_specialized_endpoints(tmp_path: Path) -> None:
     # Security scan
     sample_code = tmp_path / "main.py"
     sample_code.write_text("print('hello')\n", encoding="utf-8")
-    resp_sec = client.post("/v1/security/scan", json={"path": str(tmp_path), "force_offline": True})
+    resp_sec = client.post(
+        "/v1/security/scan",
+        json={"path": str(tmp_path), "force_offline": True, "owned_target": True, "authorized_by": "api-tester"},
+    )
     assert resp_sec.status_code == 200
     assert resp_sec.json()["status"] == "success"
 
@@ -85,6 +88,23 @@ def test_api_specialized_endpoints(tmp_path: Path) -> None:
     resp_agent = client.post("/v1/agents/run", json={"agent_name": "lead-architect", "task": "Design API"})
     assert resp_agent.status_code == 200
     assert resp_agent.json()["status"] == "success"
+
+    # Productivity and Security NexDash reports
+    resp_rep_prod = client.post(
+        "/v1/reports/productivity",
+        json={"project": "nexcoder", "team": "core", "period": "2026-Q4", "transport": "offline"},
+    )
+    assert resp_rep_prod.status_code == 200
+    assert resp_rep_prod.json()["status"] == "success"
+    assert resp_rep_prod.json()["model_id"] == "dev_productivity"
+
+    resp_rep_sec = client.post(
+        "/v1/reports/security",
+        json={"project": "nexcoder", "period": "2026-Q4", "transport": "offline"},
+    )
+    assert resp_rep_sec.status_code == 200
+    assert resp_rep_sec.json()["status"] == "success"
+    assert resp_rep_sec.json()["model_id"] == "security_posture"
 
     # Pipeline approve with human approval token from control plane
     atm: ApprovalTokenManager = app.state.approval_token_manager

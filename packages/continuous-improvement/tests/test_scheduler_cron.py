@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 
-from faccoder_continuous_improvement.scheduler.cron import CronJob, CronScheduler, compute_next_run
+from nexcoder_continuous_improvement.scheduler.cron import CronJob, CronScheduler, compute_next_run
 
 
 def test_compute_next_run_shortcuts() -> None:

@@ -1,39 +1,39 @@
 import asyncio
 
 import pytest
-from faccoder_core.cache import SemanticCache
-from faccoder_core.config import FaccoderConfig
-from faccoder_core.jsonx import extract_json
-from faccoder_core.llm.fake import FakeChatModel
-from faccoder_core.llm.registry import get_chat_model
-from faccoder_core.llm.rotation import classify_error, requested_wait
-from faccoder_core.observability.pricing import cost_usd
-from faccoder_core.observability.usage import BudgetExceededError, UsageCallback, usage_scope
-from faccoder_core.retrieval.embeddings import HashEmbedder
-from faccoder_core.retrieval.fusion import mmr_select, rrf_fuse
-from faccoder_core.sandbox import PathOutsideSandboxError, resolve_inside
-from faccoder_core.store.sqlite_store import HybridStore, StoredChunk, fts_query
-from faccoder_core.structured import OutOfContractError, call_structured
+from nexcoder_core.cache import SemanticCache
+from nexcoder_core.config import NexcoderConfig
+from nexcoder_core.jsonx import extract_json
+from nexcoder_core.llm.fake import FakeChatModel
+from nexcoder_core.llm.registry import get_chat_model
+from nexcoder_core.llm.rotation import classify_error, requested_wait
+from nexcoder_core.observability.pricing import cost_usd
+from nexcoder_core.observability.usage import BudgetExceededError, UsageCallback, usage_scope
+from nexcoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_core.retrieval.fusion import mmr_select, rrf_fuse
+from nexcoder_core.sandbox import PathOutsideSandboxError, resolve_inside
+from nexcoder_core.store.sqlite_store import HybridStore, StoredChunk, fts_query
+from nexcoder_core.structured import OutOfContractError, call_structured
 from pydantic import BaseModel
 
 
 def test_presets_resolve_every_tier():
-    from faccoder_core.llm.presets import PRESETS
+    from nexcoder_core.llm.presets import PRESETS
 
     for name in PRESETS:
-        cfg = FaccoderConfig(preset=name)
+        cfg = NexcoderConfig(preset=name)
         for tier in ("small", "medium", "large"):
             assert cfg.model_for(tier).model
 
 
 def test_tier_override_wins_over_preset():
-    cfg = FaccoderConfig(preset="all-paid", tiers={"small": {"provider": "ollama", "model": "llama3.1"}})
+    cfg = NexcoderConfig(preset="all-paid", tiers={"small": {"provider": "ollama", "model": "llama3.1"}})
     assert cfg.model_for("small").provider == "ollama"
     assert cfg.model_for("large").provider == "anthropic"
 
 
 def test_offline_model_is_deterministic():
-    model = get_chat_model("medium", config=FaccoderConfig(preset="offline"), tracing=False)
+    model = get_chat_model("medium", config=NexcoderConfig(preset="offline"), tracing=False)
     assert model.invoke("hello").content == model.invoke("hello").content
 
 

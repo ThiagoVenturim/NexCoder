@@ -1,6 +1,6 @@
-# Getting Started with faccoder
+# Getting Started with nexcoder
 
-This guide walks through setting up `faccoder`, configuring execution presets, and running your first agentic pipelines and code intelligence tasks.
+This guide walks through setting up `nexcoder`, configuring execution presets, and running your first agentic pipelines and code intelligence tasks.
 
 ---
 
@@ -19,8 +19,8 @@ This guide walks through setting up `faccoder`, configuring execution presets, a
 ### 1. Clone Repository and Create Virtual Environment
 
 ```bash
-git clone https://github.com/ThiagoVenturim/faccoder.git
-cd faccoder
+git clone https://github.com/ThiagoVenturim/nexcoder.git
+cd nexcoder
 
 python -m venv .venv
 
@@ -44,14 +44,46 @@ git config core.hooksPath .githooks
 Install the core foundation and feature packages in editable mode:
 
 ```bash
-# Foundation package (required by all other packages)
+# Foundation packages (required by dependent packages)
 pip install -e packages/core
+pip install -e packages/control
 
 # Feature packages
 pip install -e packages/code-intel
 pip install -e packages/agents
 pip install -e packages/planning
+pip install -e packages/ideation
+pip install -e packages/security
+pip install -e packages/capture
+pip install -e packages/interfaces
+pip install -e packages/serving
+pip install -e packages/continuous-improvement
+
+# Tooling and quality verification
+pip install pytest ruff
 ```
+
+---
+
+## Try it in 2 minutes (Quickstart)
+
+Experience nexcoder's end-to-end automated lifecycle immediately without needing any API keys or network connection:
+
+```bash
+python examples/quickstart/run_quickstart.py
+```
+
+This single command runs all six pipeline stages offline against an included sample project:
+1. **Ideation & Architectural Jury**: Evaluates an idea hypothesis and returns a quorum consensus verdict.
+2. **PRD Generation**: Creates a structured Product Requirements Document.
+3. **Sprint & Backlog Planning**: Breaks down tasks and initializes a local Git repository.
+4. **Code Intelligence**: Indexes AST symbols and queries code via GraphRAG.
+5. **Multi-Agent Pipeline**: Dispatches the catalog `bugfix-delivery` workflow.
+6. **Security Gate**: Executes SAST vulnerability checks and verifies release readiness.
+
+For detailed breakdown, artifact descriptions, and instructions on connecting real models, see the [Quickstart Example Guide](../examples/quickstart/README.md).
+
+---
 
 To install optional provider dependencies (e.g. Anthropic, OpenAI, Google Gemini, Ollama, Langfuse):
 
@@ -63,7 +95,7 @@ pip install -e "packages/core[all]"
 
 ## Configuration and Presets
 
-`faccoder` manages provider configurations through environment variables and the `FaccoderConfig` model.
+`nexcoder` manages provider configurations through environment variables and the `NexcoderConfig` model.
 
 ### Environment Setup
 
@@ -87,7 +119,7 @@ export LANGFUSE_HOST="http://localhost:3000"
 
 ### Runtime Presets
 
-`faccoder` provides five execution presets out of the box:
+`nexcoder` provides five execution presets out of the box:
 
 | Preset | Description | Network Needed |
 |---|---|---|
@@ -100,7 +132,7 @@ export LANGFUSE_HOST="http://localhost:3000"
 Specify the preset programmatically or via environment:
 
 ```python
-from faccoder_core import FaccoderConfig, load_config
+from nexcoder_core import NexcoderConfig, load_config
 
 # Load default config and override preset
 config = load_config()
@@ -113,15 +145,18 @@ config.preset = "offline"
 
 ### 1. Tiered Model Invocation
 
-`faccoder` avoids vendor lock-in by routing model requests to three capability tiers:
+`nexcoder` avoids vendor lock-in by routing model requests to three capability tiers:
 - `small`: High-throughput extraction, classification, query rewriting, and chunk tagging.
 - `medium`: Code generation, unit testing, structural analysis, and documentation.
 - `large`: Architectural evaluation, multi-persona jury debate, and PRD generation.
 
 ```python
-from faccoder_core import get_chat_model, load_config
+from nexcoder_core import get_chat_model, load_config
 
+# Load default config and set offline preset for hermetic execution
 config = load_config()
+config.preset = "offline"
+
 model = get_chat_model("medium", config=config)
 
 response = model.invoke("Draft a unit test plan for an authentication service.")
@@ -133,8 +168,8 @@ print(response.content)
 Index source code and query semantic relationships:
 
 ```python
-from faccoder_code_intel import CodeSearchIndex
-from faccoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_code_intel import CodeSearchIndex
+from nexcoder_core.retrieval.embeddings import HashEmbedder
 
 embedder = HashEmbedder(dimensions=256)
 index = CodeSearchIndex("code_index.db", embedder=embedder)
@@ -161,18 +196,25 @@ for r in results:
 Load an agent persona from the catalog and construct an execution pipeline:
 
 ```python
-from faccoder_agents.catalog import AgentCatalog
-from faccoder_agents.engine import PipelineBuilder
-from faccoder_agents.engine.blocks import PromptBlock, ValidatorBlock
+from nexcoder_agents.catalog import AgentCatalog
+from nexcoder_agents.engine import PipelineBuilder
+from nexcoder_agents.engine.blocks import PromptBlock, ValidatorBlock
 
-catalog = AgentCatalog.from_directory("agents")
+# Load catalog from packages/agents/agents
+catalog = AgentCatalog.from_directory("packages/agents/agents")
 architect = catalog.get("lead-architect")
 
-builder = PipelineBuilder("architecture-review")
-builder.add_block(ValidatorBlock(name="input-validator", required_keys=["prd_content"]))
-builder.add_block(PromptBlock(name="generate-architecture", prompt_template=architect.template))
+# Construct pipeline blocks
+validator = ValidatorBlock(name="input-validator", required_keys=["prd_content"])
+prompt_block = PromptBlock(
+    name="generate-architecture",
+    user_prompt_template=architect.prompt if architect else "{prd_content}",
+)
 
-pipeline = builder.build()
+builder = PipelineBuilder("architecture-review")
+builder.add_sequence([validator, prompt_block])
+
+pipeline = builder.compile()
 ```
 
 ---

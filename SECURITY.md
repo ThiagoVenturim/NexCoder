@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Do not open a public issue. Report it privately through
-[GitHub private vulnerability reporting](https://github.com/ThiagoVenturim/faccoder/security/advisories/new)
+[GitHub private vulnerability reporting](https://github.com/ThiagoVenturim/nexcoder/security/advisories/new)
 (Security tab, "Report a vulnerability").
 
 Include what is affected, how to reproduce it and the impact you expect. You will

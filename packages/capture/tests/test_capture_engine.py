@@ -1,4 +1,4 @@
-"""Unit tests for faccoder_capture.web.capture."""
+"""Unit tests for nexcoder_capture.web.capture."""
 
 from __future__ import annotations
 
@@ -7,12 +7,12 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from faccoder_capture.models import (
+from nexcoder_capture.models import (
     CaptchaDetectedError,
     DomainNotAllowedError,
     WebCaptureConfig,
 )
-from faccoder_capture.web.capture import WebCaptureEngine
+from nexcoder_capture.web.capture import WebCaptureEngine
 
 SAMPLE_HTML = """
 <!DOCTYPE html>
@@ -148,6 +148,8 @@ def test_capture_page_async_mock() -> None:
         config = WebCaptureConfig(
             allowed_domains=["example.com"],
             capture_screenshot=True,
+            owned_target=True,
+            authorized_by="qa-engineer",
         )
         engine = WebCaptureEngine(config=config)
 
@@ -173,7 +175,9 @@ def test_capture_page_async_detects_captcha() -> None:
             return_value="<html><body><div id='cf-turnstile'>Verifying human</div></body></html>"
         )
 
-        engine = WebCaptureEngine(config=WebCaptureConfig(allowed_domains=["example.com"]))
+        engine = WebCaptureEngine(
+            config=WebCaptureConfig(allowed_domains=["example.com"], owned_target=True, authorized_by="qa-engineer")
+        )
 
         with pytest.raises(CaptchaDetectedError):
             await engine.capture_page_async(mock_page)

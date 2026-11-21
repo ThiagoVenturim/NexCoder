@@ -1,6 +1,6 @@
 """Unit tests for competitor and market research diffing."""
 
-from faccoder_continuous_improvement.research.competitor_diff import (
+from nexcoder_continuous_improvement.research.competitor_diff import (
     CompetitorDiffer,
     CompetitorItem,
     ResearchSnapshot,

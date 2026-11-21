@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_interfaces.registry import (
+from nexcoder_interfaces.registry import (
     KNOWN_MODULES,
     get_module_statuses,
     is_module_installed,
@@ -44,7 +44,7 @@ def test_module_statuses(monkeypatch: pytest.MonkeyPatch) -> None:
     def _mock_installed(pkg: str) -> bool:
         return False if "nonexistent" in pkg else is_module_installed(pkg)
 
-    monkeypatch.setattr("faccoder_interfaces.registry.is_module_installed", _mock_installed)
+    monkeypatch.setattr("nexcoder_interfaces.registry.is_module_installed", _mock_installed)
     monkeypatch.setitem(
         KNOWN_MODULES,
         "mock_mod",
@@ -53,7 +53,7 @@ def test_module_statuses(monkeypatch: pytest.MonkeyPatch) -> None:
             (),
             {
                 "name": "mock_mod",
-                "package_name": "faccoder_nonexistent_mock",
+                "package_name": "nexcoder_nonexistent_mock",
                 "description": "Mock module",
                 "available_in_develop": False,
                 "tools": [],
@@ -67,4 +67,4 @@ def test_module_statuses(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_is_module_installed_nonexistent() -> None:
-    assert is_module_installed("faccoder_nonexistent_xyz") is False
+    assert is_module_installed("nexcoder_nonexistent_xyz") is False

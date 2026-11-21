@@ -6,10 +6,34 @@ useDefault = true
 
 [allowlist]
 description = "Fake credentials used as scanner test fixtures"
+commits = [
+  '''2113236461a4fc6e318af3b96e0c65e0cc25cffc''',
+  '''f7eada78aa706d033c7348187c01b52eb2a7ea84''',
+]
 regexTarget = "match"
 regexes = [
   '''AKIA1234567890ABCDEF''',
   '''abcdef1234567890abcdef123456''',
   '''fk_nonexistent_key_12345''',
   '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9''',
+  '''sk-1234567890abcdef''',
+  '''sk-123456789012345678901234''',
+  '''sk-live9876543210abcdef''',
+  '''sk-antigravity-secret-key-123''',
+  '''sk-secret-key-abcdef''',
+  '''sk-mytoken123456''',
+  '''sk-securekey12345''',
+  '''sk-testsecret12345''',
+  '''sk-proj-supersecretkey1234567890''',
+  '''sk-proj-supersecretapikey123456789''',
+  '''sk-proj-1234567890abcdef12345''',
+  '''fc_apr_9876543210abcdef''',
+  '''hf_[a-zA-Z0-9]{34,}''',
+  '''sk-[a-zA-Z0-9]{32,}''',
+  '''mock-ado-pat-placeholder''',
+  '''mock-gl-token-placeholder''',
+  '''ghp_1{36}''',
+  '''ghp_123456789012345678901234567890123456''',
+  '''postgres://admin:topsecretpw@localhost:5432/mydb''',
+  '''sk-syntheticlogsecret123456789''',
 ]

@@ -1,9 +1,9 @@
-"""Unit tests for faccoder_capture.models."""
+"""Unit tests for nexcoder_capture.models."""
 
 from __future__ import annotations
 
 import pytest
-from faccoder_capture.models import (
+from nexcoder_capture.models import (
     AccessibilityNode,
     CaptchaDetectedError,
     CapturePolicyError,
@@ -78,7 +78,7 @@ def test_web_capture_config_defaults() -> None:
     assert config.capture_har is True
     assert config.extract_selectors is True
     assert config.timeout_ms == 30000
-    assert config.user_agent == "faccoder-capture/0.1.0"
+    assert config.user_agent == "nexcoder-capture/0.1.0"
     assert config.honor_robots_txt is True
     assert config.allowed_domains == []
     assert config.read_only is True

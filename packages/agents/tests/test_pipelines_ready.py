@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import pytest
-from faccoder_agents.catalog.registry import AgentCatalog
-from faccoder_agents.catalog.skills import SkillCatalog
-from faccoder_agents.cli import main
-from faccoder_agents.engine.models import ApprovalStatus
-from faccoder_agents.engine.pipelines import (
+from nexcoder_agents.catalog.registry import AgentCatalog
+from nexcoder_agents.catalog.skills import SkillCatalog
+from nexcoder_agents.cli import main
+from nexcoder_agents.engine.models import ApprovalStatus
+from nexcoder_agents.engine.pipelines import (
     build_pipeline,
     get_pipeline_template,
     list_pipeline_templates,
 )
-from faccoder_core.llm.fake import FakeChatModel
+from nexcoder_core.llm.fake import FakeChatModel
 
 
 def test_new_stack_and_jury_personas_in_catalog() -> None:
@@ -54,6 +54,17 @@ def test_new_standard_skills() -> None:
     threat_skill = skills.get("security-threat-model")
     assert threat_skill is not None
     assert "STRIDE" in threat_skill.content
+
+    for sec_skill in [
+        "prompt-injection-defense",
+        "sql-injection-prevention",
+        "data-leakage-prevention",
+        "application-security-review",
+    ]:
+        loaded = skills.get(sec_skill)
+        assert loaded is not None, f"Expected security skill '{sec_skill}' in catalog"
+        assert loaded.description
+        assert loaded.content
 
 
 def test_list_and_get_pipeline_templates() -> None:
@@ -168,7 +179,7 @@ def test_documentation_pipeline() -> None:
     pipeline = build_pipeline("documentation", model=fake_llm)
     res = pipeline.run(
         inputs={
-            "project_name": "faccoder",
+            "project_name": "nexcoder",
             "source_scope": "packages/agents and packages/core",
         },
         dry_run=True,
@@ -213,3 +224,40 @@ def test_cli_pipeline_commands(capsys) -> None:
     # 3. show-pipeline invalid
     code_invalid = main(["show-pipeline", "unknown-pipeline"])
     assert code_invalid == 1
+
+
+def test_security_review_pipeline_planted_flaws_and_target_gate(tmp_path) -> None:
+    vuln_file = tmp_path / "planted_app.py"
+    vuln_file.write_text(
+        """
+def bad_sql(cursor, user_input):
+    cursor.execute("SELECT * FROM users WHERE name = '" + user_input + "'")
+    logger.info(f"Token used: {auth_token}")
+    llm.invoke(f"System: be nice. User: {user_input}")
+""",
+        encoding="utf-8",
+    )
+
+    fake_llm = FakeChatModel(responses=["Remediation plan drafted."])
+    pipeline = build_pipeline("security-review", model=fake_llm)
+
+    # 1. Refused when owned_target=False
+    res_denied = pipeline.run(inputs={"target_path": str(vuln_file), "owned_target": False}, dry_run=True)
+    assert res_denied.status == "failed"
+    assert any("USAGE_POLICY.md" in err for err in res_denied.errors)
+
+    # 2. Succeeds when owned_target=True and reports findings with file:line
+    res_ok = pipeline.run(
+        inputs={
+            "target_path": str(vuln_file),
+            "owned_target": True,
+            "authorized_by": "pipeline-tester",
+        },
+        dry_run=True,
+    )
+    assert res_ok.status == "completed"
+    assert res_ok.data["disclosure_mode"] == "responsible"
+    assert res_ok.data["exploit_published"] is False
+    assert len(res_ok.data["security_findings"]) >= 3
+    assert "security_remediation_plan" in res_ok.data
+

@@ -1,6 +1,6 @@
 """Unit tests for planning bridge task generator."""
 
-from faccoder_continuous_improvement.issues.planning_bridge import (
+from nexcoder_continuous_improvement.issues.planning_bridge import (
     FindingCategory,
     ImprovementFinding,
     PlanningBridge,

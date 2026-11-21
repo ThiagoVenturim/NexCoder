@@ -1,17 +1,17 @@
-"""Unit tests for faccoder_capture.qa.screen_doc."""
+"""Unit tests for nexcoder_capture.qa.screen_doc."""
 
 from __future__ import annotations
 
-from faccoder_capture.desktop.models import (
+from nexcoder_capture.desktop.models import (
     DesktopBoundingBox,
     DesktopCaptureResult,
     DesktopControlNode,
     DesktopWindowInfo,
     OCRTextBlock,
 )
-from faccoder_capture.models import NetworkEntry, StableSelector, WebCaptureResult
-from faccoder_capture.qa.models import AccessibilityAuditResult, AccessibilityViolation
-from faccoder_capture.qa.screen_doc import generate_screen_documentation
+from nexcoder_capture.models import NetworkEntry, StableSelector, WebCaptureResult
+from nexcoder_capture.qa.models import AccessibilityAuditResult, AccessibilityViolation
+from nexcoder_capture.qa.screen_doc import generate_screen_documentation
 
 
 def test_generate_web_screen_documentation() -> None:

@@ -1,16 +1,16 @@
-"""Unit tests for faccoder_capture.web.policy."""
+"""Unit tests for nexcoder_capture.web.policy."""
 
 from __future__ import annotations
 
 import pytest
-from faccoder_capture.models import (
+from nexcoder_capture.models import (
     CaptchaDetectedError,
     DomainNotAllowedError,
     ReadOnlyViolationError,
     RobotsDisallowedError,
     WebCaptureConfig,
 )
-from faccoder_capture.web.policy import PolicyEnforcer
+from nexcoder_capture.web.policy import PolicyEnforcer
 
 
 def test_url_scheme_validation() -> None:
@@ -53,7 +53,7 @@ def test_domain_allowlist() -> None:
 def test_robots_txt_enforcement() -> None:
     config = WebCaptureConfig(
         honor_robots_txt=True,
-        user_agent="faccoder-capture/0.1.0",
+        user_agent="nexcoder-capture/0.1.0",
     )
     enforcer = PolicyEnforcer(config)
 
@@ -76,7 +76,7 @@ Allow: /public/
 def test_robots_txt_disabled() -> None:
     config = WebCaptureConfig(
         honor_robots_txt=False,
-        user_agent="faccoder-capture/0.1.0",
+        user_agent="nexcoder-capture/0.1.0",
     )
     enforcer = PolicyEnforcer(config)
 
@@ -132,3 +132,28 @@ def test_validate_action_read_only() -> None:
     # Non-read-only permits mutating actions
     enforcer_rw = PolicyEnforcer(WebCaptureConfig(read_only=False))
     enforcer_rw.validate_action("click_submit", is_mutating=True)
+
+
+def test_capture_target_authorization_gate() -> None:
+    from nexcoder_control.approval import TargetNotAuthorizedError
+
+    enforcer = PolicyEnforcer(WebCaptureConfig(allowed_domains=["example.com"]))
+
+    with pytest.raises(TargetNotAuthorizedError, match="USAGE_POLICY.md"):
+        enforcer.verify_target_authorization("https://example.com/login", owned_target=False)
+
+    denied = enforcer.audit_log.query(event_type="target.authorization.denied")
+    assert len(denied) == 1
+    assert denied[0].resource == "https://example.com/login"
+
+    rec = enforcer.verify_target_authorization(
+        "https://example.com/login",
+        owned_target=True,
+        authorized_by="qa-owner",
+        metadata={"session_token": "super_secret_cookie_12345"},
+    )
+    assert rec.authorized_by == "qa-owner"
+    granted = enforcer.audit_log.query(event_type="target.authorization.granted")
+    assert len(granted) == 1
+    assert granted[0].actor == "qa-owner"
+    assert "super_secret_cookie_12345" not in granted[0].model_dump_json()

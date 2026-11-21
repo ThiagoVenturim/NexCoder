@@ -2,7 +2,7 @@
 
 Enterprise software organizations frequently maintain core mission-critical systems that have evolved over two decades. Over time, original authors depart, architectural documentation becomes obsolete or lost, and onboarding a new software engineer takes six to nine months.
 
-This case study documents how the techniques and architecture now packaged in `faccoder` were deployed against a massive legacy enterprise ERP system, generating bottom-up architectural and functional documentation in three weeks.
+This case study documents how the techniques and architecture now packaged in `nexcoder` were deployed against a massive legacy enterprise ERP system, generating bottom-up architectural and functional documentation in three weeks.
 
 ---
 

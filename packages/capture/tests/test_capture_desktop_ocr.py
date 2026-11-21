@@ -1,12 +1,12 @@
-"""Unit tests for faccoder_capture.desktop.ocr."""
+"""Unit tests for nexcoder_capture.desktop.ocr."""
 
 from __future__ import annotations
 
 import sys
 from unittest.mock import MagicMock, patch
 
-from faccoder_capture.desktop.models import DesktopBoundingBox, OCRTextBlock
-from faccoder_capture.desktop.ocr import MockOCRProvider, TesseractOCRProvider
+from nexcoder_capture.desktop.models import DesktopBoundingBox, OCRTextBlock
+from nexcoder_capture.desktop.ocr import MockOCRProvider, TesseractOCRProvider
 
 
 def test_mock_ocr_provider_add_block_and_confidence_filter() -> None:

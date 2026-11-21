@@ -1,10 +1,10 @@
-# faccoder-control
+# nexcoder-control
 
-Control plane for faccoder: authentication, API keys, rate limits, per-tool metering, budgets, audit, approval tokens, and web panel.
+Control plane for nexcoder: authentication, API keys, rate limits, per-tool metering, budgets, audit, approval tokens, and web panel.
 
 ## Overview
 
-`faccoder-control` provides security, cost governance, and operational policy enforcement for multi-tenant and agentic workflows:
+`nexcoder-control` provides security, cost governance, and operational policy enforcement for multi-tenant and agentic workflows:
 
 1. **Pluggable Authentication**:
    - **Local Authenticator**: Username/password with PBKDF2 hashing, bearer tokens with permission scopes.
@@ -30,16 +30,24 @@ Control plane for faccoder: authentication, API keys, rate limits, per-tool mete
 5. **Web Panel and Status API**:
    - Lightweight FastAPI metrics router and self-contained HTML/CSS operational dashboard with zero external dependencies and 100% offline capability.
 
+6. **Email Dispatch & Delivery Governance**:
+   - Multi-provider connectors: Google Gmail (REST API / OAuth2), Microsoft Outlook / Microsoft 365 (Graph API / OAuth2), and generic SMTP fallback.
+   - Mandatory human approval tokens preventing automated bulk distribution.
+   - Tamper-evident append-only audit ledger tracking every email attempt, approval, dispatch, and failure.
+   - Built-in platform rate limiting (Gmail, Microsoft Graph, SMTP).
+   - Reusable templates (reports, proposals, alerts) with HTML formatting and attachments.
+   - Safe unconfigured state ("sem credencial, desliga sem quebrar").
+
 ## Installation
 
 ```bash
-pip install faccoder-control
+pip install nexcoder-control
 ```
 
 Or install with optional web panel and CLI dependencies:
 
 ```bash
-pip install "faccoder-control[web,cli]"
+pip install "nexcoder-control[web,cli]"
 ```
 
 ## Quick Start
@@ -47,7 +55,7 @@ pip install "faccoder-control[web,cli]"
 ### API Keys and Rate Limiting
 
 ```python
-from faccoder_control import APIKeyCreate, APIKeyService
+from nexcoder_control import APIKeyCreate, APIKeyService
 
 service = APIKeyService()
 
@@ -76,7 +84,7 @@ print(f"Authenticated Owner: {verified.owner}")
 ### Metering MCP Tools
 
 ```python
-from faccoder_control import MCPToolMeter
+from nexcoder_control import MCPToolMeter
 
 meter = MCPToolMeter()
 
@@ -101,7 +109,7 @@ print(f"Invocations: {metrics.invocations}, Cost: ${metrics.total_cost_usd:.4f}"
 ### Cryptographic Append-Only Audit Log
 
 ```python
-from faccoder_control import AppendOnlyAuditLog
+from nexcoder_control import AppendOnlyAuditLog
 
 audit = AppendOnlyAuditLog()
 
@@ -118,6 +126,40 @@ is_valid, message = audit.verify_integrity()
 print(f"Audit log status: {message}")
 ```
 
+### Email Dispatch with Human Approval and Audit
+
+```python
+from nexcoder_control.email import (
+    EmailAttachment,
+    EmailMessage,
+    EmailService,
+)
+
+service = EmailService()
+
+message = EmailMessage(
+    subject="Automated Sprint Report",
+    recipients=["lead@example.com"],
+    template_name="report_delivery",
+    template_vars={
+        "project_name": "NexCoder",
+        "report_type": "Productivity & Quality",
+        "period": "Sprint 1",
+        "summary": "All sprint deliverables and test suites passed.",
+        "metrics_summary": "676 tests passing.",
+        "recipient_name": "Lead Engineer",
+        "sender_name": "NexCoder Reporter",
+    },
+    attachments=[
+        EmailAttachment(filename="report.pdf", content=b"%PDF-1.4 sample", content_type="application/pdf"),
+    ],
+)
+
+# Explicit confirmation or supply single-use human approval token
+result = service.send_email(message, confirmed=True)
+print(f"Dispatched via {result.provider}, ID: {result.message_id}, Audit Event: {result.audit_event_id}")
+```
+
 ## Origin
 
-The control plane concepts, rate limiting, and governance patterns in this package originated in ApoIA and lochome, where access keys, USD limits, and tool-level metering protected enterprise LLM applications across production workloads.
+The control plane provides access keys, USD budget limits, and tool-level metering to govern LLM applications in production.

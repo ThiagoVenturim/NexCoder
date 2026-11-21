@@ -1,6 +1,6 @@
 """Unit tests for RAG evaluation metrics and LLM judge."""
 
-from faccoder_serving.eval.rag_eval import (
+from nexcoder_serving.eval.rag_eval import (
     EvaluationSample,
     LLMJudge,
     RagEvaluator,
@@ -10,10 +10,10 @@ from faccoder_serving.eval.rag_eval import (
 def test_faithfulness_grounded_answer() -> None:
     judge = LLMJudge()
     contexts = [
-        "The faccoder core framework provides model routing and sqlite hybrid search.",
+        "The nexcoder core framework provides model routing and sqlite hybrid search.",
         "Langfuse observability has an offline circuit breaker mode.",
     ]
-    answer = "The faccoder core framework provides model routing. Langfuse has an offline circuit breaker."
+    answer = "The nexcoder core framework provides model routing. Langfuse has an offline circuit breaker."
     score, reason = judge.evaluate_faithfulness(contexts, answer)
 
     assert score >= 0.8
@@ -33,8 +33,8 @@ def test_faithfulness_hallucinated_answer() -> None:
 
 def test_answer_relevance() -> None:
     judge = LLMJudge()
-    question = "How does faccoder handle Langfuse circuit breaking?"
-    answer = "Faccoder wraps Langfuse calls in a circuit breaker that no-ops when disconnected."
+    question = "How does nexcoder handle Langfuse circuit breaking?"
+    answer = "Nexcoder wraps Langfuse calls in a circuit breaker that no-ops when disconnected."
     score, reason = judge.evaluate_answer_relevance(question, answer)
 
     assert score >= 0.6

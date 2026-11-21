@@ -1,16 +1,16 @@
-from faccoder_core.cache import SemanticCache
-from faccoder_core.config import ModelSpec
-from faccoder_core.llm.compression import compress_messages, compress_text
-from faccoder_core.llm.context import ContextBudget
-from faccoder_core.llm.fake import FakeChatModel
-from faccoder_core.llm.memory import PinnedMemory
-from faccoder_core.llm.registry import build_chat_model
-from faccoder_core.llm.rotation import RotatingChatModel, classify_error, requested_wait
-from faccoder_core.llm.tool_loader import SelectiveToolLoader, ToolUsageTracker
-from faccoder_core.observability.usage import usage_scope
-from faccoder_core.retrieval.embeddings import HashEmbedder
-from faccoder_core.store.sqlite_store import HybridStore
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+from nexcoder_core.cache import SemanticCache
+from nexcoder_core.config import ModelSpec
+from nexcoder_core.llm.compression import compress_messages, compress_text
+from nexcoder_core.llm.context import ContextBudget
+from nexcoder_core.llm.fake import FakeChatModel
+from nexcoder_core.llm.memory import PinnedMemory
+from nexcoder_core.llm.registry import build_chat_model
+from nexcoder_core.llm.rotation import RotatingChatModel, classify_error, requested_wait
+from nexcoder_core.llm.tool_loader import SelectiveToolLoader, ToolUsageTracker
+from nexcoder_core.observability.usage import usage_scope
+from nexcoder_core.retrieval.embeddings import HashEmbedder
+from nexcoder_core.store.sqlite_store import HybridStore
 
 
 def test_classify_error_and_requested_wait():
@@ -76,7 +76,7 @@ def test_build_chat_model_with_fallbacks_from_spec():
 def test_context_window_budget_pruning_and_pinned_memory():
     pinned = PinnedMemory()
     pinned.pin("arch", "Clean Architecture with tiered fallback", category="decision")
-    pinned.pin("target_file", "packages/core/src/faccoder_core/llm/context.py", category="path")
+    pinned.pin("target_file", "packages/core/src/nexcoder_core/llm/context.py", category="path")
 
     # Set small budget of 60 tokens to force pruning
     budgeter = ContextBudget(
@@ -111,7 +111,7 @@ def test_context_window_budget_pruning_and_pinned_memory():
     assert "[Context Summary" in summary_msg.content
     assert "[PINNED MEMORY]" in summary_msg.content
     assert "Clean Architecture with tiered fallback" in summary_msg.content
-    assert "packages/core/src/faccoder_core/llm/context.py" in summary_msg.content
+    assert "packages/core/src/nexcoder_core/llm/context.py" in summary_msg.content
 
     # Recent turns (tail) must be preserved intact
     assert pruned_msgs[-2].content == "Step 2: Please create the file now."
@@ -165,7 +165,7 @@ def test_tool_result_caching_in_semantic_cache(tmp_path):
     cache = SemanticCache(store, embedder, ttl_seconds=3600)
 
     tool_name = "fetch_git_status"
-    args = {"repo": "faccoder", "branch": "layer/core"}
+    args = {"repo": "nexcoder", "branch": "layer/core"}
 
     # Initially cache miss
     assert cache.get_tool_result(tool_name, args) is None
@@ -179,7 +179,7 @@ def test_tool_result_caching_in_semantic_cache(tmp_path):
     assert cached_val == result_text
 
     # Different arguments should miss
-    diff_args = {"repo": "faccoder", "branch": "layer/planning"}
+    diff_args = {"repo": "nexcoder", "branch": "layer/planning"}
     assert cache.get_tool_result(tool_name, diff_args) is None
 
     # Error results must not be cached

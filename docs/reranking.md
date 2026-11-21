@@ -2,7 +2,7 @@
 
 In production code retrieval, first-stage retrieval algorithms (BM25 lexical search and bi-encoder vector embeddings) prioritize **speed** over complex interaction modeling. They scan tens of thousands of code chunks in milliseconds.
 
-However, bi-encoders cannot model cross-attention between the query tokens and code tokens. To achieve high precision, `faccoder` uses a **two-stage retrieval pipeline** with cross-encoder reranking.
+However, bi-encoders cannot model cross-attention between the query tokens and code tokens. To achieve high precision, `nexcoder` uses a **two-stage retrieval pipeline** with cross-encoder reranking.
 
 ---
 
@@ -58,16 +58,16 @@ Stage 2: Cross-Encoder Reranker (Slower, Highly Accurate)
 | **Stage 1 Only** | BM25 + Vector (RRF) | Entire repository (10k+ chunks) | 5 - 15 ms | ~0.65 - 0.72 |
 | **Stage 1 + Stage 2** | RRF + Cross-Encoder Rerank | Top 20 - 30 candidates | 40 - 120 ms | **0.88 - 0.94** |
 
-By restricting the computationally expensive cross-encoder to the top 20-30 candidates, `faccoder` achieves state-of-the-art precision while keeping retrieval latency well under 150 milliseconds.
+By restricting the computationally expensive cross-encoder to the top 20-30 candidates, `nexcoder` achieves state-of-the-art precision while keeping retrieval latency well under 150 milliseconds.
 
 ---
 
-## Using Reranking in faccoder
+## Using Reranking in nexcoder
 
-`faccoder-core` provides `CrossEncoderReranker` supporting HuggingFace sentence-transformers and local endpoints:
+`nexcoder-core` provides `CrossEncoderReranker` supporting HuggingFace sentence-transformers and local endpoints:
 
 ```python
-from faccoder_core.retrieval import CrossEncoderReranker
+from nexcoder_core.retrieval import CrossEncoderReranker
 
 # Initialize reranker (e.g. BGE-Reranker-v2-M3)
 reranker = CrossEncoderReranker(model="BAAI/bge-reranker-v2-m3")
@@ -89,4 +89,4 @@ for hit in reranked:
     print(f"Score: {hit['_rerank_score']:.4f} | ID: {hit['id']}")
 ```
 
-If cross-encoder libraries are not installed or offline testing is requested, `faccoder` gracefully falls back to normalized RRF ranks without raising exceptions.
+If cross-encoder libraries are not installed or offline testing is requested, `nexcoder` gracefully falls back to normalized RRF ranks without raising exceptions.

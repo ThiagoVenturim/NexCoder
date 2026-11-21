@@ -1,8 +1,8 @@
-"""Unit tests for faccoder_capture.web.accessibility."""
+"""Unit tests for nexcoder_capture.web.accessibility."""
 
 from __future__ import annotations
 
-from faccoder_capture.web.accessibility import AccessibilityExtractor, parse_playwright_a11y
+from nexcoder_capture.web.accessibility import AccessibilityExtractor, parse_playwright_a11y
 
 
 def test_parse_playwright_a11y_structure() -> None:

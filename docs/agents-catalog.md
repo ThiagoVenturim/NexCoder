@@ -1,6 +1,6 @@
 # Agents Catalog: Personas, Sectors and Packs
 
-`faccoder-agents` manages a structured catalog of specialized autonomous personas, organizing roles across organizational sectors and technology stacks.
+`nexcoder-agents` manages a structured catalog of specialized autonomous personas, organizing roles across organizational sectors and technology stacks.
 
 ---
 
@@ -67,7 +67,7 @@ The seed catalog covers 10 primary organizational departments:
 
 ## Technology Stack Packs
 
-Beyond general engineering personas, `faccoder` provides specialized **Stack Packs** with deep language-specific heuristics:
+Beyond general engineering personas, `nexcoder` provides specialized **Stack Packs** with deep language-specific heuristics:
 
 - **`pack-python`**: Asyncio patterns, Pydantic v2 schemas, SQLAlchemy 2.0 mapped relationships, Ruff formatting, and pytest fixtures.
 - **`pack-delphi`**: Object Pascal AST conventions, memory leak prevention (`try..finally Free`), DFM form visual event decoupling, CP1252/AnsiString handling, and ADO/SQLOLEDB SQL Server 2008 queries.
@@ -81,7 +81,7 @@ Beyond general engineering personas, `faccoder` provides specialized **Stack Pac
 ## Loading and Using the Catalog in Code
 
 ```python
-from faccoder_agents.catalog import AgentCatalog
+from nexcoder_agents.catalog import AgentCatalog
 
 # Load catalog from the agents directory
 catalog = AgentCatalog.from_directory("agents")
@@ -99,5 +99,5 @@ prompt = qa_engineer.render_prompt(module_name="billing", coverage_target="85%")
 The catalog can be exported to subagent folders or JSON configurations compatible with Claude Code:
 
 ```bash
-faccoder-agents export --format claude-subagents --out .claude/agents/
+nexcoder-agents export --format claude-subagents --out .claude/agents/
 ```

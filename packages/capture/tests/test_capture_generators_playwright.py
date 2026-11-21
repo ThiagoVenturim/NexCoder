@@ -1,13 +1,13 @@
-"""Unit tests for faccoder_capture.generators.playwright."""
+"""Unit tests for nexcoder_capture.generators.playwright."""
 
 from __future__ import annotations
 
-from faccoder_capture.generators.playwright import (
+from nexcoder_capture.generators.playwright import (
     _format_locator,
     _sanitize_name,
     generate_playwright_test,
 )
-from faccoder_capture.models import StableSelector, WebCaptureResult
+from nexcoder_capture.models import StableSelector, WebCaptureResult
 
 
 def test_sanitize_name() -> None:

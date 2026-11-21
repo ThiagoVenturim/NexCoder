@@ -1,10 +1,10 @@
 # Ideation and Jury: From Concept to PRD
 
-> **Status**: This module is currently In Progress ([Issue #5](https://github.com/ThiagoVenturim/faccoder/issues/5), [PR #29](https://github.com/ThiagoVenturim/faccoder/pull/29)). Code examples illustrate the upcoming release API.
+> **Status**: This module is currently In Progress ([Issue #5](https://github.com/ThiagoVenturim/nexcoder/issues/5), [PR #29](https://github.com/ThiagoVenturim/nexcoder/pull/29)). Code examples illustrate the upcoming release API.
 
 Software projects often fail before writing code due to flawed market assumptions, unnoticed competitors, or unvetted technical risks.
 
-The `faccoder` ideation subsystem automates the front of the software lifecycle: turning an unstructured idea into an evidenced Product Requirement Document (PRD) vetted by an automated multi-persona jury.
+The `nexcoder` ideation subsystem automates the front of the software lifecycle: turning an unstructured idea into an evidenced Product Requirement Document (PRD) vetted by an automated multi-persona jury.
 
 ---
 
@@ -103,10 +103,10 @@ Each juror assigns scores (1 to 5) across six standardized criteria:
 
 ## 4. PRD and Architecture Proposal Generation
 
-Upon achieving a `GO` verdict, `faccoder` synthesizes the squad findings and jury recommendations into an actionable **Product Requirement Document (PRD)**:
+Upon achieving a `GO` verdict, `nexcoder` synthesizes the squad findings and jury recommendations into an actionable **Product Requirement Document (PRD)**:
 
 - **Executive Summary & Value Proposition**
 - **Non-Functional Requirements**: Latency budgets, concurrency targets, security isolation, and compliance rules.
 - **Functional Requirements & User Journeys**
 - **Architectural Proposal**: Monorepo packages, service boundaries, data schemas, and API contracts.
-- **Human Approval Gate (b85)**: The complete PRD is presented to the engineering lead for review. Once confirmed, it is handed directly to `faccoder-planning` for sprint task decomposition.
+- **Human Approval Gate (b85)**: The complete PRD is presented to the engineering lead for review. Once confirmed, it is handed directly to `nexcoder-planning` for sprint task decomposition.

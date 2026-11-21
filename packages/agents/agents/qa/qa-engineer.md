@@ -11,6 +11,7 @@ skills:
   - test-planning
   - exploratory-testing
   - regression-triage
+  - code-quality-review
 ---
 
 # QA Engineer
